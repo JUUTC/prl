@@ -21,13 +21,13 @@
 7. **Points of interest**: shrines, camps, lone towers, caravans, groves, ruins (small one-level sites).
 8. **Danger gradient**: danger level rises with distance from the starting town and toward the blight.
 
-Overworld travel is tile-by-tile on a scaled-down map; **random encounters** (biome- and danger-based) drop you into a small generated local map.
+Overworld travel is tile-by-tile on a **separate, scaled-down overworld map** (ADOM style; 1 tile ≈ a local area). Entering a town, dungeon or point of interest switches to the full-scale local map; **random encounters** (biome- and danger-based) drop you into a small generated local map.
 
 ## Towns
 
 Each town is seeded with:
 - **Shops**: general store, smith (weapons/armor/repair), alchemist, magic shop, fletcher/tailor (varies by town size).
-- **Sage** (identification), **temple** (remove curse, healing, resurrection of pets), **bank/stash** (shared across towns), **trainers** (skills up to 30), **inn** (rest, rumours), **crafting stations**.
+- **Sage** (identification), **temple** (remove curse, healing, resurrection of pets), **bank/stash** (shared across towns), **stables** (store tamed pets; fee per day), **trainers** (skills up to 30), **inn** (rest, rumours), **crafting stations**.
 - **Quest givers**: kill/fetch/escort/explore/craft quests; rewards = gold, items, recipes, reputation, unique keys.
 - Town size (village / town / city) scales services. Towns are safe zones (no hostile spawns; guards).
 

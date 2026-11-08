@@ -138,12 +138,13 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 - Diablo-style **Champions** (1 modifier) and **Elites/Uniques** (2–4 modifiers: *Fast, Fire-Enchanted, Teleporting, Vampiric, Stone-Skinned, Summoner, Cursed, Multishot…*) with better loot.
 - AI states: *Asleep → Wandering → Investigating (noise/scent) → Hunting → Fleeing*. Smart monsters open doors and use items; packs coordinate.
 - Factions: some monsters fight each other; tamed pets, undead thralls and summons are allies.
+- **Stables:** tamed pets beyond your control slots (or ones you choose to leave) are kept in town stables; only pets within your control slots travel with you. Travelling pets follow you across the overworld and dungeons.
 
 ## 11. Death, Saves & Meta-Progression
 
 - **Permadeath (default)** — save on quit only; save deleted on death.
 - **Explorer mode** — optional, no permadeath (respawn at last visited town with penalties). Run is flagged *Explorer*.
-- **Meta-progression** — specific in-game feats unlock new races, classes and legacy special abilities. See [meta-progression.md](meta-progression.md).
+- **Meta-progression** — specific in-game feats unlock new races, classes and legacy special abilities; all feats can be earned in any mode, including Explorer. See [meta-progression.md](meta-progression.md).
 - **Morgue file** — text summary of each finished run (seed, settings, skills, gear, kills, cause of death).
 
 ## 12. UI / UX
@@ -158,8 +159,8 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 
 - 32×32 pixel art; restricted master palette (~64 colours) for cohesion.
 - Idle animations 2–4 frames; hit flashes; per-biome tilesets; light-radius rendering.
-- Audio scope **[OPEN]**.
-- Placeholder art acceptable for early milestones.
+- **Audio:** basic SFX (combat, spells, UI, footsteps, ambience loops) in v1; music in a later milestone.
+- **Art sourcing:** start with an open-licensed 32×32 tileset as placeholder (licence tracked in `assets/CREDITS.md`), replaced by original art later.
 
 ## 14. Milestones
 

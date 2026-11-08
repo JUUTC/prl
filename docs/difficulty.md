@@ -39,4 +39,4 @@ Hard/Nightmare increase magic find because tougher monsters drop better loot (Di
 
 ## Explorer mode
 
-Explorer (no permadeath) can be toggled with any preset. On death: respawn at the last visited town's temple, lose carried gold (dropped as a recoverable grave), −10% durability on gear. Explorer runs are tagged and eligible only for **Explorer-marked** feats — see [meta-progression.md](meta-progression.md).
+Explorer (no permadeath) can be toggled with any preset. On death: respawn at the last visited town's temple, lose carried gold (dropped as a recoverable grave), −10% durability on gear. Explorer runs are tagged in the morgue/Hall of Records but can earn all feats — see [meta-progression.md](meta-progression.md).

@@ -4,13 +4,20 @@ Decisions still needed before or during implementation.
 
 1. **Lore** — ~~big bad~~ (decided: Lich-Emperor + undead blight). Still open: name and world history.
 2. **Title of the game** — "PRL" is the repo name; is there a full title?
-3. **Audio scope** — music style, SFX, and whether audio is in v1.
-4. **Explorer mode & feats** — can race/class unlocks be earned in Explorer runs?
 5. **Stat decay** — should unused stats/skills ever decay? (Current: no.)
 6. **Gain pacing** — confirm target hours to reach Master (100) in a focused skill.
-7. **Overworld presentation** — scaled-down overworld map (ADOM) vs. seamless world?
-8. **Pet permanence** — can pets follow across dungeons and the overworld? Do they persist on Explorer respawn?
 9. **Reputation/factions** — town/faction reputation system depth?
 10. ~~**Religion**~~ — decided: pantheon required only for Clerics/Paladins (see races-and-classes.md). Deity names/details still draft.
-11. **Art sourcing** — commission, create, or start with an open-licensed 32×32 tileset as placeholder?
 12. **Controller support** — not in scope for v1 (desktop keyboard/mouse). Confirm.
+
+
+## Decided
+
+- Big bad: Lich-Emperor with spreading undead blight.
+- Blight spreads over time (difficulty-scaled), can be pushed back.
+- Pantheon: required only for Clerics/Paladins.
+- Art: open-licensed 32×32 placeholder tileset first.
+- Overworld: separate scaled-down map (ADOM style).
+- Meta-progression: everything earnable in Explorer mode.
+- Pets: stabled in towns; only control-slot pets travel.
+- Audio: basic SFX in v1, music later.

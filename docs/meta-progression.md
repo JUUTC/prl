@@ -43,6 +43,6 @@ Selected at character creation. Each run has **2 legacy slots** (+1 slot after f
 
 ## Rules
 
-- Feats marked **(any mode)** can be earned in Explorer runs; others require permadeath runs. Default: race/class unlocks require permadeath; cumulative counters count in any mode. **[OPEN]**
+- **All feats can be earned in any mode**, including Explorer runs.
 - Unlocks are global to the profile; a "reset profile" option exists.
 - The **Hall of Records** screen lists runs (morgues), feats, progress toward locked feats (hidden feats show `???`).
