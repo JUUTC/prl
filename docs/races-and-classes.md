@@ -85,3 +85,23 @@ Unlocked via meta-progression feats — see [meta-progression.md](meta-progressi
 
 - **Races:** Gnome, Half-Elf, Dark Elf, Half-Giant, Revenant (undead).
 - **Classes:** Necromancer, Summoner, Druid, Bard, Monk, Beastmaster, Artificer.
+
+## Pantheon (Clerics & Paladins)
+
+Clerics and Paladins **must choose a patron deity** at character creation. Other classes have no patron. Draft pantheon (names are placeholders):
+
+| Deity | Domain | Boon | Taboo (loses piety) |
+|---|---|---|---|
+| Solenne | Sun, healing | Restoration spells +15% potency | Using Necromancy |
+| Kaedric | War, honour | +10% melee damage while at full HP | Attacking fleeing or sleeping foes |
+| Verdana | Nature, beasts | Pets regenerate; Herbalism +20% gain | Killing tamed or neutral animals |
+| Thalos | Knowledge, magic | −10% spell failure; Item Lore +20% gain | Destroying spellbooks or scrolls unread |
+| Morrow | Death's passage (anti-undead) | Turn Undead/Smite +25% vs undead | Raising or commanding undead |
+| Iridel | Luck, travel | +5% magic find; cheaper Sage/temple services | Refusing quests, breaking deals |
+
+**Piety** (0–200) rises with deeds the deity favours (e.g., destroying undead, healing allies, tithing) and falls with taboos.
+
+- **Pray** (action, long cooldown): at sufficient piety, the deity heals, cures, or removes curses; low piety risks wrath (curse, summoned punisher).
+- Piety thresholds (50/100/150/200) grant the deity's boon and later a unique **divine favour** ability.
+- Switching patron is possible at a temple of the new god, but resets piety and angers the old god (temporary curse).
+- If a Cleric/Paladin drops to 0 piety, Restoration spells suffer +20% failure until piety recovers.

@@ -2,7 +2,7 @@
 
 Decisions still needed before or during implementation.
 
-1. **Lore** — ~~big bad~~ (decided: Lich-Emperor + undead blight). Still open: name, world history, and pantheon (affects Clerics/Paladins).
+1. **Lore** — ~~big bad~~ (decided: Lich-Emperor + undead blight). Still open: name and world history.
 2. **Title of the game** — "PRL" is the repo name; is there a full title?
 3. **Audio scope** — music style, SFX, and whether audio is in v1.
 4. **Explorer mode & feats** — can race/class unlocks be earned in Explorer runs?
@@ -11,6 +11,6 @@ Decisions still needed before or during implementation.
 7. **Overworld presentation** — scaled-down overworld map (ADOM) vs. seamless world?
 8. **Pet permanence** — can pets follow across dungeons and the overworld? Do they persist on Explorer respawn?
 9. **Reputation/factions** — town/faction reputation system depth?
-10. **Religion** — deity choice for Clerics/Paladins with piety/prayer mechanics?
+10. ~~**Religion**~~ — decided: pantheon required only for Clerics/Paladins (see races-and-classes.md). Deity names/details still draft.
 11. **Art sourcing** — commission, create, or start with an open-licensed 32×32 tileset as placeholder?
 12. **Controller support** — not in scope for v1 (desktop keyboard/mouse). Confirm.
