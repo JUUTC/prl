@@ -4498,6 +4498,71 @@ name = "prl"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "prl_audio",
+ "prl_content",
+ "prl_core",
+ "prl_gen",
+ "prl_render",
+ "prl_save",
+ "prl_ui",
+]
+
+[[package]]
+name = "prl_audio"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "prl_core",
+]
+
+[[package]]
+name = "prl_content"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
+name = "prl_core"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "prl_content",
+]
+
+[[package]]
+name = "prl_gen"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "prl_content",
+ "prl_core",
+]
+
+[[package]]
+name = "prl_render"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "prl_content",
+ "prl_core",
+]
+
+[[package]]
+name = "prl_save"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "prl_core",
+]
+
+[[package]]
+name = "prl_ui"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "prl_content",
+ "prl_core",
 ]
 
 [[package]]

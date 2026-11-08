@@ -32,6 +32,7 @@ Start with the [Game Design Specification](docs/SPEC.md).
 | [meta-progression.md](docs/meta-progression.md) | Feats & unlocks |
 | [architecture.md](docs/architecture.md) | Technical architecture |
 | [open-questions.md](docs/open-questions.md) | Pending decisions |
+| [standards/](docs/standards/) | Coding standards, project structure, extensibility (mods/DLC) |
 
 ## Building
 

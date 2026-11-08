@@ -1,12 +1,49 @@
-[package]
-name = "prl"
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
-description = "A high-fantasy pixel-art roguelike"
+rust-version = "1.90"
 license = "MIT"
+repository = "https://github.com/JUUTC/prl"
 
-[dependencies]
-bevy = "0.20"
+[workspace.dependencies]
+# Library crates use Bevy without default features; only the `prl` binary
+# (and crates that truly need rendering/audio) enable more.
+bevy = { version = "0.20", default-features = false }
+
+prl_audio = { path = "crates/prl_audio" }
+prl_content = { path = "crates/prl_content" }
+prl_core = { path = "crates/prl_core" }
+prl_gen = { path = "crates/prl_gen" }
+prl_render = { path = "crates/prl_render" }
+prl_save = { path = "crates/prl_save" }
+prl_ui = { path = "crates/prl_ui" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+unimplemented = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+# Bevy idioms: systems take `Res`/`Query` by value, have many params and complex query types.
+needless_pass_by_value = "allow"
+too_many_arguments = "allow"
+type_complexity = "allow"
+module_name_repetitions = "allow"
 
 # Fast iteration in dev while keeping dependencies optimized.
 [profile.dev]
@@ -14,3 +51,7 @@ opt-level = 1
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
