@@ -1,0 +1,16 @@
+[package]
+name = "prl"
+version = "0.1.0"
+edition = "2024"
+description = "A high-fantasy pixel-art roguelike"
+license = "MIT"
+
+[dependencies]
+bevy = "0.20"
+
+# Fast iteration in dev while keeping dependencies optimized.
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
