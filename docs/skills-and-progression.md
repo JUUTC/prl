@@ -110,7 +110,7 @@ Each skill gain has a chance to train a linked stat:
 
 - Chance `= 0.05 / (1 + (stat − 10) / 5)` per gain, split across linked stats.
 - Stats rise +1 at a time; logarithmic soft cap, no hard cap.
-- Stat decay for unused stats: **none** (default).
+- **No decay:** trained skills and stats never go down from disuse. (Temporary drains from monsters/curses are status effects and wear off or are cured.)
 
 ## Ability unlocks
 

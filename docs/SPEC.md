@@ -27,7 +27,7 @@ PRL is a single-player, high-fantasy, pixel-art roguelike written in Rust. It co
 | Engine | Bevy 0.20 (ECS, 2D sprites) |
 | Platforms | Desktop: Windows, macOS, Linux |
 | Art | Pixel art, **32×32** tiles, nearest-neighbour scaling |
-| Input | Keyboard-first (arrows, numpad, vi-keys), mouse supported |
+| Input | Keyboard-first (arrows, numpad, vi-keys), mouse supported; no gamepad in v1 |
 | Players | Single-player only |
 | Content data | Data-driven (RON files under `assets/data/`) |
 

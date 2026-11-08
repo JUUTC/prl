@@ -3,10 +3,8 @@
 Decisions still needed before or during implementation.
 
 1. **Lore** — ~~big bad~~ (decided: Lich-Emperor + undead blight). Still open: name and world history.
-2. **Title of the game** — "PRL" is the repo name; is there a full title?
-5. **Stat decay** — should unused stats/skills ever decay? (Current: no.)
+2. **Title of the game** — keep "PRL" for now; brainstorm a name once more systems are complete.
 10. ~~**Religion**~~ — decided: pantheon required only for Clerics/Paladins (see races-and-classes.md). Deity names/details still draft.
-12. **Controller support** — not in scope for v1 (desktop keyboard/mouse). Confirm.
 
 
 ## Decided
@@ -21,3 +19,6 @@ Decisions still needed before or during implementation.
 - Audio: basic SFX in v1, music later.
 - Skill pacing: ~20+ hours of focused use to reach Master (100).
 - No reputation system.
+- No skill/stat decay.
+- Keyboard + mouse only for v1.
+
