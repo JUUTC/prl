@@ -19,6 +19,7 @@ Difficulty is chosen at world creation and is separate from world knobs. Players
 | Hunger rate | 50% | 75% | 100% | 115% | 130% |
 | Skill gain rate | 150% | 125% | 100% | 100% | 100% |
 | Shop prices | 75% | 90% | 100% | 115% | 130% |
+| Blight spread rate | 25% | 50% | 100% | 150% | 200% |
 | Trap frequency | 50% | 75% | 100% | 125% | 150% |
 | Sage identify cost | 50% | 75% | 100% | 125% | 150% |
 | Permadeath | Off (Explorer) | On | On | On | On |
