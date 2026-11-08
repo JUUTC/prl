@@ -24,7 +24,9 @@ Difficulty is chosen at world creation and is separate from world knobs. Players
 | Trap frequency | 50% | 75% | 100% | 125% | 150% |
 | Sage identify cost | 50% | 75% | 100% | 125% | 150% |
 | Permadeath | Off (Explorer) | On | On | On | On |
-| Score multiplier | 0.25× | 0.5× | 1× | 1.5× | 2.5× |
+| Score multiplier | 0.25×¹ | 0.5× | 1× | 1.5× | 2.5× |
+
+¹ Explorer runs always score 0, so Story's 0.25× applies only if permadeath is turned back on.
 
 Hard and Nightmare increase magic find because tougher monsters drop better loot (the Diablo convention). They also substantially raise **skill gain rate**, so mastering skills on a permadeath character is achievable rather than impossible.
 

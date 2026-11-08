@@ -13,9 +13,9 @@ Every skill has a **Mastery** passive that scales continuously with skill value 
 ### Swords — Req: sword
 | Lvl | Ability |
 |---|---|
-| 25 | *(A)* **Riposte** — after a successful parry/block, next attack within 1 turn deals +50% |
+| 25 | *(A)* **Riposte** — after you take a glancing blow or block, next attack within 1 turn deals +50% |
 | 50 | *(A)* **Cleave** — hit target and up to 2 adjacent enemies for 70% |
-| 75 | *(P)* **Blade Dancer** — +10% parry chance, sword attacks cost 10% less energy |
+| 75 | *(P)* **Blade Dancer** — +10% glancing-blow chance against you, sword attacks cost 10% less energy |
 | 100 | *(A)* **Whirlwind** — attack all adjacent enemies at full damage |
 | 150 | *(A)* **Thousand Cuts** — 5 rapid strikes on one target, each 50% |
 | 200 | *(P)* **Sword Saint** — crits refund 50% of the attack's energy |

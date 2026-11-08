@@ -14,7 +14,13 @@ Decisions still needed before or during implementation.
 - Big bad: Lich-Emperor with spreading undead blight.
 - Blight spreads over time (difficulty-scaled), can be pushed back.
 - Pantheon: required only for Clerics/Paladins.
-- Art: open-licensed 32×32 placeholder tileset first.
+- Art: 64×64 tiles with integer zoom (4K-ready); DCSS CC0 32×32 tiles as 2× placeholders until original art.
+- Palette: locked ramp-based PRL palette (~24 ramps × 6–8 shades, ~150–190 colours), CI-checked.
+- Fonts: Pixelify Sans + Silkscreen (OFL); title font later.
+- UI: bevy_ui for the game; bevy_egui only for dev tools behind a feature flag.
+- Tone: grimdark-hopeful high fantasy; terse, archaic-lite prose.
+- Mods/DLC: v1 data-only content packs (namespaced IDs, load order); DLC = first-party packs; WASM scripting deferred.
+- Code: Cargo workspace (prl, prl_core, prl_content, prl_gen, prl_render, prl_ui, prl_audio, prl_save); strict lints (clippy all + pedantic as errors, no unsafe, no unwrap/expect outside tests, documented pub items).
 - Overworld: separate scaled-down map (ADOM style).
 - Meta-progression: everything earnable in Explorer mode.
 - Pets: stabled in towns; only control-slot pets travel.

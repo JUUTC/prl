@@ -5,7 +5,7 @@
 **Diablo-style grid inventory with weight.**
 
 - Backpack grid: **10 × 6** cells. Items have shapes (potion 1×1, dagger 1×2, sword 1×3, bow 2×4, body armor 2×3, shield 2×2…).
-- **Weight** applies on top of the grid. Exceeding carry capacity (`STR × 5` kg, modified by Athletics) reduces speed in encumbrance tiers.
+- **Weight** applies on top of the grid. Exceeding carry capacity (`STR × 5` kg; Athletics abilities such as *Tireless* ease the penalties) reduces speed in encumbrance tiers.
 - **Bag options:**
   - **Belt:** 2–4 quick slots for potions and scrolls, usable from the hotbar.
   - **Containers:** pouches, packs and satchels (crafted with Tailoring or bought) add extra grid pages. Larger bags add more cells but weigh more.
