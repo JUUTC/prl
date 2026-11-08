@@ -93,11 +93,13 @@ Clerics and Paladins **must choose a patron deity** at character creation. Other
 | Deity | Domain | Boon | Taboo (loses piety) |
 |---|---|---|---|
 | Solenne | Sun, healing | Restoration spells +15% potency | Using Necromancy |
-| Kaedric | War, honour | +10% melee damage while at full HP | Attacking fleeing or sleeping foes |
+| Kaedric* | War, honour | +10% melee damage while at full HP | Attacking fleeing or sleeping foes |
 | Verdana | Nature, beasts | Pets regenerate; Herbalism +20% gain | Killing tamed or neutral animals |
 | Thalos | Knowledge, magic | −10% spell failure; Item Lore +20% gain | Destroying spellbooks or scrolls unread |
 | Morrow | Death's passage (anti-undead) | Turn Undead/Smite +25% vs undead | Raising or commanding undead |
 | Iridel | Luck, travel | +5% magic find; cheaper Sage/temple services | Refusing quests, breaking deals |
+
+\* Kaedric betrayed Malgareth; a secret quest line reveals the truth and forces his followers to choose. See [lore.md](lore.md#kaedrics-secret).
 
 **Piety** (0–200) rises with deeds the deity favours (e.g., destroying undead, healing allies, tithing) and falls with taboos.
 

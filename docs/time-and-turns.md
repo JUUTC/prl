@@ -44,7 +44,8 @@ Speed modifiers: encumbrance, armor, haste/slow, terrain (swamp, deep snow), rac
 - On the **overworld map**, each step = **10 minutes** of game time; the local tick system resumes when entering a location or on random encounters.
 - **Day/night cycle** (24h): affects light, monster spawns, shop hours, herb availability.
 - Per-tick world systems: HP/Mana/Stamina regen, hunger, status effect durations, cooldowns, poison/bleed, fire spread, light sources burning down, node regrowth, spawn timers.
-- Off-screen levels are **frozen** while the player is elsewhere, then "caught up" with a coarse simulation on return (regen, respawn, node regrowth) — standard roguelike behaviour.
+- Off-screen levels are **frozen** while the player is elsewhere, then "caught up" with a coarse simulation on return (regeneration, node regrowth). Dungeon instances never respawn monsters; only resets refresh them. Overworld encounters respawn over time.
+- Pack-animal trips and house sieges advance with the world clock.
 
 ## Interruption rules
 
@@ -52,6 +53,13 @@ Multi-turn actions (rest, auto-explore, travel, gather, craft, pick lock) are in
 - a hostile comes into view,
 - the player takes damage,
 - a significant message occurs (status change, hunger stage change, item breaks).
+
+## Light
+
+- **Dungeons are dark.** Visibility = light radius, except races with darkvision see unlit tiles within 6 (desaturated).
+- Light sources: **torch** (radius 4, ~1,500 turns), **lantern** (radius 5, refuelled with oil), **Light** spell (radius 5, duration by Mysticism), glowing affixes, braziers and magical terrain.
+- Towns and the overworld use daylight; night reduces sight on the overworld.
+- **Stealth:** darkness grants a stealth bonus and lit tiles a penalty. Carrying a light makes you visible to monsters from farther away, so you trade vision against being noticed.
 
 ## Hunger (when enabled)
 

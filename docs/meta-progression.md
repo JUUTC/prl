@@ -39,7 +39,9 @@ Selected at character creation. Each run has **2 legacy slots** (+1 slot after f
 | Survivor | Survive at < 5% HP 10 times | +5% max HP |
 | Tamer's Legacy | Tame a dragon | Start with a random tamed small beast |
 | Iron Will | Win on Hard or Nightmare | +10 Magic Resistance at start |
-| Bane of the Undying | Defeat the big bad | New-game+ option: "Blight Ascendant" world modifier |
+| Bane of the Undying | Defeat Malgareth | New Game+ option: "Blight Ascendant" world modifier |
+| Oathbreaker's Truth | Uncover Kaedric's secret | Start with the *Testament of the Companions* lore book (reveals one secret-quest location) |
+| Ascendant | Reach NG+3 | +1 legacy slot |
 
 ## Rules
 

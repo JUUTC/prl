@@ -91,9 +91,8 @@ Modifier = `floor((stat − 10) / 2)`.
 | Max Stamina | `STR + DEX + CON + Athletics / 4` |
 | Base speed | 100 (see time system) |
 | Carry capacity | `STR × 5` kg (encumbrance tiers reduce speed) |
-| Accuracy | `DEX mod + weapon skill / 4 + Tactics / 8 + gear` |
-| Evasion | `DEX mod + Athletics / 8 + gear − armor hindrance` |
-| Armor | sum of armor pieces × armor-skill multiplier |
+| Accuracy / Evasion / Armor | See [combat.md](combat.md#damage-pipeline) |
+| Power Level (PL) | `floor(total trained skill points / 10)` — see [combat.md](combat.md#power-level--area-level) |
 
 ### 5.3 Races & Classes
 
@@ -123,18 +122,34 @@ Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item l
 
 See [abilities.md](abilities.md#spells).
 
+## 8b. Combat
+
+- **Always hit**: no miss rolls. Evasion → glancing blows (50%), shields → blocks (−75%), armor → flat + % physical reduction, resistances → elemental reduction.
+- Damage types: **Physical** (slash/pierce/blunt), **Fire, Cold, Lightning, Poison**. Holy/unholy are bonus tags, not types.
+- Resist cap 75% (90% max via rare affixes); difficulty and NG+ apply a resist penalty.
+
+See [combat.md](combat.md).
+
 ## 9. World
 
 - Seeded overworld (biomes, roads, rivers), multiple towns, multiple themed dungeons, and one **final dungeon** (deepest) containing the **big bad**.
 - **World knobs**: world size, dungeon count, dungeon depth, monster density, loot abundance, hunger on/off.
 - **Difficulty**: presets (Story, Easy, Normal, Hard, Nightmare) plus **Custom**.
+- **Overworld encounters**: visible and random, scaled by area level vs Power Level; weak monsters avoid you; repel/attraction consumables control spawns.
+- **Instanced dungeons**: resettable at the entrance with **Dungeon Sigil** modifiers. Resetting the final dungeon grows the blight.
+- **Player housing** (unlimited, Small → Castle), **pack animals** hauling loot home, Diablo-style **grid inventory**. See [housing-and-logistics.md](housing-and-logistics.md).
+- **Victory → New Game+** (endless tiers). See [endgame.md](endgame.md).
+- **Lore**: Malgareth the Undying, a betrayed champion turned Lich-Emperor; see [lore.md](lore.md).
+- **Light**: dungeons are dark; torches, lanterns and light spells burn fuel; darkness aids stealth.
+- **Quests**: seeded main quest line (blight, phylactery, Kaedric's secret) plus procedural side quests from town boards and NPCs.
 
 See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md).
 
 ## 10. Monsters & AI
 
 - Families (beasts, undead, demons, goblinoids, giants, dragons, elementals, constructs…) defined in data.
-- **Danger level** scales with dungeon depth and distance from the starting town.
+- **Monster level** comes from area level (dungeon depth, distance from start, blight) + difficulty offset + NG+ tier.
+- **Bestiary v1:** 60–80 base monsters across ~10 families.
 - Diablo-style **Champions** (1 modifier) and **Elites/Uniques** (2–4 modifiers: *Fast, Fire-Enchanted, Teleporting, Vampiric, Stone-Skinned, Summoner, Cursed, Multishot…*) with better loot.
 - AI states: *Asleep → Wandering → Investigating (noise/scent) → Hunting → Fleeing*. Smart monsters open doors and use items; packs coordinate.
 - Factions: some monsters fight each other; tamed pets, undead thralls and summons are allies.
@@ -142,8 +157,9 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 
 ## 11. Death, Saves & Meta-Progression
 
-- **Permadeath (default)** — save on quit only; save deleted on death.
+- **Permadeath (default)** — auto-save on quit plus a periodic crash-safety checkpoint (overwritten; never reloadable after death). The save is deleted on death.
 - **Explorer mode** — optional, no permadeath (respawn at last visited town with penalties). Run is flagged *Explorer*.
+- **Victory** — win screen, then Retire or continue into **New Game+** with the same character.
 - **Meta-progression** — specific in-game feats unlock new races, classes and legacy special abilities; all feats can be earned in any mode, including Explorer. See [meta-progression.md](meta-progression.md).
 - **Morgue file** — text summary of each finished run (seed, settings, skills, gear, kills, cause of death).
 
@@ -171,11 +187,12 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 | M2 | Combat | Monsters, AI states, melee/ranged, death, morgue |
 | M3 | Items | Inventory, equipment, rarity/affixes, identification |
 | M4 | Skills | Use-based gain, thresholds, ability unlocks, stat training |
-| M5 | Dungeons | Seeded generators (caves, crypts, mines, ruins, towers) |
-| M6 | Overworld & towns | Biomes, towns, shops, Sage, bank, trainers, quests |
+| M5 | Dungeons | Seeded generators, instancing, resets, Dungeon Sigils, light & darkness |
+| M6 | Overworld & towns | Biomes, encounters, towns, shops, Sage, bank, trainers, quests |
+| M6b | Housing & logistics | Grid inventory polish, pack animals, houses, sieges |
 | M7 | Magic | Mana, schools, spellbooks, scrolls |
 | M8 | Crafting & gathering | All crafting/gathering skills, recipes, materials |
 | M9 | Companions | Taming, Necromancy thralls, Summoning |
 | M10 | Setup & difficulty | Seed + knobs UI, difficulty presets & custom |
 | M11 | Meta-progression | Feats, unlocks, legacy perks |
-| M12 | Endgame | Final dungeon, big bad, victory, balance & polish |
+| M12 | Endgame | Final dungeon, Malgareth, victory, New Game+, balance & polish |

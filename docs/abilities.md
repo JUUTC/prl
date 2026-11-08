@@ -137,7 +137,7 @@ Every skill has a **Mastery** passive that scales continuously with skill value 
 | 50 | *(P)* **Evasive** — +10% evasion |
 | 75 | *(A)* **Tumble** — dodge roll 2 tiles, no opportunity attacks |
 | 100 | *(P)* **Second Skin** — light armor counts as cloth for spell failure |
-| 150 | *(P)* **Blur** — first attack each turn against you has 50% miss chance |
+| 150 | *(P)* **Blur** — first attack each turn against you has +50% glancing-blow chance |
 | 200 | *(P)* **Untouchable** — evasion also applies vs spells |
 
 ### Heavy Armor — Req: heavy armor

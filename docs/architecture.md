@@ -30,8 +30,9 @@ All races, classes, skills, abilities, synergies, spells, items, affixes, monste
 
 ## Saves
 
-- One save per character; written on quit, deleted on death (permadeath). Explorer mode keeps the save.
-- Save = seed + settings + generated-level states + gameplay RNG state + entities.
+- One save per character; **auto-save on quit** plus a **periodic checkpoint** (every N turns and on level transitions) for crash safety. The checkpoint is overwritten in place and is deleted with the save on death (permadeath). Explorer mode keeps the save.
+- Save = seed + settings + NG+ tier + dungeon instance states (incl. reset counts) + overworld state (blight, houses, pack animals en route) + gameplay RNG state + entities.
+- Writes are atomic (write temp file, then rename).
 - Versioned format; incompatible versions refuse to load gracefully.
 
 ## Testing

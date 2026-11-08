@@ -36,6 +36,8 @@ Head, Amulet, Body, Cloak, Hands, Belt, Feet, Ring ×2, Main hand, Off hand, Amm
 - **Curses:** some items carry negative affixes and/or are *sticky* (can't be unequipped). Removed by Remove Curse scroll, Abjuration *Dispel Magic*, a town temple, or Enchanting 150.
 - **Blessed / Uncursed / Cursed** status for consumables (standard roguelike); detectable via Item Lore 75 or altars.
 
+**Retempering** (NG+): raise an old item to the current NG+ tier; see [endgame.md](endgame.md#new-game).
+
 ## Consumables
 
 Potions (healing, mana, stamina, cure, resist, speed, strength, invisibility, and some harmful), scrolls (identify, teleport, recall, enchant, remove curse, magic mapping, spell scrolls), wands (charges, rechargeable by Mysticism/Enchanting), food (rations, cooked meals, raw meat), bandages, reagents, gems, runes, keys, lockpicks, ammo, bombs.
@@ -43,7 +45,8 @@ Potions (healing, mana, stamina, cure, resist, speed, strength, invisibility, an
 ## Gold & economy
 
 - Shops in each town with seeded stock that refreshes over time. Prices affected by CHA and Bartering.
-- **Bank/stash** shared across all towns.
+- **Bank** shared across all towns. Each player house has its **own separate storage**; see [housing-and-logistics.md](housing-and-logistics.md).
+- Inventory is a Diablo-style **grid + weight**; see [housing-and-logistics.md](housing-and-logistics.md#inventory).
 - Selling unidentified items yields reduced prices.
 
 ## Crafting
