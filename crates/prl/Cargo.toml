@@ -1,0 +1,21 @@
+[package]
+name = "prl"
+description = "PRL: a high-fantasy pixel-art roguelike (game binary)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bevy = { workspace = true, features = ["default"] }
+prl_audio.workspace = true
+prl_content.workspace = true
+prl_core.workspace = true
+prl_gen.workspace = true
+prl_render.workspace = true
+prl_save.workspace = true
+prl_ui.workspace = true
+
+[lints]
+workspace = true

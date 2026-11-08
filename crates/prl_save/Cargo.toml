@@ -1,0 +1,15 @@
+[package]
+name = "prl_save"
+description = "PRL persistence: saves, checkpoints, profile (meta-progression), morgue files"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bevy.workspace = true
+prl_core.workspace = true
+
+[lints]
+workspace = true

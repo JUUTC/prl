@@ -37,8 +37,8 @@ Animations play while in `ResolvingTurn` or after, but never gate game state (a 
 
 All races, classes, skills, abilities, synergies, spells, items, affixes, monsters, recipes, dungeon themes, feats and difficulty presets are defined in RON. Code implements **effect primitives** (damage, heal, status, summon, teleport, modify stat…) that data composes.
 
-- **Content packs (v1, data-only):** a pack is a folder of RON + assets with a manifest. The base game is itself a pack.
-- **Namespaced IDs:** every definition has an ID like `base:longsword` or `my_mod:frost_wolf`, so packs never collide.
+- **Content packs (v1, data-only):** a pack is a folder of RON + assets with a manifest. The base game is itself a pack (namespace `prl`). Full rules: [standards/extensibility.md](standards/extensibility.md).
+- **Namespaced IDs:** every definition has an ID like `prl:longsword` or `my_mod:frost_wolf`, so packs never collide.
 - **Load order:** packs load in a defined order; later packs may add or override earlier definitions by ID.
 - **DLC** ships as first-party content packs.
 - **Scripting:** WASM scripting is designed-for (stable effect/event boundaries) but deferred past v1.
