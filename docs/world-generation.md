@@ -51,7 +51,13 @@ Connectivity guarantee: every level is validated so stairs are reachable (flood-
 
 ## The big bad
 
-The final dungeon's last floor hosts the big bad — working name **[OPEN]** (e.g., *Malgareth the Undying, the Lich-Emperor*). Defeating it wins the game. It is telegraphed through rumours, quests and the blight's spread.
+The big bad is a **Lich-Emperor** (working name *Malgareth the Undying*) whose **undead blight** spreads from the final dungeon.
+
+- The blight is a visible overworld region around the final dungeon; it **grows slowly over game time** (rate scaled by difficulty), converting biomes to blighted lands, raising undead encounter rates, and eventually threatening outlying villages.
+- Quests, rumours and cleansing shrines let the player slow or push back the blight.
+- The Lich-Emperor's **phylactery** must be found and destroyed (hidden in another dungeon, revealed via quests/lore) — otherwise he reforms once after defeat on a deeper "Throne of Bone" floor.
+- Final floor: multi-phase boss fight (necromantic summons, life drain, curses, blight terrain).
+- Defeating him wins the game.
 
 ## World knobs (player-tweakable at start)
 

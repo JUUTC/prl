@@ -2,7 +2,7 @@
 
 Decisions still needed before or during implementation.
 
-1. **Big bad & lore** — name, nature (lich, demon lord, fallen god?), world history, and pantheon (affects Clerics/Paladins).
+1. **Lore** — ~~big bad~~ (decided: Lich-Emperor + undead blight). Still open: name, world history, and pantheon (affects Clerics/Paladins).
 2. **Title of the game** — "PRL" is the repo name; is there a full title?
 3. **Audio scope** — music style, SFX, and whether audio is in v1.
 4. **Explorer mode & feats** — can race/class unlocks be earned in Explorer runs?
