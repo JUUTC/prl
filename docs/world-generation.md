@@ -28,7 +28,7 @@ Overworld travel is tile-by-tile on a **separate, scaled-down overworld map** (A
 Each town is seeded with:
 - **Shops**: general store, smith (weapons/armor/repair), alchemist, magic shop, fletcher/tailor (varies by town size).
 - **Sage** (identification), **temple** (remove curse, healing, resurrection of pets), **bank/stash** (shared across towns), **stables** (store tamed pets; fee per day), **trainers** (skills up to 30), **inn** (rest, rumours), **crafting stations**.
-- **Quest givers**: kill/fetch/escort/explore/craft quests; rewards = gold, items, recipes, reputation, unique keys.
+- **Quest givers**: kill/fetch/escort/explore/craft quests; rewards = gold, items, recipes, unique keys (no reputation system).
 - Town size (village / town / city) scales services. Towns are safe zones (no hostile spawns; guards).
 
 ## Dungeons

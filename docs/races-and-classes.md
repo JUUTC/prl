@@ -15,7 +15,7 @@ Racial stat modifiers apply **after** point-buy. Racial traits are permanent spe
 ### Human — *the adaptable*
 - **Versatile:** +10% gain rate on **all** skills.
 - **Ambitious:** choose 2 skills at creation for +5 starting points each.
-- **Diplomat:** town reputation gains +25%.
+- **Diplomat:** +10% gold and item-quality rewards from quests.
 - **Active — Second Wind** (once per rest): restore 25% HP and Stamina.
 
 ### Elf — *the ancient*
