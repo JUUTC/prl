@@ -22,6 +22,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let boot_error = match state {
         Ok(state) => {
+            if let Some(pack) = pack_path.parent() {
+                app.insert_resource(prl_render::PlaceholderArtSource(pack.to_path_buf()));
+            }
             app.insert_resource(state)
                 .add_plugins((
                     prl_content::PrlContentPlugin,

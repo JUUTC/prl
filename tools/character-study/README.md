@@ -68,6 +68,27 @@ opaque pixel edges, action variation, coordinated grips, anatomical hand identit
 facing retention, non-mirrored art, and two-handed loadout validation, plus 156
 world/effects showcase frames for pixel edges, bounds and variation.
 
+## Playtest placeholder atlas
+
+`export.html`/`export.js` render the Human Gravebound baseline in the Warrior
+kit (idle, walk and attack; independent left and right rows), single-facing
+skeleton, shambler and grave-rat studies, a seamless floor, a half-height wall
+and closed/open doors into one atlas. Regenerate the committed playtest assets
+with headless Chrome or Chromium (localhost only, no network):
+
+```sh
+python3 tools/character-study/export_placeholder_atlas.py          # write
+python3 tools/character-study/export_placeholder_atlas.py --check  # verify
+```
+
+Outputs go to `assets/packs/prl/sprites/placeholder/`: the PNG plus a RON
+manifest keyed by content ID, which `prl_render` loads. They are disposable
+placeholders, not candidates for art P1; do not hand-edit them. PNG bytes may
+change with the Chrome encoder version, so `--check` failing after a browser
+update only means the files should be regenerated and reviewed.
+Pure sprite construction lives in `sprite.js` so it imports without the
+atelier UI.
+
 ## World & effects showcase
 
 Twenty-six representative six-frame studies cover six spell effects, five arrow

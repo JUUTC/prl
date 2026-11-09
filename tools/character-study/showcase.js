@@ -13,9 +13,11 @@ export const studies = [
   ["skeleton", "Skeleton", "Undead enemy", "actor"],
   ["goblin", "Goblin", "Small knife-bearing enemy", "actor"],
   ["wraith", "Wraith", "Shrouded spectral monster", "actor"],
+  ["shambler", "Shambler", "Slow, stooped corpse", "actor"],
   ["smith", "Town smith", "Apron and hammer", "actor"],
   ["merchant", "Town merchant", "Hood, satchel and ledger", "actor"],
   ["wolf", "Wolf", "Lean quadruped", "animal"],
+  ["rat", "Grave rat", "Small, quick vermin", "animal"],
   ["deer", "Deer", "Antlers and long legs", "animal"],
   ["mule", "Pack mule", "Panniers and long ears", "animal"],
   ["tree", "Tree felling", "Standing → falling → stump/logs", "harvest"],
@@ -99,8 +101,9 @@ export function drawStudy(canvas, id, frame) {
   r(25, 57, 47, 2, "#1b211e");
   if (study[3] === "actor") {
     const bob = frame % 3 === 1 ? -1 : 0;
-    const colour = id === "skeleton" ? "#ad9b75" : id === "goblin" ? "#788957" : "#515b60";
-    const short = id === "goblin" ? 8 : 0;
+    const colour = id === "skeleton" ? "#ad9b75" : id === "goblin" ? "#788957" :
+      id === "shambler" ? "#6f7562" : "#515b60";
+    const short = id === "goblin" ? 8 : id === "shambler" ? 4 : 0;
     if (id === "wraith") {
       for (let y = 20; y < 56; y++) {
         const width = 5 + (y - 20) / 4;
@@ -129,6 +132,13 @@ export function drawStudy(canvas, id, frame) {
       if (id === "smith") { line(62, 40 - phase, 63, 28 - phase, "#756750", 2); r(59, 27 - phase, 9, 3, "#65716b"); }
       if (id === "goblin") { r(39, 20 + short, 3, 3, colour); line(62, 40 - phase, 68, 33 - phase, "#929780"); }
     }
+  } else if (id === "rat") {
+    const bob = frame % 2, fur = "#4c4a43";
+    r(35, 45 + bob, 22, 8, ink); r(36, 46 + bob, 20, 6, fur); r(39, 46 + bob, 12, 1, "#65716b");
+    r(55, 43 + bob, 9, 7, fur); r(63, 46 + bob, 3, 3, fur); r(61, 45 + bob, 1, 1, "#af7449");
+    r(56, 41 + bob, 2, 2, "#796b52");
+    for (let i = 0; i < 2; i++) line(39 + i * 12, 52, 38 + i * 12 + (i ? phase : -phase), 56, fur);
+    line(35, 49, 22, 46 + phase, "#796b52");
   } else if (study[3] === "animal") {
     const fur = id === "wolf" ? "#65716b" : "#796b52";
     const bob = frame % 2;

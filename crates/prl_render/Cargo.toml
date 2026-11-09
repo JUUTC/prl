@@ -8,9 +8,11 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-bevy = { workspace = true, features = ["bevy_camera", "bevy_sprite", "bevy_sprite_render", "bevy_core_pipeline", "bevy_log", "bevy_text", "bevy_window"] }
+bevy = { workspace = true, features = ["bevy_camera", "bevy_sprite", "bevy_sprite_render", "bevy_core_pipeline", "bevy_log", "bevy_text", "bevy_window", "png"] }
 prl_content.workspace = true
 prl_core.workspace = true
+ron.workspace = true
+serde.workspace = true
 
 [lints]
 workspace = true

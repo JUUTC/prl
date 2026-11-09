@@ -200,7 +200,7 @@ expansion requires explicit approval of a finished in-world reference.
 - Hi-res UI elements (item icons, portraits); lighting/shader effects, particles.
 - Idle animations 2–4 frames; hit flashes; per-biome tilesets; light-radius rendering.
 - **Audio:** basic SFX (combat, spells, UI, footsteps, ambience loops) in v1; music in a later milestone.
-- **Art sourcing:** placeholder art may use the CC0 subset of the Dungeon Crawl Stone Soup 32×32 tiles, shown at 2× until original 64×64 art replaces it, once the subset's licence is verified. *Status:* no DCSS tiles are imported; gameplay builds use repository-owned procedural shapes. Every third-party asset's licence is tracked in `assets/CREDITS.md`.
+- **Art sourcing:** placeholder art may use the CC0 subset of the Dungeon Crawl Stone Soup 32×32 tiles, shown at 2× until original 64×64 art replaces it, once the subset's licence is verified. *Status:* no DCSS tiles are imported; gameplay builds draw a generated atlas of the repository-owned Gravebound procedural studies (disposable placeholders, `assets/packs/prl/sprites/placeholder/`) and fall back to coloured shapes if it is missing. Every third-party asset's licence is tracked in `assets/CREDITS.md`.
 - **Placeholder rendering:** disposable gameplay placeholders must still respect the approved perspective rules where cheap to do so (for example, no visible floor-grid seams); they do not establish art direction.
 
 ## 15. Milestones
@@ -219,7 +219,9 @@ separate gates. Disposable gameplay placeholders do not approve production art.
 
 **Current status (2026-11-09):** gameplay P1 is implemented provisionally
 (Windows hands-on acceptance pending); P2 combat core rules, enemy AI, death and
-new run are implemented with presentation pending. Art P0 is awaiting review.
+new run are implemented, with placeholder presentation awaiting a hands-on check.
+Actors and terrain draw from the disposable Gravebound placeholder atlas; this
+does not complete art P1. Art P0 is awaiting review.
 Track open work and defects in [backlog.md](backlog.md).
 
 | # | Milestone | Scope |

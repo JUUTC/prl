@@ -2,8 +2,10 @@
 
 This build tests one question: is a fight in the small arena readable and fair,
 and is it quick to try again after dying? It is not the full game. There is no
-loot, inventory, procedural dungeon, disk save or campaign. All shapes, colours,
-the font and the sounds are temporary placeholders made in code. The separate
+loot, inventory, procedural dungeon, disk save or campaign. The sprites are a
+generated placeholder atlas of the project's own Gravebound studies; if it fails
+to load, the game draws coloured shapes instead. Sprites, shapes, colours, the
+font and the sounds are all temporary placeholders. The separate
 art and animation effort still decides the final look.
 
 ## Running
@@ -28,9 +30,13 @@ the Windows build works.
 You start in a small room. A closed door is to the east. Behind it are three
 hostile enemies, each moving at a different speed:
 
-- Shambler: slow, a green wide block.
-- Skeleton: normal speed, an orange tall block.
-- Grave rat: fast, a pink diamond.
+- Shambler: slow (fallback shape: a green wide block).
+- Skeleton: normal speed (fallback: an orange tall block).
+- Grave rat: fast (fallback: a pink diamond).
+
+You are the figure with a shield and coif. Your character faces left or right
+from the horizontal part of each move or attack; straight up or down keeps the
+last facing. Creatures have only one placeholder facing so far.
 
 Survive and kill them. If you die, start a new run straight away. Each new run
 uses the next seed.
@@ -46,7 +52,7 @@ uses the next seed.
 | `R` once | Start a new run after death |
 | `T` | Motion speed: Normal, Fast or Off (visual only) |
 | `M` / `9` / `0` | Mute sound, or turn the volume down/up in 10% steps |
-| F1 / `?` | Help, including the shape legend |
+| F1 / `?` | Help, including the art legend |
 | Esc | Pause menu, or close an overlay |
 | `+` / `-` | World zoom, 1-4x in whole steps |
 | `[` / `]` | UI scale, separate from world zoom |
@@ -63,15 +69,15 @@ the clock. After you die, only new run, help, menu, zoom and settings keys work.
   (slow, normal or fast).
 - The bottom-left log keeps the last five messages. Each hit lists its raw
   damage and how much armor removed, so you can see why HP changed.
-- Attackers lunge toward their target, and the target flashes. A number floats
+- Attackers lunge toward their target, and the target flashes (red on sprites). A number floats
   up from the target: `-6` for a normal hit, `CRIT -11` for a critical hit,
   `glance -2` for a glancing blow. Hits on you show in red.
 - A red bar under an actor shows its HP once it is hurt. When you die, your
-  square turns grey and a message tells you how to start a new run.
+  figure (or square) turns grey and a message tells you how to start a new run.
 
 Lunges, flashes and numbers never hold up input. A new key press cuts short any
 effect that is still playing. With motion set to Off, numbers appear briefly
-without moving. Fast, Normal and Off must play out identically; only the visual
+without moving and sprites hold a still frame. Fast, Normal and Off must play out identically; only the visual
 timing differs.
 
 ## What to try

@@ -97,7 +97,8 @@ window focus or opening help must not commit buffered actions.
 
 Render 64x64 tiles with nearest filtering/integer world zoom and independent UI
 scale. Use licensed DCSS CC0 placeholders at 2x when verified; repository-owned
-temporary shapes can unblock P0/P1 without implying an art-direction change.
+temporary shapes or the generated Gravebound placeholder atlas can unblock
+P0-P2 without implying an art-direction change or art P1 completion.
 Do not wait for the final palette or titles to implement the shared theme.
 
 ### P2 - Fight and retry

@@ -12,7 +12,7 @@ const LOG_LINES: usize = 5;
 
 const CONTROLS: &str = "Move / attack: arrows, numpad, vi (y k u h l b j n); bump an enemy to attack\nWait: . / numpad 5 / Space | Open door: O, then a direction\nNew run: R twice (or R then Y) while alive; R once after death\nMotion: T (Normal / Fast / Off) | Sound: M mute, 9 / 0 volume\nWorld zoom: + / - | UI scale: [ / ] | Pause/menu: Esc | Help: F1 / ?";
 
-const LEGEND: &str = "Legend (placeholder shapes, not final art)\nCyan square: you (grey when dead)\nGreen wide block: slow enemy | Orange tall block: normal-speed enemy\nPink small diamond: fast enemy | Red bar under an actor: HP when hurt\nGrey: wall | Brown + bar: door | Dim: remembered terrain\nFloating numbers: damage dealt (CRIT = critical, glance = glancing blow)\nThe log explains each hit: raw damage and how much armor removed.";
+const LEGEND: &str = "Legend (placeholder art, not final)\nYou: the figure with shield and coif (greys out when dead)\nEnemies: shambler (slow), skeleton (normal), grave rat (fast); red flash = hit\nRed bar under an actor: HP when hurt\nRaised blocks: walls | Planks: door | Dim: remembered terrain\nIf art fails to load: cyan square = you; green wide = slow, orange tall = normal,\npink diamond = fast; grey = wall; brown + bar = door\nFloating numbers: damage dealt (CRIT = critical, glance = glancing blow)\nThe log explains each hit: raw damage and how much armor removed.";
 
 #[derive(Component)]
 struct HudText;

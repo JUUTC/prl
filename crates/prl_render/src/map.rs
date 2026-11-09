@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use prl_core::{CoreSet, CoreState, Position};
 
+use crate::actors::depth;
+use crate::art::PlaceholderArt;
 use crate::camera::{TILE_SIZE, WorldCamera, tile_to_world};
 
 #[derive(Component)]
@@ -22,15 +24,36 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+fn tint(visible: bool) -> Color {
+    if visible {
+        Color::WHITE
+    } else {
+        Color::srgb(0.3, 0.3, 0.3)
+    }
+}
+
 fn refresh(
     mut commands: Commands<'_, '_>,
     state: Res<'_, CoreState>,
+    art: Option<Res<'_, PlaceholderArt>>,
     placeholders: Query<'_, '_, Entity, With<Placeholder>>,
     mut cameras: Query<'_, '_, &mut Transform, With<WorldCamera>>,
 ) {
     for entity in &placeholders {
         commands.entity(entity).despawn();
     }
+    spawn_terrain(&mut commands, &state, art.as_deref());
+    if let Some(player) = state.player() {
+        let position = player.position();
+        let centre = tile_to_world(position.x, position.y);
+        for mut camera in &mut cameras {
+            camera.translation.x = centre.x;
+            camera.translation.y = centre.y;
+        }
+    }
+}
+
+fn spawn_terrain(commands: &mut Commands<'_, '_>, state: &CoreState, art: Option<&PlaceholderArt>) {
     let map = state.map();
     for y in 0..map.height() {
         for x in 0..map.width() {
@@ -44,6 +67,25 @@ fn refresh(
                 continue;
             };
             let visible = map.is_visible(position);
+            let centre = tile_to_world(x, y);
+            let raised = definition.door || definition.blocks_movement;
+            let z = if raised { depth(y) } else { 0.0 };
+            if let Some(tile) = art.and_then(|art| art.index.tiles.get(&memory.definition)) {
+                let index = if definition.door && memory.door_open {
+                    tile.open.unwrap_or(tile.closed)
+                } else {
+                    tile.closed
+                };
+                let mut sprite = art.map_or_else(Sprite::default, |art| art.sprite(index));
+                sprite.color = tint(visible);
+                commands.spawn((
+                    Name::new(format!("Placeholder art tile {x},{y}")),
+                    sprite,
+                    Transform::from_xyz(centre.x, centre.y + tile.offset_y, z),
+                    Placeholder,
+                ));
+                continue;
+            }
             let appearance = if definition.door {
                 TerrainAppearance::Door {
                     open: memory.door_open,
@@ -53,12 +95,11 @@ fn refresh(
             } else {
                 TerrainAppearance::Floor
             };
-            let color = terrain_color(appearance, visible);
-            let centre = tile_to_world(x, y);
+            // Full-size cells: the movement grid stays hidden (SPEC 14, B-005).
             commands.spawn((
                 Name::new(format!("P1 {:?} tile {x},{y}", map.id())),
-                Sprite::from_color(color, Vec2::splat(TILE_SIZE - 2.0)),
-                Transform::from_xyz(centre.x, centre.y, 0.0),
+                Sprite::from_color(terrain_color(appearance, visible), Vec2::splat(TILE_SIZE)),
+                Transform::from_xyz(centre.x, centre.y, z),
                 Placeholder,
             ));
             if definition.door {
@@ -76,18 +117,10 @@ fn refresh(
                             Vec2::new(44.0, 8.0)
                         },
                     ),
-                    Transform::from_xyz(centre.x, centre.y, 0.5),
+                    Transform::from_xyz(centre.x, centre.y, z + 0.0001),
                     Placeholder,
                 ));
             }
-        }
-    }
-    if let Some(player) = state.player() {
-        let position = player.position();
-        let centre = tile_to_world(position.x, position.y);
-        for mut camera in &mut cameras {
-            camera.translation.x = centre.x;
-            camera.translation.y = centre.y;
         }
     }
 }

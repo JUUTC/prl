@@ -27,7 +27,7 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 | I-007 | Retune the P2 arena from hands-on results | P2 | Open | Provisional: holding the door wins ~78% of seeds 1-50, charging ~4% (ignored balance probe in prl_core). Q-004/Q-019 |
 | I-006 | Decide the challenge model for combat skill gain | P4 | Blocked | Q-010 |
 | I-008 | Complete the snapshot proof: restore into a fresh ECS world with different Entity allocation and compare a canonical state hash | P1 (F2/F3/F7) | Open | Current tests compare RON round-trip and logical equality only. Needs Q-016 hash/encoding choice |
-| I-009 | Delete stale remote branch `round-3-workspace` | Repo hygiene | Blocked | Tree at 79fd915 is identical to merged PR #2 squash commit 1c87423; awaiting owner approval to delete |
+| I-009 | Delete stale remote branch `round-3-workspace` | Repo hygiene | Done 2026-11-09 | Tree at 79fd915 was identical to merged PR #2 squash commit 1c87423; deleted from origin with owner approval |
 | I-010 | Integrate Pixelify Sans/Silkscreen in the placeholder theme | P1/P2 UI | Open | SPEC font decision; UI still uses Bevy's Fira Mono. Verify OFL files and credit in `assets/CREDITS.md`. Q-014 |
 | I-011 | Verify and import the DCSS CC0 placeholder subset, or record a decision to stay on owned shapes | P2/P3 | Open | SPEC/playtest-plan name DCSS placeholders; none imported. Q-014 |
 | I-012 | Gear-tool foundations: pure `derive_stats`, `ContainerId` containers, atomic `TransferItems`, basic compare tooltip | P3 | Open | [gear-and-storage.md](gear-and-storage.md#foundation-contracts); replaces P2 definition-supplied stats (Q-019) |
@@ -37,12 +37,14 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 | I-016 | Crafting from site storage with reservations | Crafting slice | Open | Q-026; same access rule as I-015 |
 | I-017 | Shared `ItemPredicate` rule type and the Default loot-filter preset (content data) for ground labels | P3 | Open | Q-027; [gear-and-storage.md](gear-and-storage.md#loot-filters); needs I-012 items |
 | I-018 | Custom loot filters: all presets, rule editor with live preview, auto-pickup, import/export | After P5 | Open | Q-027; needs I-017 |
+| I-019 | Draw the playtest from a generated Gravebound placeholder atlas (actors, walls, door, floor) with shape fallback | P2 | Done (this commit) | `tools/character-study/export_placeholder_atlas.py`; manifest keyed by content ID in the pack. Disposable placeholder: not art P1, not the P2 attachment gate |
+| I-020 | Placeholder creature left facings and walk/attack clips | P2/P3 | Open | Creatures currently reuse their right-facing idle frames unmirrored; add left sets in the study and re-export. Replaced by art P1+ assets |
 
 ## Bugs
 
 | ID | Bug | Status | Reproduce / expected | Found in |
 |---|---|---|---|---|
-| B-005 | Placeholder floor shows a visible grid | Open | `crates/prl_render/src/map.rs` draws each tile at `TILE_SIZE - 2.0`, leaving 2 px seams between cells. Expected: SPEC §14 hidden grid, no drawn floor grid; draw tiles at full `TILE_SIZE` (door marker unaffected) | Review of 753ea3d |
+| B-005 | Placeholder floor shows a visible grid | Fixed with I-019 | `crates/prl_render/src/map.rs` draws each tile at `TILE_SIZE - 2.0`, leaving 2 px seams between cells. Expected: SPEC §14 hidden grid, no drawn floor grid; draw tiles at full `TILE_SIZE` (door marker unaffected) | Review of 753ea3d |
 | B-006 | Missing packaged assets can silently fall back to the source checkout | Open | `crates/prl/src/main.rs` `content_path()` uses a compile-time `CARGO_MANIFEST_DIR` path when no `assets/` folder sits next to the executable. On a dev machine a broken package still launches from repo content, masking packaging errors. Expected: packaged builds fail explicitly (foundation acceptance 5); restrict the fallback to `cargo run` / debug or an explicit flag | Review of 753ea3d |
 | B-008 | Death banner overlaps the top map rows | Open | `crates/prl_ui/src/hud.rs` places the death overlay near the top centre; at 1280x900 and 1x zoom it covers part of the top two map rows (not the player). Expected: banner sits clear of the map or is translucent enough to read cells beneath. Placeholder only; final layout belongs to the UX effort | Linux Xvfb smoke run of P2 |
 

@@ -4,7 +4,7 @@ import { studies, drawStudy } from "./showcase.js";
 
 // Run in the atelier's browser console: await (await import("./checks.js")).runChecks()
 export async function runChecks() {
-  const { drawSprite, races, skinRamps, hairRamps } = await import("./study.js");
+  const { drawSprite, races, skinRamps, hairRamps } = await import("./sprite.js");
   let count = 0;
   const failures = [];
   const check = (condition, message) => { if (!condition) failures.push(message); };

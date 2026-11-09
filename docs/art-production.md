@@ -134,6 +134,14 @@ After P2, measure time for a finished base, a fitted gear layer, an action and a
 revision. Use those measurements for estimates and batch sizing; do not quote
 completion dates based on procedural-placeholder speed.
 
+The gameplay playtest currently draws a generated atlas of the Gravebound
+procedural studies (`tools/character-study/export_placeholder_atlas.py`, manifest
+`assets/packs/prl/sprites/placeholder/gravebound_placeholder.ron`). It is a
+disposable **placeholder** that exercises independent left/right sets, frame
+rectangles, durations and per-tile draw offsets in Bevy. It does not implement
+attachment poses, pivots/visual bounds or palette revisions, is not the P2
+attachment gate, and does not complete art P1.
+
 Maintain an approved asset inventory before P4. Each entry records ID, gameplay
 definition, family, required facings/actions, layer/variant dependencies, author,
 source/export paths, licence, review evidence and status:

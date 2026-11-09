@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use bevy::{prelude::*, text::FontSize};
 use prl_core::{ActorId, CoreSet, CoreState, OutcomeKind, Position};
 
-use crate::actors::{ActorView, sync_actor_views};
+use crate::actors::{ActorView, actor_depth, sync_actor_views};
 use crate::camera::{TILE_SIZE, tile_to_world};
 use crate::cursor::OutcomeCursor;
 use crate::motion::{AnimationSpeed, EffectTimings};
@@ -43,6 +43,17 @@ pub(crate) struct FloatingNumber {
     moves: bool,
     origin: Vec2,
     color: Color,
+}
+
+/// Atlas sprites are drawn white-tinted, so a white flash would not show.
+const ATLAS_HIT_TINT: LinearRgba = LinearRgba::rgb(1.0, 0.25, 0.2);
+
+/// What a dying actor last looked like, for its fade-out.
+struct LastSeen {
+    position: Position,
+    base: Vec2,
+    color: Color,
+    sprite: Sprite,
 }
 
 #[derive(Component)]
@@ -92,7 +103,7 @@ fn consume_outcomes(
     state: Res<'_, CoreState>,
     speed: Res<'_, AnimationSpeed>,
     mut effects: ResMut<'_, CombatEffects>,
-    views: Query<'_, '_, &ActorView>,
+    views: Query<'_, '_, (&ActorView, &Sprite)>,
     transient: Query<'_, '_, Entity, Or<(With<FloatingNumber>, With<Ghost>)>>,
 ) {
     let effects = &mut *effects;
@@ -104,15 +115,12 @@ fn consume_outcomes(
     effects.lunges.clear();
     effects.flashes.clear();
     let timings = speed.timings();
-    let last_seen: BTreeMap<ActorId, (Position, Color)> = views
-        .iter()
-        .map(|view| (view.id, (view.position, view.color)))
-        .collect();
+    let last_seen = last_seen(&views);
     let position_of = |id: ActorId| {
         state
             .actor(id)
             .map(prl_core::Actor::position)
-            .or_else(|| last_seen.get(&id).map(|(position, _)| *position))
+            .or_else(|| last_seen.get(&id).map(|seen| seen.position))
     };
     let shown = |id: ActorId| {
         id == state.player_id()
@@ -186,14 +194,29 @@ fn consume_outcomes(
                 if *actor == state.player_id() || timings.ghost <= 0.0 || !shown(*actor) {
                     continue;
                 }
-                let Some((position, color)) = last_seen.get(actor) else {
+                let Some(seen) = last_seen.get(actor) else {
                     continue;
                 };
-                spawn_ghost(&mut commands, *position, *color, timings.ghost);
+                spawn_ghost(&mut commands, seen, timings.ghost);
             }
             _ => {}
         }
     }
+}
+
+fn last_seen(views: &Query<'_, '_, (&ActorView, &Sprite)>) -> BTreeMap<ActorId, LastSeen> {
+    views
+        .iter()
+        .map(|(view, sprite)| {
+            let seen = LastSeen {
+                position: view.position,
+                base: view.base,
+                color: view.color,
+                sprite: sprite.clone(),
+            };
+            (view.id, seen)
+        })
+        .collect()
 }
 
 fn spawn_damage_number(
@@ -222,16 +245,21 @@ fn spawn_damage_number(
     ));
 }
 
-fn spawn_ghost(commands: &mut Commands<'_, '_>, position: Position, color: Color, duration: f32) {
-    let centre = tile_to_world(position.x, position.y);
+fn spawn_ghost(commands: &mut Commands<'_, '_>, seen: &LastSeen, duration: f32) {
+    let (sprite, at) = if seen.sprite.texture_atlas.is_some() {
+        (seen.sprite.clone(), seen.base)
+    } else {
+        let centre = tile_to_world(seen.position.x, seen.position.y);
+        (Sprite::from_color(seen.color, Vec2::splat(30.0)), centre)
+    };
     commands.spawn((
         Name::new("P2 death fade"),
-        Sprite::from_color(color, Vec2::splat(30.0)),
-        Transform::from_translation(centre.extend(0.9)),
+        sprite,
+        Transform::from_translation(at.extend(actor_depth(seen.position.y) - 0.0001)),
         Ghost {
             elapsed: 0.0,
             duration,
-            color,
+            color: seen.color,
         },
     ));
 }
@@ -280,8 +308,12 @@ fn animate(
             .filter(|flash| flash.actor == view.id)
             .map(|flash| 1.0 - progress(flash.elapsed, flash.duration))
             .fold(0.0_f32, f32::max);
-        sprite.color =
-            Color::LinearRgba(view.color.to_linear().mix(&LinearRgba::WHITE, flash * 0.8));
+        let flash_to = if sprite.texture_atlas.is_some() {
+            ATLAS_HIT_TINT
+        } else {
+            LinearRgba::WHITE
+        };
+        sprite.color = Color::LinearRgba(view.color.to_linear().mix(&flash_to, flash * 0.8));
     }
     for (entity, mut number, mut transform, mut color) in &mut numbers {
         number.elapsed += delta;

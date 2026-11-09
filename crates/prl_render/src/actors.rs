@@ -3,7 +3,10 @@ use std::collections::BTreeMap;
 use bevy::prelude::*;
 use prl_core::{ACTION_ENERGY, Actor, ActorBehavior, ActorId, CoreSet, CoreState, Position};
 
-use crate::camera::tile_to_world;
+use crate::art::{Action, PlaceholderArt};
+use crate::camera::{TILE_SIZE, tile_to_world};
+use crate::facing::{ActorMotion, Motion};
+use crate::motion::AnimationSpeed;
 
 /// Persistent placeholder sprite for one visible actor, keyed by logical ID.
 #[derive(Component, Debug)]
@@ -12,6 +15,17 @@ pub(crate) struct ActorView {
     pub(crate) position: Position,
     pub(crate) base: Vec2,
     pub(crate) color: Color,
+}
+
+/// Draw order for raised things on row `y`: southern rows cover northern ones,
+/// so a half-height wall hides only the lower part of an actor north of it.
+pub(crate) fn depth(y: i32) -> f32 {
+    1.0 - tile_to_world(0, y).y / TILE_SIZE * 0.001
+}
+
+/// Actors draw just above raised terrain on their own row.
+pub(crate) fn actor_depth(y: i32) -> f32 {
+    depth(y) + 0.0005
 }
 
 #[derive(Component)]
@@ -72,17 +86,63 @@ pub(crate) fn appearance(actor: &Actor) -> Appearance {
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        sync_actor_views
-            .in_set(CoreSet::Presentation)
-            .run_if(resource_exists::<CoreState>)
-            .run_if(resource_changed::<CoreState>),
+        (
+            sync_actor_views
+                .run_if(resource_exists::<CoreState>)
+                .run_if(resource_changed::<CoreState>),
+            animate_frames
+                .run_if(resource_exists::<CoreState>)
+                .run_if(resource_exists::<PlaceholderArt>),
+        )
+            .chain()
+            .in_set(CoreSet::Presentation),
     );
 }
 
+/// Atlas frame for an actor's current cosmetic motion; `None` when the
+/// placeholder atlas has no entry for its definition (shape fallback).
+fn atlas_frame(
+    art: &PlaceholderArt,
+    actor: &Actor,
+    motion: Motion,
+    now: std::time::Duration,
+    speed: AnimationSpeed,
+) -> Option<(usize, f32)> {
+    let sprites = art.index.actors.get(actor.definition())?;
+    // Motion Off holds the first idle frame of the current facing.
+    let (action, since, now_ms) = if speed == AnimationSpeed::Off {
+        (Action::Idle, 0, 0)
+    } else {
+        (
+            motion.action,
+            now.saturating_sub(motion.since).as_millis(),
+            now.as_millis(),
+        )
+    };
+    Some((
+        sprites.frame(motion.facing, action, since, now_ms),
+        sprites.offset_y,
+    ))
+}
+
+/// The player's dead tint for the atlas; living actors keep their atlas colours.
+fn atlas_tint(actor: &Actor) -> Color {
+    if actor.is_player() && !actor.is_alive() {
+        Color::srgb(0.4, 0.42, 0.44)
+    } else {
+        Color::WHITE
+    }
+}
+
 /// Keeps one view per visible actor; positions come only from core.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sync_actor_views(
     mut commands: Commands<'_, '_>,
     state: Res<'_, CoreState>,
+    art: Option<Res<'_, PlaceholderArt>>,
+    motion: Option<Res<'_, ActorMotion>>,
+    speed: Option<Res<'_, AnimationSpeed>>,
+    time: Res<'_, Time>,
     mut views: Query<'_, '_, (Entity, &mut ActorView, &mut Transform, &mut Sprite)>,
     bars: Query<'_, '_, Entity, With<HpBar>>,
 ) {
@@ -95,46 +155,93 @@ pub(crate) fn sync_actor_views(
             commands.entity(entity).despawn();
         }
     }
+    let now = time.elapsed();
+    let speed = speed.as_deref().copied().unwrap_or_default();
     for actor in state.visible_actors() {
         let position = actor.position();
-        let base = tile_to_world(position.x, position.y);
-        let look = appearance(actor);
+        let centre = tile_to_world(position.x, position.y);
         let id = actor.id();
-        let updated = existing
+        let current = motion
+            .as_deref()
+            .map(|motion| motion.get(id))
+            .unwrap_or_default();
+        let atlas = art.as_deref().and_then(|art| {
+            atlas_frame(art, actor, current, now, speed)
+                .map(|(index, offset_y)| (art.sprite(index), offset_y))
+        });
+        let (new_sprite, base, color, rotation) = if let Some((mut sprite, offset_y)) = atlas {
+            let color = atlas_tint(actor);
+            sprite.color = color;
+            (sprite, centre + Vec2::new(0.0, offset_y), color, 0.0)
+        } else {
+            let look = appearance(actor);
+            (
+                Sprite::from_color(look.color, look.size),
+                centre,
+                look.color,
+                look.rotation,
+            )
+        };
+        let view = ActorView {
+            id,
+            position,
+            base,
+            color,
+        };
+        let transform = Transform::from_translation(base.extend(actor_depth(position.y)))
+            .with_rotation(Quat::from_rotation_z(rotation));
+        match existing
             .remove(&id)
             .and_then(|entity| views.get_mut(entity).ok())
-            .map(|(_, mut view, mut transform, mut sprite)| {
-                *view = ActorView {
-                    id,
-                    position,
-                    base,
-                    color: look.color,
-                };
-                transform.translation = base.extend(1.0);
-                transform.rotation = Quat::from_rotation_z(look.rotation);
-                sprite.color = look.color;
-                sprite.custom_size = Some(look.size);
-            });
-        if updated.is_none() {
-            commands.spawn((
-                Name::new(format!("P2 actor {id:?}")),
-                Sprite::from_color(look.color, look.size),
-                Transform::from_translation(base.extend(1.0))
-                    .with_rotation(Quat::from_rotation_z(look.rotation)),
-                ActorView {
-                    id,
-                    position,
-                    base,
-                    color: look.color,
-                },
-            ));
+        {
+            Some((_, mut old_view, mut old_transform, mut old_sprite)) => {
+                *old_view = view;
+                *old_transform = transform;
+                *old_sprite = new_sprite;
+            }
+            None => {
+                commands.spawn((
+                    Name::new(format!("P2 actor {id:?}")),
+                    new_sprite,
+                    transform,
+                    view,
+                ));
+            }
         }
         if let Some(fraction) = damaged_fraction(actor) {
-            spawn_hp_bar(&mut commands, base, fraction);
+            spawn_hp_bar(&mut commands, centre, fraction);
         }
     }
     for entity in existing.into_values() {
         commands.entity(entity).despawn();
+    }
+}
+
+/// Advances cosmetic atlas frames from wall-clock time; never touches core.
+fn animate_frames(
+    state: Res<'_, CoreState>,
+    art: Res<'_, PlaceholderArt>,
+    motion: Res<'_, ActorMotion>,
+    speed: Res<'_, AnimationSpeed>,
+    time: Res<'_, Time>,
+    mut views: Query<'_, '_, (&ActorView, &mut Sprite)>,
+) {
+    let now = time.elapsed();
+    for (view, mut sprite) in &mut views {
+        let Some((index, _)) = state
+            .actor(view.id)
+            .and_then(|actor| atlas_frame(&art, actor, motion.get(view.id), now, *speed))
+        else {
+            continue;
+        };
+        if sprite
+            .texture_atlas
+            .as_ref()
+            .is_some_and(|atlas| atlas.index != index)
+            && let Some(atlas) = sprite.texture_atlas.as_mut()
+        {
+            atlas.index = index;
+        }
     }
 }
 
@@ -202,5 +309,70 @@ mod tests {
                 .all(|actor| damaged_fraction(actor).is_none())
         );
         Ok(())
+    }
+
+    #[test]
+    fn placeholder_atlas_animates_visible_actors_without_touching_rules()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use crate::art::{Facing, PlaceholderArtSource};
+        use bevy::asset::AssetPlugin;
+        use prl_core::{Command, CommandResult, Direction};
+
+        let pack =
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl");
+        let state = CoreState::load_demo(pack.join("base.ron"))?;
+        let expected_actors = state.visible_actors().count();
+        let mut app = App::new();
+        app.add_plugins((
+            MinimalPlugins,
+            AssetPlugin::default(),
+            prl_core::PrlCorePlugin,
+            crate::PrlRenderPlugin,
+        ))
+        .init_asset::<Image>()
+        .init_asset::<TextureAtlasLayout>()
+        .insert_resource(PlaceholderArtSource(pack))
+        .insert_resource(state);
+        for _ in 0..10 {
+            app.update();
+        }
+        let world = app.world_mut();
+        assert!(world.contains_resource::<PlaceholderArt>());
+        let atlas_actors = world
+            .query::<(&ActorView, &Sprite)>()
+            .iter(world)
+            .filter(|(_, sprite)| sprite.texture_atlas.is_some())
+            .count();
+        assert_eq!(atlas_actors, expected_actors);
+        assert_eq!(world.resource::<CoreState>().clock().ticks(), 0);
+
+        let player = world.resource::<CoreState>().player_id();
+        let stepped = [Direction::West, Direction::NorthWest, Direction::SouthWest]
+            .into_iter()
+            .any(|direction| {
+                matches!(
+                    world
+                        .resource_mut::<CoreState>()
+                        .issue(Command::Move(direction)),
+                    CommandResult::Accepted { .. }
+                )
+            });
+        assert!(stepped, "fixture should allow a westward step or attack");
+        let ticks = world.resource::<CoreState>().clock().ticks();
+        app.update();
+        let world = app.world_mut();
+        let motion = world.resource::<ActorMotion>().get(player);
+        assert_eq!(motion.facing, Facing::Left);
+        assert_ne!(motion.action, Action::Idle);
+        // Presentation never advances the simulation on its own.
+        assert_eq!(world.resource::<CoreState>().clock().ticks(), ticks);
+        Ok(())
+    }
+
+    #[test]
+    fn southern_rows_draw_over_northern_rows() {
+        assert!(depth(5) > depth(4));
+        assert!(actor_depth(4) > depth(4));
+        assert!(actor_depth(4) < depth(5));
     }
 }
