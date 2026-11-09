@@ -39,7 +39,7 @@ prl/
 │   ├── SPEC.md …              # game design
 │   ├── standards/             # coding, structure, extensibility
 │   └── style/                 # art bible, UX guide, writing guide
-└── tools/                     # dev scripts (palette check, content validator) — later
+└── tools/                     # dev scripts; agent-env/free-disk.sh frees agent disk (AGENTS.md)
 ```
 
 ## Crate dependency rules

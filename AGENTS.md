@@ -27,5 +27,20 @@ cargo test --workspace
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 ```
 
+## Agent environment disk
+
+Bevy builds need several GB; agent machines have small disks and a full disk
+breaks the session itself. Before the first Rust build in a session:
+
+- Run `tools/agent-env/free-disk.sh` to remove preinstalled tools PRL never
+  uses (CodeQL, .NET, Android, Haskell, Swift, Julia, Java, ...). It is safe
+  to re-run and keeps Rust, Python, Node, git, Chrome and the Bevy libraries.
+  `.github/workflows/copilot-setup-steps.yml` runs it for Copilot cloud agent
+  sessions automatically.
+- Check `df -h /` before the full gates; run `cargo clean` if less than 3 GB is
+  free. Do not add removals for tools a workflow or test still needs.
+
+## Windows target
+
 Build Windows as the initial downloadable playtest target. Never claim a packaged
 Windows launch was verified merely because the Linux build or headless tests pass.

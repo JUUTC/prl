@@ -1,0 +1,40 @@
+name: Copilot Setup Steps
+
+# Prepares the Copilot cloud agent environment before each session.
+# Runs on its own when this file changes, and manually from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - tools/agent-env/**
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - tools/agent-env/**
+
+jobs:
+  # The job must be called `copilot-setup-steps`.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove unused preinstalled tools
+        run: bash tools/agent-env/free-disk.sh
+
+      - name: Install Bevy Linux build and smoke-test libraries
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev \
+            xvfb xdotool
+
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - name: Fetch crate sources
+        run: cargo fetch --locked
