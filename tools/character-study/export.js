@@ -2,13 +2,13 @@
 // Output is data, not a shipping art format: see docs/art-production.md.
 import { startingEquipment } from "./equipment.js";
 import { drawAnimated, frameCount, frameDuration } from "./animation.js";
-import { drawStudy } from "./showcase.js";
+import { creatureActions, drawCreature } from "./creatures.js";
 import { races, skinRamps, hairRamps, drawSprite } from "./sprite.js";
 
 const cell = 64;
 const wallHeight = 18;
-// Six player strips (three clips × two facings) plus three creature strips.
-const tileRow = 9 * cell;
+// Player and three creatures, each with three clips × two facings.
+const tileRow = 4 * 3 * 2 * cell;
 const atlas = document.getElementById("atlas");
 atlas.width = frameCount * cell;
 atlas.height = tileRow + cell + wallHeight;
@@ -47,18 +47,26 @@ const heroClip = action => {
   }
   return clip;
 };
-// Showcase creatures are single-facing studies; the renderer must not mirror them.
-const creatureClip = id => ({ frame_ms: frameDuration, right: strip((x, y, frame) => {
-  const study = document.createElement("canvas");
-  drawStudy(study, id, frame);
-  ctx.drawImage(study, 16, 0, cell, cell, x, y, cell, cell);
-}), left: null });
+// Creatures author each facing separately (creatures.js); nothing is mirrored.
+const creatureClip = (id, action) => {
+  const clip = { frame_ms: frameDuration };
+  for (const facing of ["right", "left"]) {
+    clip[facing] = strip((x, y, frame) => {
+      const sprite = document.createElement("canvas");
+      drawCreature(sprite, id, { facing, action, frame });
+      shadow(x, y);
+      ctx.drawImage(sprite, x, y);
+    });
+  }
+  return clip;
+};
 
 const actors = {
   "prl:player": { offset_y: offsetY, idle: heroClip("idle"), walk: heroClip("walk"), attack: heroClip("attack") },
 };
 for (const [content, study] of [["prl:skeleton", "skeleton"], ["prl:shambler", "shambler"], ["prl:grave_rat", "rat"]]) {
-  actors[content] = { offset_y: offsetY, idle: creatureClip(study), walk: null, attack: null };
+  const [idle, walk, attack] = creatureActions.map(action => creatureClip(study, action));
+  actors[content] = { offset_y: offsetY, idle, walk, attack };
 }
 
 // Seamless floor: speckles wrap inside one cell so adjacent tiles show no grid.

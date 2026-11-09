@@ -384,15 +384,17 @@ mod tests {
                 tile.id
             );
         }
-        // The player has independent facings for every authored action.
-        let player = &index.actors[&id("player")?];
-        for clip in [
-            Some(&player.idle),
-            player.walk.as_ref(),
-            player.attack.as_ref(),
-        ] {
-            let clip = clip.ok_or("player clip missing")?;
-            assert!(clip.left.as_ref().is_some_and(|left| left != &clip.right));
+        // Every base-pack actor has independent facings for idle, walk and attack.
+        for actor in content.actors() {
+            let art = &index.actors[&actor.id];
+            for clip in [Some(&art.idle), art.walk.as_ref(), art.attack.as_ref()] {
+                let clip = clip.ok_or_else(|| format!("{} clip missing", actor.id))?;
+                assert!(
+                    clip.left.as_ref().is_some_and(|left| left != &clip.right),
+                    "{} needs an independent left facing",
+                    actor.id
+                );
+            }
         }
         assert!(index.tiles[&id("door")?].open.is_some());
         Ok(())

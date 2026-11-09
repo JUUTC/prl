@@ -63,6 +63,7 @@ fn spawn_panel(
     name: &'static str,
     node: Node,
     initial: &str,
+    font: TextFont,
     marker: impl Component,
 ) {
     commands
@@ -76,12 +77,7 @@ fn spawn_panel(
             // Translucent so the map stays readable behind panels (B-003).
             BackgroundColor(theme.panel.with_alpha(0.72)),
         ))
-        .with_child((
-            Text::new(initial),
-            theme.font(),
-            TextColor(theme.text),
-            marker,
-        ));
+        .with_child((Text::new(initial), font, TextColor(theme.text), marker));
 }
 
 fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
@@ -96,6 +92,7 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             ..default()
         },
         "P2 PLACEHOLDER - awaiting core state",
+        theme.font(),
         HudText,
     );
     spawn_panel(
@@ -109,6 +106,7 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             ..default()
         },
         "In sight: -",
+        theme.label(),
         SightText,
     );
     spawn_panel(
@@ -122,6 +120,7 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             ..default()
         },
         "No committed actions.",
+        theme.font(),
         LogText,
     );
     commands
@@ -129,7 +128,8 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             Name::new("P2 placeholder death banner"),
             Node {
                 position_type: PositionType::Absolute,
-                top: percent(18),
+                // Above the five-line message log and clear of the map's top rows (B-008).
+                bottom: px(160),
                 width: percent(100),
                 justify_content: JustifyContent::Center,
                 display: Display::None,
@@ -143,7 +143,7 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             theme.font(),
             TextColor(theme.text),
             TextLayout::justify(Justify::Center),
-            BackgroundColor(theme.panel),
+            BackgroundColor(theme.panel.with_alpha(0.72)),
             Node {
                 padding: UiRect::all(px(20)),
                 ..default()

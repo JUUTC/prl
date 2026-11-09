@@ -47,6 +47,7 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-025 | How many kits per character, and do kits pin specific items or only definitions? | Provisional | First town/housing slice | Several named kits; definition + quantity by default, with optional pinned item IDs; kit cells act as locks for Deposit all |
 | Q-026 | Which storage can a crafting station draw from? | Provisional | First crafting slice | Carried inventory plus storage at the same site (house storage at a house, the bank at a town station) and an adjacent pack animal; carried first, then Material tabs, then General; materials reserved at start, consumed on completion |
 | Q-027 | Loot filter presets, protections, scope and auto-pickup defaults? | Provisional | `ItemPredicate` + Default preset at P3; custom filters after P5 | Built-in read-only presets (Default, Strict, Very strict, Crafter, Show all, Manual) as content data; custom filters copied from presets, stored in the profile, chosen per character, plain-text import/export; Unique/Set/quest/wanted items cannot be hidden; auto-pickup uses normal pickup commands and time, stops when a hostile is in view or before over-encumbrance; gold auto-pickup on by default. Confirm preset list and default auto-pickup set |
+| Q-028 | Is a 64×64 source cell enough fidelity for recognisable sprites? | Open | Art P0/P1 gate; changing the cell later re-cuts every tile, sprite and the renderer grid | Keep 64×64 (SPEC). The current placeholders are not evidence either way: they are code-drawn rectangles, not hand-pixelled clusters. Test in art P1: hand-pixel one skeleton and one Human at 64×64 within the proposed 42–46 px height and view at 1×/2×. If they fail, first allow oversized frames for large monsters and action bounds (already a contract option) before changing the 64 px grid |
 
 ## Resolution history
 
@@ -62,7 +63,7 @@ shapes are not production approvals. Diagonal collision remains Q-008.
 - Pantheon: required only for Clerics/Paladins.
 - Art: 64×64 tiles with integer zoom (4K-ready); DCSS CC0 32×32 tiles as 2× placeholders until original art (not yet imported; licence verification pending, Q-014).
 - Palette: locked ramp-based PRL palette (~24 ramps × 6–8 shades, ~150–190 colours), CI-checked. This is the target; no palette is locked yet (Q-014/Q-018).
-- Fonts: Pixelify Sans + Silkscreen (OFL); title font later. Not yet integrated; placeholder UI uses Bevy's Fira Mono.
+- Fonts: Pixelify Sans + Silkscreen (OFL); title font later. Integrated in the placeholder UI (I-010); final type scale belongs to the UX effort.
 - UI: bevy_ui for the game; bevy_egui only for dev tools behind a feature flag.
 - Tone: grimdark-hopeful high fantasy; terse, archaic-lite prose.
 - Character art baseline: Gravebound; two unlabeled silhouettes, five looks per race/silhouette, actual equipped items and gear improvements visible independently of skill-derived PL.

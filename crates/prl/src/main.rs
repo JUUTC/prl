@@ -24,6 +24,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(state) => {
             if let Some(pack) = pack_path.parent() {
                 app.insert_resource(prl_render::PlaceholderArtSource(pack.to_path_buf()));
+                // `assets/packs/prl` -> `assets`, which holds the OFL fonts.
+                if let Some(assets) = pack.ancestors().nth(2) {
+                    app.insert_resource(prl_ui::PlaceholderFontSource(assets.to_path_buf()));
+                }
             }
             app.insert_resource(state)
                 .add_plugins((

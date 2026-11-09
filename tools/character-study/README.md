@@ -71,8 +71,9 @@ world/effects showcase frames for pixel edges, bounds and variation.
 ## Playtest placeholder atlas
 
 `export.html`/`export.js` render the Human Gravebound baseline in the Warrior
-kit (idle, walk and attack; independent left and right rows), single-facing
-skeleton, shambler and grave-rat studies, a seamless floor, a half-height wall
+kit (idle, walk and attack; independent left and right rows), skeleton,
+shambler and grave-rat placeholders from `creatures.js` (each facing painted
+separately, never mirrored, with idle, walk and attack), a seamless floor, a half-height wall
 and closed/open doors into one atlas. Regenerate the committed playtest assets
 with headless Chrome or Chromium (localhost only, no network):
 

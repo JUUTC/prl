@@ -1,6 +1,6 @@
 //! Player-facing UI built on `bevy_ui`: shared theme and widgets, HUD, menus, screens.
 //!
-//! P2 uses procedural panels and Bevy's built-in font, not final PRL styling.
+//! P2 uses procedural panels and the SPEC's OFL fonts, not final PRL styling.
 //! Input submits core commands; UI never changes position, visibility or time.
 
 use bevy::prelude::*;
@@ -11,7 +11,7 @@ mod input;
 mod theme;
 
 pub use input::UiMode;
-pub use theme::PlaceholderTheme;
+pub use theme::{PlaceholderFontSource, PlaceholderTheme};
 
 /// Display text for presentation settings owned by sibling crates.
 ///
@@ -41,6 +41,8 @@ impl Plugin for PrlUiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PlaceholderTheme>()
             .init_resource::<SettingsStatus>()
+            // Before HUD setup so every text node spawns with the theme fonts.
+            .add_systems(PreStartup, theme::load)
             .add_plugins((input::plugin, hud::plugin));
     }
 }

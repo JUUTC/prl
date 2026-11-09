@@ -19,7 +19,7 @@ placeholder experiment, not the production renderer or a release-quality referen
 | Actions | Idle, walk, melee, archery, crafting, mining, chopping, gathering, eating, drinking, healing, casting | Production frame counts, timing, weapon/action variants |
 | World assets | Monsters/enemies, townsfolk, animals, harvest states, stations, food/drink, spell/projectile effects | Final roster, asset counts, work order |
 | Atmosphere | Optional subtle fog/ash parallax; terrain and interactables remain anchored; protect characters and targeting; reduced-motion/off settings | Shipping performance budget, layer strengths and shader implementation |
-| Palette & fonts | Target: a locked Lospec-derived ramp palette; Pixelify Sans and Silkscreen | Palette is **not yet locked** (P0 candidate unapproved, seed reuse terms unverified); final ramps, title font; prototype colours/fonts and the placeholder UI's Fira Mono are not the lock |
+| Palette & fonts | Target: a locked Lospec-derived ramp palette; Pixelify Sans and Silkscreen | Palette is **not yet locked** (P0 candidate unapproved, seed reuse terms unverified); final ramps, title font; prototype colours/fonts and the placeholder UI's font sizes are not the lock |
 
 The atelier's six-frame cycles, 140ms timing, hardcoded gear presets, enlarged
 face crops, sample projectile types, simulated parallax, and procedural actors
@@ -137,8 +137,8 @@ completion dates based on procedural-placeholder speed.
 The gameplay playtest currently draws a generated atlas of the Gravebound
 procedural studies (`tools/character-study/export_placeholder_atlas.py`, manifest
 `assets/packs/prl/sprites/placeholder/gravebound_placeholder.ron`). It is a
-disposable **placeholder** that exercises independent left/right sets, frame
-rectangles, durations and per-tile draw offsets in Bevy. It does not implement
+disposable **placeholder** that exercises independent left/right sets (player
+and creatures, idle/walk/attack), frame rectangles, durations and per-tile draw offsets in Bevy. It does not implement
 attachment poses, pivots/visual bounds or palette revisions, is not the P2
 attachment gate, and does not complete art P1.
 
@@ -179,3 +179,10 @@ pilot has passed; palette values and corrected attribution were verified through
 public sources, but palette-specific reuse terms remain unresolved.
 See [the export workflow](../tools/art-pipeline/README.md).
 Do not expand the roster while the gate is open.
+
+**Playtest feedback to carry into the final design:** movement must tween
+between cells while the walk clip plays (B-009); idle loops are too fast and
+too busy (I-021); skeleton arms are too short (I-022); confirm that 64×64 gives
+recognisable sprites with hand-pixelled art (Q-028). Held-key movement (I-023)
+must read as continuous walking. See `docs/backlog.md` and
+`docs/open-questions.md`.
