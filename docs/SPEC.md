@@ -116,7 +116,7 @@ See [skills-and-progression.md](skills-and-progression.md) and [abilities.md](ab
 
 ## 7. Items, Loot & Crafting
 
-Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item level, sockets, durability, curses. Unidentified items are identified by a **town Sage**, a **Scroll of Identify**, or the **Item Lore** skill. Full crafting and gathering. See [items-and-crafting.md](items-and-crafting.md).
+Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item level, sockets, durability, curses. Unidentified items are identified by a **town Sage**, a **Scroll of Identify**, or the **Item Lore** skill. Full crafting and gathering. See [items-and-crafting.md](items-and-crafting.md). Gear comparison, an on-demand loadout optimizer, custom storage tabs with auto-sort, inventory refill kits and crafting from storage are in [gear-and-storage.md](gear-and-storage.md).
 
 ## 8. Magic
 
@@ -171,8 +171,8 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 ## 13. UI / UX
 
 - Main view: tile map (64×64, integer zoom), side panel (HP/Mana/Stamina, hunger, light fuel, Power Level, status effects, minimap), message log, ability hotbar (1–0).
-- Screens: grid inventory (with belt, bags, pack-animal and house storage views), paper-doll equipment, skills (value, title, gain indicator), abilities/spellbook, crafting, character sheet, world map, morgue/history, options.
-- Tooltips show full math for items, abilities and attacks.
+- Screens: grid inventory (with belt, bags, pack-animal views and bank/house storage tabs), gear comparison and optimizer preview, paper-doll equipment, skills (value, title, gain indicator), abilities/spellbook, crafting, character sheet, world map, morgue/history, options.
+- Tooltips show full math for items, abilities and attacks; item tooltips compare against equipped gear using the same rules as combat ([gear-and-storage.md](gear-and-storage.md#gear-comparison)).
 - Movement tweening is cosmetic only and never affects game time.
 - Key rebinding; colour-blind-friendly rarity markers (shape + colour).
 

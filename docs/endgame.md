@@ -42,7 +42,7 @@ On victory:
   - A **higher item-level cap** and **new affix tiers / base types** that drop only at that tier or above.
   - **Faster blight spread.**
 - **World:** a **new seed world**. By default it is derived from the previous seed and the tier, and the player may enter a custom seed. World knobs can be adjusted.
-- **Carried over:** the character (stats, skills, abilities, patron and piety), **all gear and inventory**, the **bank**, pets and pack animals. The contents of every house storage move into the bank, and each house is refunded as a **deed of the same tier**.
+- **Carried over:** the character (stats, skills, abilities, patron and piety), **all gear and inventory**, the **bank**, pets and pack animals. The contents of every house storage move into the bank as tabs, keeping their names and contents, and each house is refunded as a **deed of the same tier**.
 - **Reset:** quests, the map, towns and houses as world objects.
 - **Gear scaling:** old gear keeps its stats, so a previous Unique is strong early in the new tier and is gradually outclassed by new-tier drops.
   - **Retempering:** with **Enchanting 100 + the matching craft skill 100** (Blacksmithing, Tailoring or Carpentry), you can raise an item's item level to the current tier's floor. The affix types stay the same and their values are rerolled within the new tier's ranges. It costs tier-appropriate materials and gold.

@@ -35,14 +35,14 @@ Pack animals (mule, pack horse, ox, plus tamed large beasts with Animal Taming) 
   3. **Clear the area:** a local map is generated with monsters based on the area level. It is more dangerous near dungeons, scaling with the nearby dungeon's level. Once it is cleared, the house is built.
 - **Tiers (v1):** Small house → Medium house → Large house → Castle. You upgrade in place with gold plus materials (wood, stone, metal; higher tiers need higher-tier materials).
 
-| Tier | Storage (grid pages of 10×10) | Crafting station slots | Extras |
+| Tier | Storage (free tabs) | Crafting station slots | Extras |
 |---|---|---|---|
 | Small | 2 | 1 | Bed (full rest) |
 | Medium | 4 | 3 | Stable for 1 pack animal / pet |
 | Large | 8 | 5 | Stable ×3, herb garden plot |
 | Castle | 16 | 8 | Stable ×6, ward stone socket ×2, walls (siege bonus) |
 
-- **Storage is separate per house.** It is not shared with other houses or the bank.
+- **Storage is separate per house.** It is not shared with other houses or the bank. Storage is organized in named custom tabs (more can be bought with gold), with auto-sort rules, refill kits and crafting from storage; see [gear-and-storage.md](gear-and-storage.md#storage).
 - **Fast travel:** houses act as fast-travel points between each other and towns. Each jump costs a Recall rune or scroll, or gold scaled by distance.
 - **Sieges:**
   - Houses are safe **except** in or near the blight. When the blight reaches a house's tile or an adjacent tile, the house is **besieged** and the player is notified.

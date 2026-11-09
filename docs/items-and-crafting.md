@@ -22,7 +22,7 @@
 
 ## Equipment slots
 
-Head, Amulet, Body, Cloak, Hands, Belt, Feet, Ring ×2, Main hand, Off hand, Ammo (quiver), plus **2 quick-swap weapon loadouts**.
+Head, Amulet, Body, Cloak, Hands, Belt, Feet, Ring ×2, Main hand, Off hand, Ammo (quiver), plus **2 quick-swap weapon loadouts**. Gear can be compared against what is equipped, and an on-demand optimizer can propose a loadout; see [gear-and-storage.md](gear-and-storage.md).
 
 ## Identification
 
@@ -45,7 +45,7 @@ Potions (healing, mana, stamina, cure, resist, speed, strength, invisibility, an
 ## Gold & economy
 
 - Shops in each town with seeded stock that refreshes over time. Prices affected by CHA and Bartering.
-- **Bank** shared across all towns. Each player house has its **own separate storage**; see [housing-and-logistics.md](housing-and-logistics.md).
+- **Bank** shared across all towns. Each player house has its **own separate storage**; see [housing-and-logistics.md](housing-and-logistics.md). Both use named custom **tabs** with auto-sort rules and refill kits; see [gear-and-storage.md](gear-and-storage.md#storage).
 - Inventory is a Diablo-style **grid + weight**; see [housing-and-logistics.md](housing-and-logistics.md#inventory).
 - Selling unidentified items yields reduced prices.
 
@@ -57,6 +57,7 @@ Potions (healing, mana, stamina, cure, resist, speed, strength, invisibility, an
 - **Recipes** are known by default for basic items; advanced recipes come from books, trainers, quest rewards, or experimentation.
 - Success chance and quality scale with `skill − recipe_difficulty`, INT/DEX and material tier. Failure may destroy some materials.
 - Crafting time costs game time (ticks) — usable only when no hostiles are in view.
+- Materials can come from the carried inventory **and the storage at the same site** (house storage at a house station, the bank at a town station); see [gear-and-storage.md](gear-and-storage.md#crafting-from-storage).
 - Output quality: **Poor → Normal → Superior → Exceptional → Masterwork**. Higher quality adds base stats, durability, sockets and (at skill thresholds) affixes.
 - Crafted items are auto-identified for the crafter and carry a maker's mark.
 

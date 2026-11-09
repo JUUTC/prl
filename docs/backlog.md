@@ -30,6 +30,11 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 | I-009 | Delete stale remote branch `round-3-workspace` | Repo hygiene | Blocked | Tree at 79fd915 is identical to merged PR #2 squash commit 1c87423; awaiting owner approval to delete |
 | I-010 | Integrate Pixelify Sans/Silkscreen in the placeholder theme | P1/P2 UI | Open | SPEC font decision; UI still uses Bevy's Fira Mono. Verify OFL files and credit in `assets/CREDITS.md`. Q-014 |
 | I-011 | Verify and import the DCSS CC0 placeholder subset, or record a decision to stay on owned shapes | P2/P3 | Open | SPEC/playtest-plan name DCSS placeholders; none imported. Q-014 |
+| I-012 | Gear-tool foundations: pure `derive_stats`, `ContainerId` containers, atomic `TransferItems`, basic compare tooltip | P3 | Open | [gear-and-storage.md](gear-and-storage.md#foundation-contracts); replaces P2 definition-supplied stats (Q-019) |
+| I-013 | Full gear comparison view (sets, both weapon loadouts, reference target) | After P5 | Open | Q-022 |
+| I-014 | On-demand loadout optimizer with preview and apply | After P5 | Open | Q-022; needs I-012/I-013 |
+| I-015 | Bank/house storage tabs, auto-sort rules, Deposit all, kits and refill | Town/housing slice | Open | Q-023, Q-024, Q-025 |
+| I-016 | Crafting from site storage with reservations | Crafting slice | Open | Q-026; same access rule as I-015 |
 
 ## Bugs
 

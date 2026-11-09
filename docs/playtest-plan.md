@@ -131,6 +131,12 @@ Use the spec's pickup/equip/quaff/read costs. A full backpack or overweight acti
 has clear feedback; no item disappears on a failed transfer. Implement a small
 Magic-affix subset and one Scroll of Identify, not six rarity systems at once.
 
+Build the gear-tool foundations here, even though the full tools come later:
+combat stats come from one pure `derive_stats` function, the backpack and
+equipment are `ContainerId` containers moved by one atomic transfer command, and
+the equip screen shows a basic comparison against the equipped item using that
+function ([gear-and-storage.md](gear-and-storage.md#foundation-contracts)).
+
 ### P4 - Grow and resume
 
 Implement trained versus effective skill values and PL as specified. **Q-010**
@@ -155,6 +161,22 @@ Provide new run, continue (only for a valid living save), controls/help,
 zoom/UI scale, audio settings, reduced-motion/fast presentation and quit.
 Run the checklist below against the downloadable Windows package, not just the
 developer checkout. Fix blockers before expanding to the next systems.
+
+## Gear and storage delivery
+
+The full design is in [gear-and-storage.md](gear-and-storage.md). It is phased so
+it does not delay the basic slice:
+
+| Part | When | Why then |
+|---|---|---|
+| `derive_stats`, containers, atomic transfers, basic compare tooltip | P3 | Loot/equip arrives at P3; retrofitting a second stats path later would let comparisons disagree with combat |
+| Full comparison view (sets, both weapon loadouts, reference target) | After P5, with more affixes/sets | Needs more item types than the P3 subset |
+| Optimizer (on demand, preview then apply) | After P5 | Needs the full comparison and several equippable candidates |
+| Bank/house storage tabs, auto-sort rules, kits/refill | First town/housing slice after P5 | Storage only exists once towns or houses exist |
+| Crafting from storage | First crafting slice | Uses the same site-access rule as storage transfers |
+
+Open choices are tracked as Q-022 to Q-026; work items as I-012 to I-016 in
+[backlog.md](backlog.md).
 
 ## Animation and UX contract
 
