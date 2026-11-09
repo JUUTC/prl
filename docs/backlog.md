@@ -22,7 +22,7 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 | I-001 | Hands-on Windows launch of the packaged CI artifact | P0/P1 | Open | Needs the user on Windows; record build ID and hardware in playtest-plan.md. Q-013 |
 | I-002 | 4K and multiple UI scales readability check | P1 | Open | Needs a 4K display; Q-013 |
 | I-003 | Implement P2 combat pipeline, enemy AI, death and retry | P2 | In progress | Core rules done (combat, AI, death, new run, content-defined arena); placeholder presentation (effects, HUD, death/retry, motion setting) in working tree, pending hands-on check. Q-009 blocks shield block/facing only |
-| I-004 | P2 placeholder attack/UI sound effects with mute and volume | P2 | Done (pending hands-on check) | Generated in code (`prl_audio`), `M` mute, `9`/`0` volume; untested on a real audio device |
+| I-004 | P2 placeholder attack/UI sound effects with mute and volume | P2 | Done in 5a6a1c7 (pending hands-on check) | Generated in code (`prl_audio`), `M` mute, `9`/`0` volume; untested on a real audio device |
 | I-005 | Collect P2 hands-on findings (targeting, input, camera, readability, waiting) | P2 | Open | Record in playtest-plan.md before polishing |
 | I-007 | Retune the P2 arena from hands-on results | P2 | Open | Provisional: holding the door wins ~78% of seeds 1-50, charging ~4% (ignored balance probe in prl_core). Q-004/Q-019 |
 | I-006 | Decide the challenge model for combat skill gain | P4 | Blocked | Q-010 |
@@ -52,6 +52,6 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 |---|---|---|
 | B-001 | HUD, help and pause text showed a missing-glyph box instead of an em dash (Bevy's built-in font lacks the glyph) | Fixed in 753ea3d by using ASCII in placeholder text |
 | B-002 | Message log showed internal sequence numbers that skipped because unseen NPC actions were counted | Fixed: the log shows message text only; sequence stays internal for ordering |
-| B-003 | HUD message-log panel covered the bottom-left of the map at the default window size | Fixed in working tree: controls moved into the F1 help overlay, compact translucent panels; player and adjacent cells checked clear at 1280x900 |
+| B-003 | HUD message-log panel covered the bottom-left of the map at the default window size | Fixed in 5a6a1c7: controls moved into the F1 help overlay, compact translucent panels; player and adjacent cells checked clear at 1280x900 |
 | B-004 | Valid long-running state could not be restored: outcome and message queues were trimmed independently, so retained messages referenced evicted outcomes (reproduced with a speed-500 NPC after 100 waits) | Fixed in 3f552df: `OutcomeLog::record` drops messages older than the oldest retained outcome |
 | B-007 | Docs called the palette "locked" while the P0 candidate is unapproved; SPEC named DCSS placeholders and Pixelify/Silkscreen as current when neither is integrated; foundation-plan claimed fresh-ECS/hash snapshot proof that does not exist | Fixed: SPEC §14, art-production.md, open-questions.md and foundation-plan.md now separate target from current status; follow-ups I-008, I-010, I-011 |
