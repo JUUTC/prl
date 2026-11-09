@@ -179,7 +179,8 @@ timings, interpolation style and repeat behaviour must incorporate Q-006's sourc
 
 ## Working with unanswered questions
 
-Use one canonical register in [open-questions.md](open-questions.md). When work
+Use one canonical register in [open-questions.md](open-questions.md) for
+decisions and [backlog.md](backlog.md) for open work items and bugs. When work
 uncovers an ambiguity, add an ID immediately, with affected stage, status, working
 default and next action. Refer to that ID from tasks and code reviews.
 

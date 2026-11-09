@@ -133,7 +133,7 @@ fn refresh(
         let message_text = messages
             .into_iter()
             .rev()
-            .map(|message| format!("#{} {}", message.sequence, message.text))
+            .map(|message| message.text.clone())
             .collect::<Vec<_>>()
             .join("\n");
         for mut text in &mut log {

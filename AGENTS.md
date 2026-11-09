@@ -5,7 +5,8 @@ Follow `docs/standards/coding.md`, `docs/standards/project-structure.md` and
 `docs/standards/extensibility.md`.
 
 For current delivery scope, read `docs/foundation-plan.md` and
-`docs/playtest-plan.md`. Track unresolved choices in `docs/open-questions.md`.
+`docs/playtest-plan.md`. Track unresolved choices in `docs/open-questions.md` and actionable work
+and defects in `docs/backlog.md` (open items `I-NNN`, bugs `B-NNN`).
 Do not treat proposed defaults as accepted interview answers.
 
 Core/generation rules are headless and deterministic. UI and rendering submit

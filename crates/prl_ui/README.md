@@ -22,7 +22,7 @@ execute a simultaneous direction. The first focused frame is intentionally
 ignored, preventing focus-restoration input from spending a turn.
 
 The HUD shows HP/stamina, seed, core ticks/elapsed seconds/action count and the
-last five sequenced core messages. Commands run through `CoreCommandQueue` in
+last five core messages (text only; sequence stays internal). Commands run through `CoreCommandQueue` in
 `CoreSet::Input`; changed-state feedback runs in `CoreSet::Presentation`.
 Missing state displays an explicit startup/content-error prompt.
 
