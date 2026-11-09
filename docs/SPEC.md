@@ -116,7 +116,7 @@ See [skills-and-progression.md](skills-and-progression.md) and [abilities.md](ab
 
 ## 7. Items, Loot & Crafting
 
-Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item level, sockets, durability, curses. Unidentified items are identified by a **town Sage**, a **Scroll of Identify**, or the **Item Lore** skill. Full crafting and gathering. See [items-and-crafting.md](items-and-crafting.md). Gear comparison, an on-demand loadout optimizer, custom storage tabs with auto-sort, inventory refill kits and crafting from storage are in [gear-and-storage.md](gear-and-storage.md).
+Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item level, sockets, durability, curses. Unidentified items are identified by a **town Sage**, a **Scroll of Identify**, or the **Item Lore** skill. Full crafting and gathering. See [items-and-crafting.md](items-and-crafting.md). Gear comparison, an on-demand loadout optimizer, custom loot filters with preset defaults, custom storage tabs with auto-sort, inventory refill kits and crafting from storage are in [gear-and-storage.md](gear-and-storage.md).
 
 ## 8. Magic
 

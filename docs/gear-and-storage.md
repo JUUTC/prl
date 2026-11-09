@@ -1,8 +1,8 @@
 # Gear Comparison, Optimizer & Storage
 
-Design for comparing gear, finding a good loadout on request, and moving items
-between the character and storage: custom storage tabs, auto-sort, inventory
-refills and crafting from storage. Items, rarity, identification and crafting
+Design for comparing gear, finding a good loadout on request, loot filters with
+preset defaults, and moving items between the character and storage: custom
+storage tabs, auto-sort, inventory refills and crafting from storage. Items, rarity, identification and crafting
 rules live in [items-and-crafting.md](items-and-crafting.md). The backpack,
 pack animals and houses are in [housing-and-logistics.md](housing-and-logistics.md).
 
@@ -136,6 +136,76 @@ for example 5 healing potions on belt slot 1, 40 arrows in the quiver,
 - **Save current as kit** captures the current backpack and belt layout.
 - Kit cells act as a **lock**, so Deposit all does not remove kit items.
 
+## Loot filters
+
+Loot filters decide how items on the ground are **shown and picked up**, in the
+style of Path of Exile item filters. They use the same item-rule language as
+the auto-sort rules, so one rule can describe "rare rings" for both.
+
+### What a filter does
+
+A filter is an **ordered list of rules**. Each rule has conditions and actions.
+The first rule that matches an item applies (later rules are ignored), and a
+final catch-all rule is always present.
+
+- **Conditions** use item data and tags: category, slot, base type, rarity,
+  item level, material tier, sockets, stack size, value, set/unique, tags
+  (`reagent`, `undead_bane`, ...), and identified or unidentified. Conditions
+  see **only what the character knows**: an unidentified item matches on its
+  base type and rarity colour, never on hidden affixes or curse status.
+- **Actions:**
+  - **Display:** show, minimise (small dim label) or hide the ground label.
+  - **Emphasis:** label style and a minimap/edge marker. Placeholder styles
+    use shape and outline as well as colour, so emphasis never relies on
+    colour alone. Final styles belong to the UX/art effort.
+  - **Sound:** optional alert sound from a fixed set.
+  - **Auto-pickup:** on or off (see below).
+
+### Safety rules
+
+- Filters **never destroy, move or alter items**. A hidden item is still on the
+  ground and still in the game state. A "show all" key temporarily reveals every
+  item, and the inspect/look command always lists hidden items.
+- Filters cannot hide **Unique, Set or quest items**, or items the character
+  has marked as wanted; the rule editor rejects a rule that tries (Q-027).
+- Filters are **presentation and command helpers only**. They never change core
+  rules, RNG, drops or the clock, so a filter cannot change what drops.
+
+### Auto-pickup
+
+- When the player steps onto a tile, items whose matching rule has auto-pickup
+  are picked up by **normal pickup commands**. They cost the usual pickup time
+  and are recorded like any other command, so replays and saves stay exact.
+- Auto-pickup stops when a hostile comes into view, stops before going
+  over-encumbered or running out of space, and reports what it left behind.
+- Gold auto-pickup follows the same rule (default on in every preset) (Q-027).
+
+### Presets and custom filters
+
+- The game ships **built-in presets** as content data (a filter file in the
+  content pack). Presets are read-only:
+
+  | Preset | Shows | Auto-pickup |
+  |---|---|---|
+  | **Default** | Everything; Magic and better emphasised | Gold, potions, scrolls, ammo for the equipped launcher |
+  | **Strict** | Hides Normal non-material gear below the area level; minimises Magic gear | As Default plus identified Rare jewellery |
+  | **Very strict** | Hides Normal and Magic gear; shows Rare and better, materials and consumables | As Strict |
+  | **Crafter** | Emphasises materials, reagents and socketed bases | Default plus materials and reagents |
+  | **Show all** | Every item with equal emphasis | Gold only |
+  | **Manual** | As Default | Nothing |
+
+- **Custom filters:** the player copies a preset (or starts empty) and edits
+  it: add, reorder, enable/disable and delete rules, with a live preview of
+  items on the current screen. Custom filters can be renamed.
+- Filters are stored in the **profile**, so every character can use them. Each
+  character selects its active filter; a quick key cycles a short list of
+  favourites (Q-027).
+- **Import/export** as a plain-text versioned file so filters can be shared.
+  Imported filters are validated; unknown definition IDs or tags are kept but
+  shown as warnings, so a filter written for newer content still loads.
+- When content changes, a preset is updated with the game; a custom filter is
+  never rewritten silently.
+
 ## Crafting from storage
 
 - A crafting station can use materials from the **carried inventory plus the
@@ -163,5 +233,7 @@ These keep the design possible without building it before it's scheduled:
 | Storage anywhere | A `ContainerId` with an owner (character, world site, animal), a location (map/site), a layout (grid, slotted, equipment) and an ordered tab list. The backpack is just one container |
 | No duplication or loss | One atomic `TransferItems` command validates the source, destination, capacity and access location; it is property-tested for item conservation |
 | Data-driven sorting | Tab rules and kits are serializable filters over item data and tags; no Rust `match` on content IDs |
+| One rule language | Loot filters, auto-sort rules and optimizer constraints share one pure, serializable `ItemPredicate` evaluated against the character's knowledge of an item |
+| Filters cannot affect play | Filter evaluation is read-only; auto-pickup only submits ordinary pickup commands, so the command log stays the source of truth |
 | Crafting sources | Recipe resolution queries "accessible containers at this site" for materials, using the same access rule as transfers |
 | Persistence | Tabs, rules, kits and locks are versioned save data, owned by the profile/world as described in [foundation-plan.md](foundation-plan.md) |

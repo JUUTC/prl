@@ -64,7 +64,7 @@ cargo run -p prl
 ```
 
 The P1 build uses temporary shapes to demonstrate movement, doors, turns and
-fog of war. See [P1 playtest instructions](docs/p1-playtest.md) for controls and
+fog of war. See [playtest guide](docs/playtest-guide.md) for controls and
 scope. The Windows playtest workflow packages the executable, fixture content
 and a diagnostic launcher; its downloadable build requires no Rust installation.
 

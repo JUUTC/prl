@@ -20,6 +20,8 @@ bevy = { workspace = true, features = [
     "bevy_sprite_render",
     "bevy_ui_render",
     "default_font",
+    "bevy_audio",
+    "wav",
 ] }
 prl_audio.workspace = true
 prl_content.workspace = true

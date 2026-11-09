@@ -16,7 +16,7 @@ validated tile/actor fixture content, command/energy scheduling, recursive
 shadowcasting and memory, placeholder rendering, HUD/input and a versioned RON
 snapshot proof. A Windows packaging workflow is included. There is no combat,
 generation, production pack manifest or disk save yet; Windows hands-on
-acceptance remains pending. See [p1-playtest.md](p1-playtest.md).
+acceptance remains pending. See [playtest-guide.md](playtest-guide.md).
 
 The recorded UX decisions are 64x64 world tiles, integer zoom, independent UI
 scaling, `bevy_ui`, Pixelify Sans/Silkscreen, and cosmetic movement tweening.
@@ -136,6 +136,9 @@ combat stats come from one pure `derive_stats` function, the backpack and
 equipment are `ContainerId` containers moved by one atomic transfer command, and
 the equip screen shows a basic comparison against the equipped item using that
 function ([gear-and-storage.md](gear-and-storage.md#foundation-contracts)).
+Ground item labels go through the shared `ItemPredicate` rule type with the
+built-in Default loot-filter preset loaded from content data, so later custom
+filters do not need a second rules path.
 
 ### P4 - Grow and resume
 
@@ -171,11 +174,13 @@ it does not delay the basic slice:
 |---|---|---|
 | `derive_stats`, containers, atomic transfers, basic compare tooltip | P3 | Loot/equip arrives at P3; retrofitting a second stats path later would let comparisons disagree with combat |
 | Full comparison view (sets, both weapon loadouts, reference target) | After P5, with more affixes/sets | Needs more item types than the P3 subset |
+| `ItemPredicate` rules and the Default loot-filter preset for ground labels | P3 | Ground loot arrives at P3; one rule language serves filters, auto-sort and optimizer constraints |
+| Custom loot filters, all presets, editor, auto-pickup, import/export | After P5, before or with the first town slice | Needs enough item variety for filtering to matter |
 | Optimizer (on demand, preview then apply) | After P5 | Needs the full comparison and several equippable candidates |
 | Bank/house storage tabs, auto-sort rules, kits/refill | First town/housing slice after P5 | Storage only exists once towns or houses exist |
 | Crafting from storage | First crafting slice | Uses the same site-access rule as storage transfers |
 
-Open choices are tracked as Q-022 to Q-026; work items as I-012 to I-016 in
+Open choices are tracked as Q-022 to Q-027; work items as I-012 to I-018 in
 [backlog.md](backlog.md).
 
 ## Animation and UX contract
@@ -243,7 +248,7 @@ its code compiles.
 |---|---|---|
 | P0 | Implementation present | Packaging workflow and boot errors added; extracted-package Linux software-rendering smoke passed; Windows launch acceptance pending |
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory, input/HUD/zoom and snapshot proof implemented; 36 workspace tests pass; Windows/4K acceptance pending |
-| P2 | Planned | Combat/AI and presentation not implemented |
+| P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Planned | Generation, pack loading and inventory not implemented |
 | P4 | Planned | Progression and persistence not implemented |
 | P5 | Planned | End-to-end candidate depends on earlier gates |

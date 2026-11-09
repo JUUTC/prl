@@ -1,11 +1,16 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use prl_core::{Command, CoreCommandQueue, CoreSet, Direction};
+use prl_core::{Command, CoreCommandQueue, CoreSet, CoreState, Direction, RunStatus};
+
+/// Seconds a first `R` press waits for confirmation during a live run.
+pub(super) const CONFIRM_SECONDS: f32 = 2.0;
 
 /// Purely presentational modal state; opening a menu never spends a turn.
 #[derive(Resource, Default)]
 pub struct UiMode {
     pub(super) overlay: Overlay,
     pub(super) door: bool,
+    /// App time when `R` was pressed during a live run, awaiting confirmation.
+    pub(super) confirm_new_run: Option<f32>,
     focused: bool,
 }
 
@@ -32,7 +37,8 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(CoreSet::Input)
             .run_if(resource_exists::<ButtonInput<KeyCode>>)
             .run_if(resource_exists::<CoreCommandQueue>)
-            .run_if(resource_exists::<UiScale>),
+            .run_if(resource_exists::<UiScale>)
+            .run_if(resource_exists::<Time>),
     );
 }
 
@@ -42,15 +48,31 @@ fn handle_input(
     mut mode: ResMut<'_, UiMode>,
     mut queue: ResMut<'_, CoreCommandQueue>,
     mut scale: ResMut<'_, UiScale>,
+    state: Option<Res<'_, CoreState>>,
+    time: Res<'_, Time>,
 ) {
+    let now = time.elapsed_secs();
+    if mode
+        .confirm_new_run
+        .is_some_and(|armed| now - armed > CONFIRM_SECONDS)
+    {
+        mode.confirm_new_run = None;
+    }
     let focused = windows.iter().any(|window| window.focused);
     if focused != mode.focused {
         mode.focused = focused;
         mode.door = false;
+        mode.confirm_new_run = None;
         return;
     }
     if !focused {
         return;
+    }
+    if keys.just_pressed(KeyCode::F1)
+        || keys.just_pressed(KeyCode::Slash)
+        || keys.just_pressed(KeyCode::Escape)
+    {
+        mode.confirm_new_run = None;
     }
     if keys.just_pressed(KeyCode::F1) || keys.just_pressed(KeyCode::Slash) {
         mode.overlay = if mode.overlay == Overlay::Help {
@@ -78,9 +100,34 @@ fn handle_input(
     if mode.is_paused() {
         return;
     }
+    let dead = state.is_some_and(|core| core.run_status() == RunStatus::Dead);
     if keys.just_pressed(KeyCode::KeyR) {
         mode.door = false;
-        queue.push(Command::NewRun);
+        // A stray R must not abandon a live run; a dead run restarts at once.
+        if dead || mode.confirm_new_run.is_some() {
+            mode.confirm_new_run = None;
+            queue.push(Command::NewRun);
+        } else {
+            mode.confirm_new_run = Some(now);
+        }
+        return;
+    }
+    if mode.confirm_new_run.is_some() {
+        if keys.just_pressed(KeyCode::KeyY) {
+            mode.confirm_new_run = None;
+            queue.push(Command::NewRun);
+        } else if pressed_direction(&keys).is_some()
+            || keys.just_pressed(KeyCode::KeyO)
+            || is_wait(&keys)
+        {
+            // Any other gameplay key cancels the prompt and is consumed.
+            mode.confirm_new_run = None;
+        }
+        return;
+    }
+    if dead {
+        // Core would reject these anyway; do not even submit them.
+        mode.door = false;
         return;
     }
     if keys.just_pressed(KeyCode::KeyO) {
@@ -95,13 +142,15 @@ fn handle_input(
         };
         mode.door = false;
         queue.push(command);
-    } else if !mode.door
-        && (keys.just_pressed(KeyCode::Period)
-            || keys.just_pressed(KeyCode::Numpad5)
-            || keys.just_pressed(KeyCode::Space))
-    {
+    } else if !mode.door && is_wait(&keys) {
         queue.push(Command::Wait);
     }
+}
+
+fn is_wait(keys: &ButtonInput<KeyCode>) -> bool {
+    keys.just_pressed(KeyCode::Period)
+        || keys.just_pressed(KeyCode::Numpad5)
+        || keys.just_pressed(KeyCode::Space)
 }
 
 fn pressed_direction(keys: &ButtonInput<KeyCode>) -> Option<Direction> {
@@ -201,9 +250,13 @@ mod tests {
     }
 
     fn fixture_app() -> Result<App, prl_core::CoreError> {
+        Ok(app_with(CoreState::demo()?))
+    }
+
+    fn app_with(state: CoreState) -> App {
         let mut app = App::new();
         app.add_plugins((MinimalPlugins, prl_core::PrlCorePlugin, plugin))
-            .insert_resource(prl_core::CoreState::demo()?)
+            .insert_resource(state)
             .insert_resource(ButtonInput::<KeyCode>::default())
             .insert_resource(UiScale::default());
         app.world_mut().spawn((
@@ -214,7 +267,7 @@ mod tests {
             PrimaryWindow,
         ));
         app.update();
-        Ok(app)
+        app
     }
 
     fn press(app: &mut App, key: KeyCode) {
@@ -229,10 +282,7 @@ mod tests {
         let mut app = fixture_app()?;
         press(&mut app, KeyCode::Space);
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             1
         );
         app.world_mut()
@@ -240,19 +290,13 @@ mod tests {
             .clear();
         app.update();
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             1
         );
         press(&mut app, KeyCode::F1);
         press(&mut app, KeyCode::Space);
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             1
         );
         press(&mut app, KeyCode::Escape);
@@ -261,10 +305,7 @@ mod tests {
             .clear();
         app.update();
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             1
         );
         {
@@ -282,10 +323,7 @@ mod tests {
         }
         press(&mut app, KeyCode::Space);
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             1
         );
         app.world_mut()
@@ -294,10 +332,7 @@ mod tests {
         app.update();
         press(&mut app, KeyCode::Space);
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             2
         );
         Ok(())
@@ -319,10 +354,7 @@ mod tests {
         assert!(!app.world().resource::<UiMode>().door);
         assert!(app.world().resource::<UiMode>().is_paused());
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             0
         );
         Ok(())
@@ -342,19 +374,99 @@ mod tests {
         }
         press(&mut app, KeyCode::Space);
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .player_actions(),
+            app.world().resource::<CoreState>().clock().player_actions(),
             0
         );
+        assert_eq!(app.world().resource::<CoreState>().clock().ticks(), 0);
+        Ok(())
+    }
+
+    /// Opens the antechamber door and waits until the arena kills the player.
+    fn dead_state() -> Result<CoreState, prl_core::CoreError> {
+        let mut state = CoreState::demo()?;
+        state.issue(Command::Move(Direction::East));
+        state.issue(Command::Move(Direction::East));
+        state.issue(Command::OpenDoor(Direction::East));
+        for _ in 0..2000 {
+            if state.is_player_dead() {
+                break;
+            }
+            state.issue(Command::Wait);
+        }
+        assert!(state.is_player_dead(), "waiting in the open must be fatal");
+        Ok(state)
+    }
+
+    fn run_number(app: &App) -> u32 {
+        app.world().resource::<CoreState>().run_number()
+    }
+
+    fn release(app: &mut App) {
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .reset_all();
+        app.update();
+    }
+
+    #[test]
+    fn new_run_needs_confirmation_while_alive() -> Result<(), prl_core::CoreError> {
+        let mut app = fixture_app()?;
+        press(&mut app, KeyCode::KeyR);
+        release(&mut app);
+        assert_eq!(run_number(&app), 1);
+        assert!(app.world().resource::<UiMode>().confirm_new_run.is_some());
+        press(&mut app, KeyCode::KeyR);
+        release(&mut app);
+        assert_eq!(run_number(&app), 2);
+
+        press(&mut app, KeyCode::KeyR);
+        press(&mut app, KeyCode::KeyY);
+        release(&mut app);
+        assert_eq!(run_number(&app), 3, "R then Y confirms instead of moving");
+
+        press(&mut app, KeyCode::KeyR);
+        press(&mut app, KeyCode::Space);
+        release(&mut app);
+        assert!(app.world().resource::<UiMode>().confirm_new_run.is_none());
+        press(&mut app, KeyCode::KeyR);
+        release(&mut app);
+        assert_eq!(run_number(&app), 3, "another key cancels the prompt");
         assert_eq!(
-            app.world()
-                .resource::<prl_core::CoreState>()
-                .clock()
-                .ticks(),
-            0
+            app.world().resource::<CoreState>().clock().player_actions(),
+            0,
+            "the cancelling key is consumed, not executed"
         );
+
+        app.world_mut().resource_mut::<UiMode>().confirm_new_run = Some(-10.0);
+        press(&mut app, KeyCode::KeyR);
+        release(&mut app);
+        assert_eq!(run_number(&app), 3, "an expired prompt re-arms instead");
+        Ok(())
+    }
+
+    #[test]
+    fn dead_player_restarts_with_one_r_and_other_actions_do_nothing()
+    -> Result<(), prl_core::CoreError> {
+        let mut app = app_with(dead_state()?);
+        let before = app.world().resource::<CoreState>().snapshot();
+        for key in [
+            KeyCode::Space,
+            KeyCode::ArrowLeft,
+            KeyCode::KeyO,
+            KeyCode::KeyH,
+        ] {
+            press(&mut app, key);
+            release(&mut app);
+        }
+        assert_eq!(
+            app.world().resource::<CoreState>().snapshot(),
+            before,
+            "no command (not even a rejected one) is submitted while dead"
+        );
+        press(&mut app, KeyCode::KeyR);
+        release(&mut app);
+        assert_eq!(run_number(&app), 2);
+        assert!(!app.world().resource::<CoreState>().is_player_dead());
         Ok(())
     }
 }

@@ -6,7 +6,8 @@ P1 uses repository-owned procedural rectangles, no imported sprites or final
 palette. The UI temporarily uses Bevy's bundled default font (Fira Mono,
 SIL Open Font License 1.1, supplied by `bevy_text`); no standalone font file is
 distributed in the pack. Pixelify Sans/Silkscreen integration remains future UX
-work. Dependency/source licences remain with Bevy.
+work. P2 placeholder sound effects are generated in code at startup
+(`crates/prl_audio/src/synth.rs`); no third-party audio is used or shipped. Dependency/source licences remain with Bevy.
 
 | Asset | Author | Source | Licence | Files |
 |---|---|---|---|---|

@@ -22,7 +22,7 @@
 
 ## Equipment slots
 
-Head, Amulet, Body, Cloak, Hands, Belt, Feet, Ring ×2, Main hand, Off hand, Ammo (quiver), plus **2 quick-swap weapon loadouts**. Gear can be compared against what is equipped, and an on-demand optimizer can propose a loadout; see [gear-and-storage.md](gear-and-storage.md).
+Head, Amulet, Body, Cloak, Hands, Belt, Feet, Ring ×2, Main hand, Off hand, Ammo (quiver), plus **2 quick-swap weapon loadouts**. Gear can be compared against what is equipped, and an on-demand optimizer can propose a loadout; see [gear-and-storage.md](gear-and-storage.md). Ground loot is shown and auto-picked up through custom **loot filters** with built-in presets; see [gear-and-storage.md](gear-and-storage.md#loot-filters).
 
 ## Identification
 

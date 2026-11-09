@@ -21,8 +21,8 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 |---|---|---|---|---|
 | I-001 | Hands-on Windows launch of the packaged CI artifact | P0/P1 | Open | Needs the user on Windows; record build ID and hardware in playtest-plan.md. Q-013 |
 | I-002 | 4K and multiple UI scales readability check | P1 | Open | Needs a 4K display; Q-013 |
-| I-003 | Implement P2 combat pipeline, enemy AI, death and retry | P2 | In progress | Core rules done (combat, AI, death, new run, content-defined arena); combat presentation in UI/render pending. Q-009 blocks shield block/facing only |
-| I-004 | P2 placeholder attack/UI sound effects with mute and volume | P2 | Open | Only self-generated or licence-verified audio |
+| I-003 | Implement P2 combat pipeline, enemy AI, death and retry | P2 | In progress | Core rules done (combat, AI, death, new run, content-defined arena); placeholder presentation (effects, HUD, death/retry, motion setting) in working tree, pending hands-on check. Q-009 blocks shield block/facing only |
+| I-004 | P2 placeholder attack/UI sound effects with mute and volume | P2 | Done (pending hands-on check) | Generated in code (`prl_audio`), `M` mute, `9`/`0` volume; untested on a real audio device |
 | I-005 | Collect P2 hands-on findings (targeting, input, camera, readability, waiting) | P2 | Open | Record in playtest-plan.md before polishing |
 | I-007 | Retune the P2 arena from hands-on results | P2 | Open | Provisional: holding the door wins ~78% of seeds 1-50, charging ~4% (ignored balance probe in prl_core). Q-004/Q-019 |
 | I-006 | Decide the challenge model for combat skill gain | P4 | Blocked | Q-010 |
@@ -35,14 +35,16 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 | I-014 | On-demand loadout optimizer with preview and apply | After P5 | Open | Q-022; needs I-012/I-013 |
 | I-015 | Bank/house storage tabs, auto-sort rules, Deposit all, kits and refill | Town/housing slice | Open | Q-023, Q-024, Q-025 |
 | I-016 | Crafting from site storage with reservations | Crafting slice | Open | Q-026; same access rule as I-015 |
+| I-017 | Shared `ItemPredicate` rule type and the Default loot-filter preset (content data) for ground labels | P3 | Open | Q-027; [gear-and-storage.md](gear-and-storage.md#loot-filters); needs I-012 items |
+| I-018 | Custom loot filters: all presets, rule editor with live preview, auto-pickup, import/export | After P5 | Open | Q-027; needs I-017 |
 
 ## Bugs
 
 | ID | Bug | Status | Reproduce / expected | Found in |
 |---|---|---|---|---|
-| B-003 | HUD message-log panel covers the bottom-left of the map at the default window size | Open | Walk to the lower-left of the room at 1× zoom: tiles sit under the log panel. Expected: the map stays readable, e.g. the camera keeps the player clear of HUD panels or the panel is translucent/collapsible | P1 Linux screenshots |
 | B-005 | Placeholder floor shows a visible grid | Open | `crates/prl_render/src/map.rs` draws each tile at `TILE_SIZE - 2.0`, leaving 2 px seams between cells. Expected: SPEC §14 hidden grid, no drawn floor grid; draw tiles at full `TILE_SIZE` (door marker unaffected) | Review of 753ea3d |
 | B-006 | Missing packaged assets can silently fall back to the source checkout | Open | `crates/prl/src/main.rs` `content_path()` uses a compile-time `CARGO_MANIFEST_DIR` path when no `assets/` folder sits next to the executable. On a dev machine a broken package still launches from repo content, masking packaging errors. Expected: packaged builds fail explicitly (foundation acceptance 5); restrict the fallback to `cargo run` / debug or an explicit flag | Review of 753ea3d |
+| B-008 | Death banner overlaps the top map rows | Open | `crates/prl_ui/src/hud.rs` places the death overlay near the top centre; at 1280x900 and 1x zoom it covers part of the top two map rows (not the player). Expected: banner sits clear of the map or is translucent enough to read cells beneath. Placeholder only; final layout belongs to the UX effort | Linux Xvfb smoke run of P2 |
 
 ## Closed
 
@@ -50,5 +52,6 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 |---|---|---|
 | B-001 | HUD, help and pause text showed a missing-glyph box instead of an em dash (Bevy's built-in font lacks the glyph) | Fixed in 753ea3d by using ASCII in placeholder text |
 | B-002 | Message log showed internal sequence numbers that skipped because unseen NPC actions were counted | Fixed: the log shows message text only; sequence stays internal for ordering |
+| B-003 | HUD message-log panel covered the bottom-left of the map at the default window size | Fixed in working tree: controls moved into the F1 help overlay, compact translucent panels; player and adjacent cells checked clear at 1280x900 |
 | B-004 | Valid long-running state could not be restored: outcome and message queues were trimmed independently, so retained messages referenced evicted outcomes (reproduced with a speed-500 NPC after 100 waits) | Fixed in 3f552df: `OutcomeLog::record` drops messages older than the oldest retained outcome |
 | B-007 | Docs called the palette "locked" while the P0 candidate is unapproved; SPEC named DCSS placeholders and Pixelify/Silkscreen as current when neither is integrated; foundation-plan claimed fresh-ECS/hash snapshot proof that does not exist | Fixed: SPEC §14, art-production.md, open-questions.md and foundation-plan.md now separate target from current status; follow-ups I-008, I-010, I-011 |

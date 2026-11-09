@@ -46,6 +46,7 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-024 | Do storage transfers and refills cost game time? | Provisional | First town/housing slice | Free at storage when no hostiles are in view; disallowed in hostile range; any time cost would follow time-and-turns.md |
 | Q-025 | How many kits per character, and do kits pin specific items or only definitions? | Provisional | First town/housing slice | Several named kits; definition + quantity by default, with optional pinned item IDs; kit cells act as locks for Deposit all |
 | Q-026 | Which storage can a crafting station draw from? | Provisional | First crafting slice | Carried inventory plus storage at the same site (house storage at a house, the bank at a town station) and an adjacent pack animal; carried first, then Material tabs, then General; materials reserved at start, consumed on completion |
+| Q-027 | Loot filter presets, protections, scope and auto-pickup defaults? | Provisional | `ItemPredicate` + Default preset at P3; custom filters after P5 | Built-in read-only presets (Default, Strict, Very strict, Crafter, Show all, Manual) as content data; custom filters copied from presets, stored in the profile, chosen per character, plain-text import/export; Unique/Set/quest/wanted items cannot be hidden; auto-pickup uses normal pickup commands and time, stops when a hostile is in view or before over-encumbrance; gold auto-pickup on by default. Confirm preset list and default auto-pickup set |
 
 ## Resolution history
 

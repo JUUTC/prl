@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .set(ImagePlugin::default_nearest())
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: format!("PRL P1 placeholders - {build}"),
+                    title: format!("PRL P2 placeholders - {build}"),
                     resolution: (1280, 900).into(),
                     ..default()
                 }),
@@ -22,15 +22,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let boot_error = match state {
         Ok(state) => {
-            app.insert_resource(state).add_plugins((
-                prl_content::PrlContentPlugin,
-                prl_core::PrlCorePlugin,
-                prl_gen::PrlGenPlugin,
-                prl_save::PrlSavePlugin,
-                prl_render::PrlRenderPlugin,
-                prl_ui::PrlUiPlugin,
-                prl_audio::PrlAudioPlugin,
-            ));
+            app.insert_resource(state)
+                .add_plugins((
+                    prl_content::PrlContentPlugin,
+                    prl_core::PrlCorePlugin,
+                    prl_gen::PrlGenPlugin,
+                    prl_save::PrlSavePlugin,
+                    prl_render::PrlRenderPlugin,
+                    prl_ui::PrlUiPlugin,
+                    prl_audio::PrlAudioPlugin,
+                ))
+                .add_systems(Update, show_settings.run_if(settings_changed));
             None
         }
         Err(error) => {
@@ -54,6 +56,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[derive(Resource)]
 struct BootFailure(String);
+
+fn settings_changed(
+    motion: Res<'_, prl_render::AnimationSpeed>,
+    audio: Res<'_, prl_audio::AudioSettings>,
+) -> bool {
+    motion.is_changed() || audio.is_changed()
+}
+
+/// Sibling presentation crates cannot depend on each other, so the binary
+/// mirrors render/audio settings into the UI's display resource.
+fn show_settings(
+    motion: Res<'_, prl_render::AnimationSpeed>,
+    audio: Res<'_, prl_audio::AudioSettings>,
+    mut status: ResMut<'_, prl_ui::SettingsStatus>,
+) {
+    let next = prl_ui::SettingsStatus {
+        motion: motion.label().to_owned(),
+        sound: audio.label(),
+    };
+    if *status != next {
+        *status = next;
+    }
+}
 
 fn show_boot_failure(mut commands: Commands<'_, '_>, failure: Res<'_, BootFailure>) {
     error!("{}", failure.0);

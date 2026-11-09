@@ -82,21 +82,6 @@ fn refresh(
             }
         }
     }
-    for actor in state.visible_actors() {
-        let position = actor.position();
-        let centre = tile_to_world(position.x, position.y);
-        let (color, size) = if actor.is_player() {
-            (Color::srgb(0.2, 0.85, 1.0), Vec2::splat(34.0))
-        } else {
-            (Color::srgb(1.0, 0.55, 0.25), Vec2::new(24.0, 42.0))
-        };
-        commands.spawn((
-            Name::new(format!("P1 actor {:?}", actor.id())),
-            Sprite::from_color(color, size),
-            Transform::from_xyz(centre.x, centre.y, 1.0),
-            Placeholder,
-        ));
-    }
     if let Some(player) = state.player() {
         let position = player.position();
         let centre = tile_to_world(position.x, position.y);
@@ -150,7 +135,7 @@ mod tests {
         let actors = world
             .query::<&Name>()
             .iter(world)
-            .filter(|name| name.as_str().starts_with("P1 actor "))
+            .filter(|name| name.as_str().starts_with("P2 actor "))
             .count();
         assert_eq!(actors, expected_actors);
         assert_eq!(world.resource::<CoreState>().clock().player_actions(), 0);
