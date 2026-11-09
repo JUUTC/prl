@@ -25,7 +25,7 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-003 | Names/personalities of the other five gods? | Deferred | Cleric/Paladin content; after P5 | Keep drafts; validate before those character templates are playable |
 | Q-004 | Area-level ranges, NG+ multipliers and house costs? | Open | Slice encounter tuning at P3; wider balance later | Use explicitly provisional crypt encounter data; record deaths/damage/run length; defer NG+/house values |
 | Q-005 | Does counting crafting/gathering in PL over-match crafters? | Open | Multi-skill/overworld slice after P5 | Preserve all trained skills in PL; later compare combat-only and crafter-heavy characters in identical areas |
-| Q-006 | Where are the latest animation/UX session decisions, and what changed? | Open | Reconcile before detailed UX sign-off at P1/P2 | Only SPEC/architecture decisions are available here; recover the session reference/transcript and reconcile timings, controls and layout |
+| Q-006 | Where are the latest animation/UX session decisions, and what changed? | Resolved | Gameplay/art boundary | Integrated the concurrent art session's [art-production.md](art-production.md) and [Gravebound reference](style/gravebound-p0.md); approved direction/facing/equipment contracts preserved, final art and timing still gated |
 | Q-007 | Movement/attack timing, key repeat, input buffering and motion options? | Provisional | Input/presentation integration at P1/P2 | Cosmetic short tweens, fast/reduced-motion option, no multi-command backlog; agree exact timing/repeat policy after Q-006 and hands-on test |
 | Q-008 | Can diagonal movement squeeze past blocked corners; do invalid actions cost time? | Provisional | Movement/pathfinding tests at P1 | No corner squeezing when either orthogonal neighbour blocks passage; invalid intents explain rejection and consume no energy; confirm and document in time-and-turns.md |
 | Q-009 | How are facing/frontal shield blocks and physical mitigation ordering defined? | Open | Block/armor implementation at P2 | No settled facing default; specify arc/facing updates and the `raw` value used for armor%, including mixed damage, then add numeric cases in combat.md |
@@ -37,12 +37,13 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-015 | Persistent IDs and character/world/map ownership across reset and NG+? | Provisional | Foundation F1/F2 before snapshot types | Typed monotonic actor/map IDs, allocator state in snapshot, Entity lookup runtime-only; review run/world scope and later reset identity in [foundation-plan.md](foundation-plan.md) |
 | Q-016 | Stable seed/domain encoding, RNG state format and canonical snapshot hash? | Open | Foundation F1/F2 determinism tests | Use the spec's ChaCha8 streams; specify stable domain encoding/hash and pinned representation, version snapshots, and test continuation across fresh ECS allocation before accepting serialized types |
 | Q-017 | How do render, audio, logs and later feats consume ordered outcomes without loss? | Provisional | Foundation F3/F5 | Sequenced core outcomes, independent consumer fan-out and bounded presentation retention; snapshot contains state, not animations; define reset, overflow and lag handling before integrating consumers |
+| Q-018 | Production art lock: palette, anatomy/perspective, authoring tools, frame/timing and improvement variants? | Open | Art P0-P2, not gameplay placeholder P1 | Follow [art-production.md](art-production.md); [P0 reference package](style/gravebound-p0.md) is ready for review but not approved. Original palette is not locked/verified Lospec-derived; LibreSprite export feasibility passed; palette reuse terms and author/tool selection remain open |
 
 ## Resolution history
 
-No new register questions have been resolved yet. The accepted interview decisions
-already recorded in the spec are retained below. Append future resolutions with
-their question ID and source rather than silently removing an active question.
+Q-006 resolved by integrating the concurrent art session's committed documents.
+Q-007/Q-014/Q-018 remain open/provisional: prototype timing, colours and procedural
+shapes are not production approvals. Diagonal collision remains Q-008.
 
 
 ## Decided
@@ -55,6 +56,12 @@ their question ID and source rather than silently removing an active question.
 - Fonts: Pixelify Sans + Silkscreen (OFL); title font later.
 - UI: bevy_ui for the game; bevy_egui only for dev tools behind a feature flag.
 - Tone: grimdark-hopeful high fantasy; terse, archaic-lite prose.
+- Character art baseline: Gravebound; two unlabeled silhouettes, five looks per race/silhouette, actual equipped items and gear improvements visible independently of skill-derived PL.
+- Production quality: existing procedural sprites are placeholders, not shippable art. A finished character in a representative world scene must be approved before batch expansion; follow the gated [art production plan](art-production.md).
+- World perspective: three-quarter overhead, hidden square grid, no visible floor grid, eight-direction movement, half-height foreground walls for character readability.
+- Initial animation: independent left/right facing sets, no mirrored equipped composites; north/south retains facing, main/off hands remain assigned, dual wield and coordinated two-handed grips supported. Dedicated work, gathering, consumable and casting actions.
+- Visual coverage: archery draw/release, arrow variants, spell effects, monsters/enemies, townsfolk, animals, tree-felling and ore-depletion states, crafting benches, eating and drinking.
+- Atmosphere: optional subtle fog/ash parallax, no shifting interactables or terrain; preserve actor/target readability and offer reduced-motion/off controls.
 - Mods/DLC: v1 data-only content packs (namespaced IDs, load order); DLC = first-party packs; WASM scripting deferred.
 - Code: Cargo workspace (prl, prl_core, prl_content, prl_gen, prl_render, prl_ui, prl_audio, prl_save); strict lints (clippy all + pedantic as errors, no unsafe, no unwrap/expect outside tests, documented pub items).
 - Overworld: separate scaled-down map (ADOM style).

@@ -20,9 +20,11 @@ acceptance remains pending. See [p1-playtest.md](p1-playtest.md).
 
 The recorded UX decisions are 64x64 world tiles, integer zoom, independent UI
 scaling, `bevy_ui`, Pixelify Sans/Silkscreen, and cosmetic movement tweening.
-There is no separate animation/UX session transcript or guide in this checkout.
-Reconcile that discussion through **Q-006** before claiming its detailed choices
-are settled. The defaults below are proposals for the slice, not recovered answers.
+The concurrent animation/UX session is now recorded in
+[art-production.md](art-production.md) and [the Gravebound reference](style/gravebound-p0.md).
+Q-006 records that integration. Gameplay P0-P5 and art P0-P5 are separate gates;
+placeholder movement code does not approve final sprites, geometry or timings.
+The defaults below remain proposals for the slice, not recovered timing answers.
 
 ## Scope of the first complete slice
 

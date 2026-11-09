@@ -12,9 +12,10 @@ Core/generation rules are headless and deterministic. UI and rendering submit
 commands and read outcomes; they never write gameplay positions, clocks or RNG.
 Use logical persistent IDs, not Bevy Entity IDs, in snapshots.
 
-The animation/UX work is a separate in-flight effort. P1 visuals are disposable
-procedural placeholders. Do not establish a new art style, import unverified
-assets, or override those design decisions.
+The animation/UX work has its own gates in `docs/art-production.md` and
+`docs/style/gravebound-p0.md`. Gameplay P1 visuals are disposable procedural
+placeholders, not completion of art P1. Do not establish a new art style, import
+unverified assets, or override those design decisions.
 
 Run targeted tests while iterating. Before handoff:
 
