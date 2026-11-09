@@ -39,7 +39,7 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             BackgroundColor(theme.panel),
         ))
         .with_child((
-            Text::new("P1 PLACEHOLDER — awaiting core state"),
+            Text::new("P1 PLACEHOLDER - awaiting core state"),
             theme.font(),
             TextColor(theme.text),
             HudText,
@@ -111,14 +111,14 @@ fn refresh(
     }
     for mut text in &mut hud {
         **text = state.as_ref().map_or_else(
-            || "P1 PLACEHOLDER — no playable core state.\nCheck startup logs/content errors.".to_owned(),
+            || "P1 PLACEHOLDER - no playable core state.\nCheck startup logs/content errors.".to_owned(),
             |core| {
                 let vitals = core.player().map_or_else(
                     || "Player unavailable".to_owned(),
                     |actor| format!("HP {}/{} | Stamina {}/{}", actor.hp(), actor.max_hp(), actor.stamina(), actor.max_stamina()),
                 );
                 format!(
-                    "P1 PLACEHOLDER — not final art/font | Normal fixture\n{vitals} | Seed {}\nTick {} | Clock {}s | Actions {}{}",
+                    "P1 PLACEHOLDER - not final art/font | Normal fixture\n{vitals} | Seed {}\nTick {} | Clock {}s | Actions {}{}",
                     core.seed(),
                     core.clock().ticks(),
                     core.clock().elapsed_seconds(),
@@ -148,10 +148,10 @@ fn refresh(
         };
         **text = if mode.overlay == Overlay::Help {
             format!(
-                "HELP — gameplay paused\n\n{CONTROLS}\n\nCyan square: player | Orange tall rectangle: other actor\nGrey: wall | Brown + bar: door | Dim: remembered terrain\nUnseen actors are hidden. Light/FOV are core-owned.\n\nOne key press, one intent; held keys do not repeat.\nO arms a directional door command; no time until direction.\nCombat, inventory, saves and final assets are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
+                "HELP - gameplay paused\n\n{CONTROLS}\n\nCyan square: player | Orange tall rectangle: other actor\nGrey: wall | Brown + bar: door | Dim: remembered terrain\nUnseen actors are hidden. Light/FOV are core-owned.\n\nOne key press, one intent; held keys do not repeat.\nO arms a directional door command; no time until direction.\nCombat, inventory, saves and final assets are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
             )
         } else if mode.overlay == Overlay::Menu {
-            "PAUSED — P1 fixture menu\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\n\nNo turns pass while browsing.\nClose this menu, then R to reset the fixture.\nFull options, saving and character creation are unavailable.".to_owned()
+            "PAUSED - P1 fixture menu\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\n\nNo turns pass while browsing.\nClose this menu, then R to reset the fixture.\nFull options, saving and character creation are unavailable.".to_owned()
         } else {
             String::new()
         };
