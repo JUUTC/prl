@@ -31,8 +31,27 @@ Start with the [Game Design Specification](docs/SPEC.md).
 | [difficulty.md](docs/difficulty.md) | Presets & custom difficulty |
 | [meta-progression.md](docs/meta-progression.md) | Feats & unlocks |
 | [architecture.md](docs/architecture.md) | Technical architecture |
+| [art-production.md](docs/art-production.md) | Art specification, production phases, quality gates and dependencies |
+| [style/gravebound-p0.md](docs/style/gravebound-p0.md) | P0 visual brief, candidate palette, construction sheet and authoring proposal |
 | [open-questions.md](docs/open-questions.md) | Pending decisions |
 | [standards/](docs/standards/) | Coding standards, project structure, extensibility (mods/DLC) |
+
+## Character art studies
+
+**Placeholder experiments only; not release-quality artwork.** The approved
+direction and gated production work are tracked in the
+[Art Specification & Production Plan](docs/art-production.md).
+
+The [character atelier](tools/character-study/README.md) is a standalone visual
+prototype using the approved **Gravebound** baseline, two unlabeled silhouettes,
+and five looks per race/silhouette. Starting class kits and per-slot equipment,
+item-level, and material previews show how characters change as gear improves.
+It includes a gridless three-quarter world preview and independently posed
+left/right action animations with hand-aware equipment and two-handed tools.
+Representative spell/arrow effects, creatures, townsfolk, harvesting and station
+studies accompany optional fog/ash parallax with reduced-motion controls.
+The [layered export pilot](tools/art-pipeline/README.md) checks real LibreSprite
+source round-trips and per-layer atlas exports independently of placeholder art.
 
 ## Building
 

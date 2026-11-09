@@ -7,6 +7,11 @@ Decisions still needed before or during implementation.
 3. **Pantheon details** — final names/personalities of the other five gods.
 4. **Balance tuning** — area-level ranges per region/depth vs Power Level; NG+ per-tier multipliers; house upgrade costs.
 5. **Power Level** — all trained skills count (incl. crafting); validate in playtests that crafters aren't over-matched by areas.
+6. **Diagonal collision** — decide whether diagonal moves can pass blocked corners; the art preview currently prevents corner cutting.
+7. **Production art lock** — palette base, finished anatomy/perspective reference, authoring/export toolchain, frame/timing and improvement-variant mapping; resolve through P0–P2 in [art-production.md](art-production.md), not by promoting placeholder defaults.
+   The [P0 reference package](style/gravebound-p0.md) is ready for review; its original
+   palette is not locked or verified as Lospec-derived. LibreSprite editor export
+   feasibility passed; palette-specific reuse terms and author/tool selection remain open.
 
 
 ## Decided
@@ -19,6 +24,12 @@ Decisions still needed before or during implementation.
 - Fonts: Pixelify Sans + Silkscreen (OFL); title font later.
 - UI: bevy_ui for the game; bevy_egui only for dev tools behind a feature flag.
 - Tone: grimdark-hopeful high fantasy; terse, archaic-lite prose.
+- Character art baseline: Gravebound; two unlabeled silhouettes, five looks per race/silhouette, actual equipped items and gear improvements visible independently of skill-derived PL.
+- Production quality: existing procedural sprites are placeholders, not shippable art. A finished character in a representative world scene must be approved before batch expansion; follow the gated [art production plan](art-production.md).
+- World perspective: three-quarter overhead, hidden square grid, no visible floor grid, eight-direction movement, half-height foreground walls for character readability.
+- Initial animation: independent left/right facing sets, no mirrored equipped composites; north/south retains facing, main/off hands remain assigned, dual wield and coordinated two-handed grips supported. Dedicated work, gathering, consumable and casting actions.
+- Visual coverage: archery draw/release, arrow variants, spell effects, monsters/enemies, townsfolk, animals, tree-felling and ore-depletion states, crafting benches, eating and drinking.
+- Atmosphere: optional subtle fog/ash parallax, no shifting interactables or terrain; preserve actor/target readability and offer reduced-motion/off controls.
 - Mods/DLC: v1 data-only content packs (namespaced IDs, load order); DLC = first-party packs; WASM scripting deferred.
 - Code: Cargo workspace (prl, prl_core, prl_content, prl_gen, prl_render, prl_ui, prl_audio, prl_save); strict lints (clippy all + pedantic as errors, no unsafe, no unwrap/expect outside tests, documented pub items).
 - Overworld: separate scaled-down map (ADOM style).

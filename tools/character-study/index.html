@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRL · Character atelier</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="study.css">
+</head>
+<body>
+  <header>
+    <a class="wordmark" href="#top">PRL <span>/ CHARACTER ATELIER</span></a>
+    <span class="status">ART STUDIES · NOT FINAL ASSETS</span>
+  </header>
+  <main id="top">
+    <section class="intro">
+      <p class="eyebrow">GRAVEBOUND / APPROVED ART BASELINE</p>
+      <h1>A face against the dark.</h1>
+      <p>Shrouded survivors. Sunken faces, ragged layers, and tarnished iron.
+        Race and silhouette beneath the gear; every upgrade visible on the traveller.</p>
+    </section>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <section aria-labelledby="perspective-heading">
+      <div class="section-heading">
+        <h2 id="perspective-heading">Three-quarter overhead</h2>
+        <span>Approved world perspective</span>
+      </div>
+      <p class="help">Continuous floor art, a hidden square movement grid, and half-height walls.
+        Current gear appears on the traveller. Focus the scene for arrows, numpad, or vi-key movement.</p>
+      <label class="occlusion"><input id="occlusion" type="checkbox" checked> Show a half-height foreground pillar</label>
+      <div class="animation-controls">
+        <label for="atmosphere">Atmosphere</label>
+        <select id="atmosphere"><option value="off">Off</option><option value="fog">Subtle fog</option>
+          <option value="fog-ash">Fog & drifting ash</option></select>
+      </div>
+      <p class="help">Two atmospheric depth layers shift differently with preview movement.
+        Terrain stays anchored. Play/Pause controls drifting; reduced motion starts effects off.</p>
+      <div class="world-comparisons chosen-world">
+        <article>
+          <canvas id="world-quarter" tabindex="0" aria-label="Gridless three-quarter dungeon preview. Use arrows, numpad, or vi keys to move."></canvas>
+        </article>
+        <div>
+          <h3>Eight directions. No drawn grid.</h3>
+          <p class="help">Cardinal and diagonal steps remain turn-based in the game.
+            West/east and diagonals choose left/right facing; north/south retains the last facing.
+            Walk playback is cosmetic and never changes movement rules.</p>
+          <div id="movement" aria-label="Eight-direction preview movement"></div>
+          <output id="position"></output>
+          <p class="help">Diagonal corner cutting is blocked in this preview. Final movement
+            collision rules remain a gameplay decision.</p>
+        </div>
+      </div>
+    </section>
+    <section class="animation-section" aria-labelledby="animation-heading">
+      <div class="section-heading">
+        <h2 id="animation-heading">Two-facing animation proof</h2>
+        <span>Independent hand attachments · no sprite mirroring</span>
+      </div>
+      <div class="animation-controls">
+        <label for="animation-action">Action</label>
+        <select id="animation-action"></select>
+        <button id="animation-play" type="button">Pause</button>
+        <button id="animation-step" type="button">Step frame</button>
+        <button id="animation-export" type="button">Export both facing rows</button>
+      </div>
+      <div class="animation-pair">
+        <div><button id="facing-left" type="button">Face left in world</button>
+          <canvas id="animation-left" aria-label="Independently posed left-facing action study"></canvas></div>
+        <div><button id="facing-right" type="button">Face right in world</button>
+          <canvas id="animation-right" aria-label="Independently posed right-facing action study"></canvas></div>
+      </div>
+      <output id="animation-frame"></output>
+      <p id="grip-note" class="help"></p>
+      <p id="action-note" class="help"></p>
+      <div id="animation-proofs" class="actions"></div>
+      <p class="help">Proof buttons replace the preview gear. These are six-frame pose studies:
+        not final animations or gameplay effects. Reduced-motion preference starts playback paused.
+        Crafting shows hammering; other crafting disciplines and weapon-specific polish need follow-up art.</p>
+    </section>
+    <section class="animation-section" aria-labelledby="showcase-heading">
+      <div class="section-heading">
+        <h2 id="showcase-heading">Gravebound world & effects showcase</h2>
+        <button id="showcase-export" type="button" class="secondary">Export sheet & manifest</button>
+      </div>
+      <p class="help">Representative original studies—not a complete bestiary or asset pack.
+        Shared Play/Pause and frame-step controls above apply here.
+        Arrow variants are visual proposals, not approved combat effects. Harvest cycles loop for review.</p>
+      <div id="showcase"></div>
+    </section>
+    <section class="atelier" aria-labelledby="appearance-heading">
+      <div class="controls">
+        <p class="eyebrow">02 / SHAPE YOUR TRAVELLER</p>
+        <h2 id="appearance-heading">Appearance</h2>
+        <fieldset>
+          <legend>Race <span>All races visible for art review</span></legend>
+          <div id="races" class="races"></div>
+        </fieldset>
+        <p id="race-note" class="help"></p>
+        <fieldset>
+          <legend>Silhouette</legend>
+          <div id="bodies" class="bodies"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Starting look <span>5 for every silhouette & race</span></legend>
+          <div id="looks" class="looks"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Skin tone</legend>
+          <div id="skin" class="swatches"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Hair colour</legend>
+          <div id="hair" class="swatches"></div>
+        </fieldset>
+        <p class="help">Appearance is cosmetic. Both silhouettes have every look and colour;
+          neither changes stats, class, or equipment access.</p>
+        <fieldset>
+          <legend><label for="class">Starting class kit</label></legend>
+          <select id="class"></select>
+        </fieldset>
+        <div class="section-heading">
+          <h2>Equipment</h2>
+          <button id="reset-kit" class="secondary" type="button">Reset class kit</button>
+        </div>
+        <p class="help">Each slot has its own item, ilvl, and material. Classes are starting
+          templates, not restrictions. The shroud is optional equipment.</p>
+        <div class="equipment-heading" aria-hidden="true"><span>Slot / item</span><span>ilvl</span><span>Material tier</span></div>
+        <div id="equipment"></div>
+        <p class="help">ilvl 1 / 25 / 50 / 100 are illustrative detail bands, not balance rules.
+          Materials are independent of ilvl. High-tier gear stays weathered, not brightly glowing.
+          Power Level comes from trained skills and does not alter equipment.</p>
+      </div>
+      <div class="preview">
+        <div class="preview-heading">
+          <p class="eyebrow" id="preview-title"></p>
+          <span class="chip">64 × 64 / 4×</span>
+        </div>
+        <div class="stage">
+          <div class="halo"></div>
+          <canvas id="hero" width="64" height="64" aria-label="Selected character sprite"></canvas>
+          <span class="stage-caption">FRONT VIEW · WORN MATERIAL STUDY</span>
+        </div>
+        <div class="details">
+          <div>
+            <p class="eyebrow">FACE STUDY</p>
+            <canvas id="portrait" width="128" height="128" aria-label="Selected character portrait study"></canvas>
+          </div>
+          <div class="identity">
+            <h3 id="look-title"></h3>
+            <p id="look-description"></p>
+            <p class="eyebrow">AT WORLD SCALE · 1× / 2×</p>
+            <div class="world-samples">
+              <canvas id="native" width="64" height="64" aria-label="Character at native size"></canvas>
+              <canvas id="double" width="64" height="64" aria-label="Character at two-times size"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="selection">
+          <span class="eyebrow">STUDY REFERENCE</span>
+          <output id="reference"></output>
+          <div class="actions">
+            <button id="save" type="button">Keep this study</button>
+            <button id="export" type="button" class="secondary">Export sprite</button>
+          </div>
+          <p class="help">Keeps your reference in this browser and downloads its settings.
+            Gravebound is approved as the baseline; these remain prototype assets.</p>
+        </div>
+        <div class="selection">
+          <p class="eyebrow">GEAR IMPROVEMENT / SAME ITEMS & MATERIALS</p>
+          <div id="progression"></div>
+          <p class="help">Only item level changes across these samples. Shoulder reinforcement,
+            fittings, edge work, and restrained ornament appear as gear improves.</p>
+        </div>
+      </div>
+    </section>
+    <section aria-labelledby="catalog-heading" class="catalog-section">
+      <div class="section-heading">
+        <h2 id="catalog-heading">The full company</h2>
+        <button id="catalog-toggle" type="button" class="secondary" aria-expanded="false"
+          aria-controls="catalog">Show all 100 looks</button>
+      </div>
+      <p class="help">Ten races × two silhouettes × five looks with the current equipment.
+        Unlockable races are studies only, not new starting options.</p>
+      <div id="catalog" hidden></div>
+    </section>
+  </main>
+  <footer>GRAVEBOUND BASELINE / ORIGINAL PIXEL STUDIES / PROVISIONAL RAMP PALETTE / EQUIPMENT-DRIVEN APPEARANCE</footer>
+  <script type="module" src="study.js"></script>
+</body>
+</html>

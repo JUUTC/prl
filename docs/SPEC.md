@@ -178,9 +178,23 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 
 ## 14. Art & Audio Direction
 
+Production requirements, decision status, asset contracts and dependency-ordered
+quality gates are defined in [Art Specification & Production Plan](art-production.md).
+**Gravebound is an approved direction, not approved artwork.** Current procedural
+atelier sprites are placeholders and are not acceptable for release. Production
+expansion requires explicit approval of a finished in-world reference.
+
 - **Tone:** grimdark-hopeful high fantasy — a weathered, earthy world with saturated accents for magic and the blight. Applies to art, UI and writing.
+- **Character baseline: Gravebound** — sunken faces, natural tapered proportions, ragged charcoal layers, and worn materials; avoid toy-like heads and squared limbs. Two visually selectable body silhouettes, without gender labels, with at least five looks per race and silhouette.
+- **Equipment-driven appearance:** characters initially show their race, silhouette, and starting class equipment. Equipped items, material, and item-level improvements change the visible gear independently of the underlying appearance. Classes impose no visual equipment restrictions after creation. Power Level remains skill-derived, not a gear tier or automatic aura.
 - **Writing voice:** terse, archaic-lite prose; no modern slang.
 - **64×64** pixel-art world tiles, shown with integer zoom so they stay crisp up to 4K. Large monsters and bosses may use bigger multi-tile sprites.
+- **World perspective:** three-quarter overhead on a hidden square grid, not isometric. Floor art has no visible grid overlay; cardinal and diagonal movement remains eight-directional. Use half-height foreground walls to reduce character occlusion while retaining depth.
+- **Initial character animation:** two independently authored three-quarter facing sets (left/right), not mirrored composites. East/west and diagonal movement select facing from the horizontal component; north/south preserves last facing. Keep the asset/action schema extensible to additional facings without changing movement rules.
+- **Hand-aware equipment animation:** main/off-hand items retain anatomical assignment across facings. Dual wielding has two attachments; two-handed weapons and tools coordinate both grips and reserve the off hand. Action props temporarily stow held gear without modifying the equipped loadout.
+- **Action coverage:** idle, walk, melee attack, archery draw/release, crafting, mining, tree chopping, gathering, eating, drinking, healing, and casting require dedicated action poses. Different crafting disciplines and weapon-specific actions can extend those families. Presentation never advances or gates game time.
+- **World asset coverage:** spell cast/travel/impact effects, distinct arrow appearances, monsters/enemies, townsfolk, animals (including pack animals), standing/falling/felled trees, intact/depleted ore, crafting stations, and food/drink props share the Gravebound direction. Visual arrow studies do not establish new damage or affix rules.
+- **Atmosphere/parallax:** subtle layered fog and drifting ash may use differential camera motion for depth. Terrain, characters, structures, resource nodes, and interactables stay grid-anchored. Preserve character/gear and targeting readability; provide reduced-motion and atmosphere-off controls. These effects are presentation-only, not a side-on or isometric camera change.
 - **Palette:** a locked, ramp-based PRL palette (~24 hue ramps × 6–8 shades, ~150–190 colours), extended from a Lospec base and checked in CI.
 - **Fonts:** Pixelify Sans (UI/body) and Silkscreen (small labels/numbers), both OFL; a fantasy display font for titles will be chosen later.
 - Hi-res UI elements (item icons, portraits); lighting/shader effects, particles.
@@ -189,6 +203,10 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 - **Art sourcing:** placeholder art is the CC0 subset of the Dungeon Crawl Stone Soup 32×32 tiles, shown at 2× until original 64×64 art replaces it. Every third-party asset's licence is tracked in `assets/CREDITS.md`.
 
 ## 15. Milestones
+
+The art production phases P0–P5 in [art-production.md](art-production.md#4-dependency-ordered-production-phases)
+run alongside these gameplay milestones. Visual prototypes do not complete an
+art quality gate or a gameplay milestone.
 
 | # | Milestone | Scope |
 |---|---|---|
