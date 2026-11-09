@@ -1,0 +1,13 @@
+(
+    schema_version: 1,
+    id: "prl:base",
+    tiles: [
+        (id: "prl:floor", blocks_movement: false, blocks_sight: false, door: false),
+        (id: "prl:wall", blocks_movement: true, blocks_sight: true, door: false),
+        (id: "prl:door", blocks_movement: true, blocks_sight: true, door: true),
+    ],
+    actors: [
+        (id: "prl:player", speed: 100),
+        (id: "prl:fixture_npc", speed: 150),
+    ],
+)

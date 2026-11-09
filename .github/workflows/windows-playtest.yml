@@ -1,0 +1,57 @@
+name: Windows playtest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+
+jobs:
+  playtest:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Headless foundation tests
+        run: cargo test --locked -p prl_core -p prl_content
+      - name: Lints
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - name: Workspace tests
+        run: cargo test --locked --workspace
+      - name: API docs
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --locked --workspace --no-deps
+      - name: Build playable executable
+        env:
+          PRL_BUILD_ID: ${{ github.sha }}
+        run: cargo build --locked -p prl
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path package/prl -Force | Out-Null
+          Copy-Item target/debug/prl.exe package/prl/
+          Copy-Item assets package/prl/ -Recurse
+          Copy-Item LICENSE package/prl/
+          Copy-Item docs/p1-playtest.md package/prl/PLAYTEST.md
+          Copy-Item tools/Launch.cmd package/prl/
+          Set-Content package/prl/BUILD.txt "PRL P1 placeholder build`nCommit: $env:GITHUB_SHA`nRun: $env:GITHUB_RUN_ID"
+      - name: Upload Windows playtest
+        uses: actions/upload-artifact@v4
+        with:
+          name: prl-windows-x86_64-${{ github.sha }}
+          path: package/prl/
+          if-no-files-found: error

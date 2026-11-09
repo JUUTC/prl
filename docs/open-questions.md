@@ -1,12 +1,48 @@
 # Open Questions
 
-Decisions still needed before or during implementation.
+Canonical running decision register for design and implementation. Delivery stages
+are defined in [playtest-plan.md](playtest-plan.md). Review this register at each
+stage handoff; add discoveries as they arise, not just at the next interview.
 
-1. **Lore** — world name, pre-war history, identity of the invading host (see lore.md).
-2. **Title of the game** — keep "PRL" for now; brainstorm a name once more systems are complete.
-3. **Pantheon details** — final names/personalities of the other five gods.
-4. **Balance tuning** — area-level ranges per region/depth vs Power Level; NG+ per-tier multipliers; house upgrade costs.
-5. **Power Level** — all trained skills count (incl. crafting); validate in playtests that crafters aren't over-matched by areas.
+## How to use the register
+
+Keep stable `Q-NNN` IDs. **Open** needs a decision; **Provisional** has a reversible
+working default, not an accepted design answer; **Blocked** prevents only the
+named dependent task; **Deferred** is outside the current slice; **Resolved**
+records an accepted answer and its source. Preserve resolved rows so the rationale
+is not lost. New questions must name their impact and next action.
+
+Working defaults below are planning proposals dated 2026-11-08. They are not
+claims about answers in an unrecovered interview. When a decision is accepted,
+update the owning system doc and retain the ID, resolution and source here.
+
+## Active register
+
+| ID | Question | Status | Impact / needed by | Working default and next action |
+|---|---|---|---|---|
+| Q-001 | World name, pre-war history and invading host? | Deferred | Campaign lore; after P5 | Keep existing Malgareth history; decide in [lore.md](lore.md) before campaign writing |
+| Q-002 | Final game title? | Deferred | Branding; not a playtest blocker | Use PRL; revisit after systems/playtest feedback |
+| Q-003 | Names/personalities of the other five gods? | Deferred | Cleric/Paladin content; after P5 | Keep drafts; validate before those character templates are playable |
+| Q-004 | Area-level ranges, NG+ multipliers and house costs? | Open | Slice encounter tuning at P3; wider balance later | Use explicitly provisional crypt encounter data; record deaths/damage/run length; defer NG+/house values |
+| Q-005 | Does counting crafting/gathering in PL over-match crafters? | Open | Multi-skill/overworld slice after P5 | Preserve all trained skills in PL; later compare combat-only and crafter-heavy characters in identical areas |
+| Q-006 | Where are the latest animation/UX session decisions, and what changed? | Open | Reconcile before detailed UX sign-off at P1/P2 | Only SPEC/architecture decisions are available here; recover the session reference/transcript and reconcile timings, controls and layout |
+| Q-007 | Movement/attack timing, key repeat, input buffering and motion options? | Provisional | Input/presentation integration at P1/P2 | Cosmetic short tweens, fast/reduced-motion option, no multi-command backlog; agree exact timing/repeat policy after Q-006 and hands-on test |
+| Q-008 | Can diagonal movement squeeze past blocked corners; do invalid actions cost time? | Provisional | Movement/pathfinding tests at P1 | No corner squeezing when either orthogonal neighbour blocks passage; invalid intents explain rejection and consume no energy; confirm and document in time-and-turns.md |
+| Q-009 | How are facing/frontal shield blocks and physical mitigation ordering defined? | Open | Block/armor implementation at P2 | No settled facing default; specify arc/facing updates and the `raw` value used for armor%, including mixed damage, then add numeric cases in combat.md |
+| Q-010 | What challenge probability drives combat skill gains when attacks always hit? | Blocked | Combat skill-gain integration at P4 only | Do not feed hit probability 1 into `4p(1-p)`; decide a trained-skill-versus-target challenge model and repeat window in skills-and-progression.md |
+| Q-011 | Which Windows build profile/linker gives the fastest useful iteration? | Open | Distribution at P0 | Native Windows local builds and one Windows artifact target; benchmark incremental/link times and package size before enabling dynamic linking or changing linker |
+| Q-012 | Checkpoint interval and crash recovery contract? | Provisional | Persistence at P4 | Checkpoint every 20 committed player actions and floor transition, plus quit-save; save at coherent boundaries; confirm interval through write-cost/recovery tests |
+| Q-013 | Minimum Windows version/GPU and performance/readability budgets? | Open | Launch compatibility at P0; acceptance at P5 | Target Windows x86_64; test 1080p/4K and multiple UI scales; obtain tester hardware, measure latency/frame time, then set supported minimums and budgets |
+| Q-014 | Final palette base, placeholder asset subset and title font? | Open | Asset integration at P0/P1; visual sign-off later | Existing 64x64/ramp palette/font decisions stand; temporary owned shapes unblock launch; verify CC0 subset/OFL files and credits before importing; record palette exceptions for placeholders |
+| Q-015 | Persistent IDs and character/world/map ownership across reset and NG+? | Provisional | Foundation F1/F2 before snapshot types | Typed monotonic actor/map IDs, allocator state in snapshot, Entity lookup runtime-only; review run/world scope and later reset identity in [foundation-plan.md](foundation-plan.md) |
+| Q-016 | Stable seed/domain encoding, RNG state format and canonical snapshot hash? | Open | Foundation F1/F2 determinism tests | Use the spec's ChaCha8 streams; specify stable domain encoding/hash and pinned representation, version snapshots, and test continuation across fresh ECS allocation before accepting serialized types |
+| Q-017 | How do render, audio, logs and later feats consume ordered outcomes without loss? | Provisional | Foundation F3/F5 | Sequenced core outcomes, independent consumer fan-out and bounded presentation retention; snapshot contains state, not animations; define reset, overflow and lag handling before integrating consumers |
+
+## Resolution history
+
+No new register questions have been resolved yet. The accepted interview decisions
+already recorded in the spec are retained below. Append future resolutions with
+their question ID and source rather than silently removing an active question.
 
 
 ## Decided

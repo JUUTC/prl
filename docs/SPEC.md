@@ -190,6 +190,11 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 
 ## 15. Milestones
 
+For the first playable slice, follow [playtest-plan.md](playtest-plan.md).
+Its smaller P0-P5 gates select parts of these milestones without requiring every
+v1 system before hands-on testing. Track unresolved decisions in
+[open-questions.md](open-questions.md).
+
 | # | Milestone | Scope |
 |---|---|---|
 | M0 | Skeleton | Bevy app builds; spec written ✅ |

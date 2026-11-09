@@ -3,6 +3,9 @@
 use std::fmt;
 use std::str::FromStr;
 
+use serde::de::Visitor;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 /// Stable identifier for any content definition (monster, item, skill, ability…).
 ///
 /// Format: `namespace:name`, e.g. `prl:goblin_archer` or `my_mod:frost_wyrm`.
@@ -55,6 +58,41 @@ impl ContentId {
 impl fmt::Display for ContentId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.namespace, self.name)
+    }
+}
+
+impl Serialize for ContentId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for ContentId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ContentIdVisitor;
+
+        impl Visitor<'_> for ContentIdVisitor {
+            type Value = ContentId;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a namespaced content ID such as `prl:stone_floor`")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(E::custom)
+            }
+        }
+
+        deserializer.deserialize_str(ContentIdVisitor)
     }
 }
 

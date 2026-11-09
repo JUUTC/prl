@@ -4,8 +4,12 @@
 //! same format. See `docs/standards/extensibility.md`.
 
 mod id;
+mod pack;
 
 pub use id::{ContentId, ContentIdError};
+pub use pack::{
+    ActorDefinition, CONTENT_SCHEMA_VERSION, ContentError, ContentPack, TileDefinition,
+};
 
 use bevy::prelude::*;
 

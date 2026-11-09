@@ -18,6 +18,8 @@ Start with the [Game Design Specification](docs/SPEC.md).
 | Doc | Topic |
 |---|---|
 | [SPEC.md](docs/SPEC.md) | Overview & core rules |
+| [playtest-plan.md](docs/playtest-plan.md) | Staged Windows playtest, acceptance gates and question workflow |
+| [foundation-plan.md](docs/foundation-plan.md) | P0/P1 build order, core contracts and full-design compatibility |
 | [races-and-classes.md](docs/races-and-classes.md) | Races, classes, starting kits |
 | [skills-and-progression.md](docs/skills-and-progression.md) | Skills, gain rules, stat training |
 | [abilities.md](docs/abilities.md) | Skill abilities, spells, synergies |
@@ -39,8 +41,13 @@ Start with the [Game Design Specification](docs/SPEC.md).
 Requires a recent stable Rust toolchain.
 
 ```sh
-cargo run
+cargo run -p prl
 ```
+
+The P1 build uses temporary shapes to demonstrate movement, doors, turns and
+fog of war. See [P1 playtest instructions](docs/p1-playtest.md) for controls and
+scope. The Windows playtest workflow packages the executable, fixture content
+and a diagnostic launcher; its downloadable build requires no Rust installation.
 
 Linux needs: `pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev`.
 

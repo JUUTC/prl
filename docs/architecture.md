@@ -1,5 +1,9 @@
 # Technical Architecture
 
+For proposed foundation contracts and the concrete build order through P1, see
+[foundation-plan.md](foundation-plan.md). It separates what must be implemented
+now from the extension points reviewed before later systems are added.
+
 ## Stack
 
 - **Rust** (edition 2024), **Bevy 0.20** (ECS, 2D sprites, `ImagePlugin::default_nearest()` and integer zoom for crisp 64×64 pixels at any resolution up to 4K).

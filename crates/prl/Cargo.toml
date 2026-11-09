@@ -8,7 +8,19 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-bevy = { workspace = true, features = ["default"] }
+bevy = { workspace = true, features = [
+    "default_app",
+    "std",
+    "multi_threaded",
+    "bevy_winit",
+    "x11",
+    "wayland",
+    "webgl2",
+    "bevy_core_pipeline",
+    "bevy_sprite_render",
+    "bevy_ui_render",
+    "default_font",
+] }
 prl_audio.workspace = true
 prl_content.workspace = true
 prl_core.workspace = true

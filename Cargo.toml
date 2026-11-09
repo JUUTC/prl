@@ -5,7 +5,7 @@ members = ["crates/*"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.90"
+rust-version = "1.97.1"
 license = "MIT"
 repository = "https://github.com/JUUTC/prl"
 
@@ -13,6 +13,8 @@ repository = "https://github.com/JUUTC/prl"
 # Library crates use Bevy without default features; only the `prl` binary
 # (and crates that truly need rendering/audio) enable more.
 bevy = { version = "0.20", default-features = false }
+ron = "0.10"
+serde = { version = "1", features = ["derive"] }
 
 prl_audio = { path = "crates/prl_audio" }
 prl_content = { path = "crates/prl_content" }
@@ -48,9 +50,10 @@ module_name_repetitions = "allow"
 # Fast iteration in dev while keeping dependencies optimized.
 [profile.dev]
 opt-level = 1
+debug = 0
 
 [profile.dev.package."*"]
-opt-level = 3
+opt-level = 1
 
 [profile.release]
 lto = "thin"
