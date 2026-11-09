@@ -33,7 +33,7 @@ The orange test actor only waits; it is not an enemy yet.
 | Arrows, numpad 1-9, vi `ykuhlbjn` | Move (numpad/vi include diagonals) |
 | `.` / numpad 5 / Space | Wait |
 | `O`, then a direction | Open an adjacent door |
-| `R` | Reset the test fixture (not a campaign dungeon reset) |
+| `R` | Start a new run with the next seed (abandons the current one) |
 | F1 / `?` | Help |
 | Esc | Pause/menu, or dismiss an overlay |
 | `+` / `-` | Integer world zoom, 1-4x |
@@ -54,7 +54,7 @@ continue button.
 
 ## Implementation boundary
 
-`assets/packs/prl/p1.ron` contains the validated tile and actor definitions for
+`assets/packs/prl/base.ron` contains the validated tile and actor definitions for
 this fixture. It is a small P1 content schema, not the full mod/DLC manifest
 described in `docs/standards/extensibility.md`. Unknown or invalid required content
 must fail explicitly; there is no silent fallback when a packaged file is broken.

@@ -10,6 +10,8 @@ repository.workspace = true
 [dependencies]
 bevy.workspace = true
 prl_content.workspace = true
+rand_chacha.workspace = true
+rand_core.workspace = true
 ron.workspace = true
 serde.workspace = true
 

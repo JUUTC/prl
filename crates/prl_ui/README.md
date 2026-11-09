@@ -9,7 +9,7 @@ No external fonts or images are used; styling is explicitly temporary.
 | Eight directions | Arrows (cardinal), numpad 1–9, vi `y k u h l b j n` |
 | Wait | `.`, numpad 5, Space |
 | Explicit open door | `O`, then a direction |
-| Reset fixture | `R` |
+| New run | `R` |
 | Help | F1 or `?` (`/` also opens help) |
 | Pause menu / close overlay | Escape |
 | Independent UI scale | `[` / `]` (0.75–2× in 0.25 steps) |

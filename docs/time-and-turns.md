@@ -38,6 +38,12 @@ Speed modifiers: encumbrance, armor, haste/slow, terrain (swamp, deep snow), rac
 | Rest / wait | 100 |
 | Gather / craft | multi-turn, recipe-dependent, interruptible |
 
+P2 provisional (Q-020, Q-021): every implemented action — move, bump melee
+attack, open door and wait — costs 100 energy for the player and for monsters.
+Rejected commands cost nothing. Once the player dies the scheduler stops at once
+and every command except starting a new run is rejected without spending
+energy, advancing the clock or consuming RNG.
+
 ## World clock
 
 - 1 standard turn (100 energy at speed 100) = **6 seconds** of game time in dungeons/towns.

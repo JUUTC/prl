@@ -80,7 +80,7 @@ fn handle_input(
     }
     if keys.just_pressed(KeyCode::KeyR) {
         mode.door = false;
-        queue.push(Command::ResetFixture);
+        queue.push(Command::NewRun);
         return;
     }
     if keys.just_pressed(KeyCode::KeyO) {

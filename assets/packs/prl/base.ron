@@ -1,0 +1,94 @@
+// PRL base pack, P2 "Fight and retry" placeholder arena.
+//
+// Every combat number below is PROVISIONAL (Q-019 placeholder stats, tuned with
+// Q-004). They are fixed placeholders until stats and skills arrive at P4; do not
+// treat them as balance decisions. The arena layout is a disposable test fixture.
+(
+    schema_version: 2,
+    id: "prl:base",
+    tiles: [
+        (id: "prl:floor", blocks_movement: false, blocks_sight: false, door: false),
+        (id: "prl:wall", blocks_movement: true, blocks_sight: true, door: false),
+        (id: "prl:door", blocks_movement: true, blocks_sight: true, door: true),
+    ],
+    actors: [
+        (
+            id: "prl:player",
+            name: "You",
+            behavior: Player,
+            speed: 100,
+            max_hp: 40,
+            accuracy: 10,
+            evasion: 8,
+            armor: 10,
+            damage: 7,
+        ),
+        // Slow melee enemy: acts once per two normal turns.
+        (
+            id: "prl:shambler",
+            name: "Shambler",
+            behavior: Hostile,
+            speed: 50,
+            max_hp: 30,
+            accuracy: 4,
+            evasion: 2,
+            armor: 4,
+            damage: 12,
+        ),
+        // Normal-speed melee enemy.
+        (
+            id: "prl:skeleton",
+            name: "Skeleton",
+            behavior: Hostile,
+            speed: 100,
+            max_hp: 20,
+            accuracy: 6,
+            evasion: 4,
+            armor: 6,
+            damage: 8,
+        ),
+        // Fast melee enemy: acts three times per two normal turns.
+        (
+            id: "prl:grave_rat",
+            name: "Grave rat",
+            behavior: Hostile,
+            speed: 150,
+            max_hp: 10,
+            accuracy: 8,
+            evasion: 10,
+            armor: 0,
+            damage: 5,
+        ),
+    ],
+    maps: [
+        (
+            id: "prl:p2_arena",
+            // West antechamber (4x5) behind one closed door; east hall with pillars.
+            rows: [
+                "###############",
+                "######........#",
+                "######..#.....#",
+                "#....#.....#..#",
+                "#....#........#",
+                "#....+........#",
+                "#....#........#",
+                "#....#..#..#..#",
+                "######........#",
+                "######........#",
+                "###############",
+            ],
+            legend: [
+                ('#', "prl:wall"),
+                ('.', "prl:floor"),
+                ('+', "prl:door"),
+            ],
+            spawns: [
+                (actor: "prl:player", x: 2, y: 5),
+                (actor: "prl:shambler", x: 8, y: 5),
+                (actor: "prl:skeleton", x: 11, y: 4),
+                (actor: "prl:grave_rat", x: 13, y: 8),
+            ],
+        ),
+    ],
+    start_map: "prl:p2_arena",
+)

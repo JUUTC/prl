@@ -4,7 +4,7 @@ use prl_core::{CoreSet, CoreState};
 use crate::input::Overlay;
 use crate::{PlaceholderTheme, UiMode};
 
-const CONTROLS: &str = "Move: arrows / numpad / vi (ykuhlbjn)\nWait: . / numpad 5 / Space\nDoor: O, then direction | Reset fixture: R\nHelp: F1 / ? | Pause/menu: Esc\nWorld zoom: +/- | UI scale: [ / ]";
+const CONTROLS: &str = "Move: arrows / numpad / vi (ykuhlbjn)\nWait: . / numpad 5 / Space\nDoor: O, then direction | New run: R\nHelp: F1 / ? | Pause/menu: Esc\nWorld zoom: +/- | UI scale: [ / ]";
 
 #[derive(Component)]
 struct HudText;
@@ -151,7 +151,7 @@ fn refresh(
                 "HELP - gameplay paused\n\n{CONTROLS}\n\nCyan square: player | Orange tall rectangle: other actor\nGrey: wall | Brown + bar: door | Dim: remembered terrain\nUnseen actors are hidden. Light/FOV are core-owned.\n\nOne key press, one intent; held keys do not repeat.\nO arms a directional door command; no time until direction.\nCombat, inventory, saves and final assets are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
             )
         } else if mode.overlay == Overlay::Menu {
-            "PAUSED - P1 fixture menu\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\n\nNo turns pass while browsing.\nClose this menu, then R to reset the fixture.\nFull options, saving and character creation are unavailable.".to_owned()
+            "PAUSED - P1 fixture menu\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\n\nNo turns pass while browsing.\nClose this menu, then R to start a new run.\nFull options, saving and character creation are unavailable.".to_owned()
         } else {
             String::new()
         };

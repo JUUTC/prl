@@ -35,6 +35,60 @@ final   = max(1, round(result))
 
 Spells use the school skill in place of the weapon skill and INT or WIS in place of DEX for accuracy. **Magic Resistance** gives targets glancing chance against spells and shortens hostile status effects.
 
+### P2 provisional implementation
+
+The P2 "Fight and retry" arena implements this pipeline in `prl_core` with
+integers only, in hundredths of HP ("centi-HP") and basis points (bp, 1/100 of a
+percent). All values are provisional: stats come straight from actor definitions
+in `assets/packs/prl/base.ron` (Q-019, Q-004), the armor order and the missing
+block step follow Q-009, and RNG use follows Q-016.
+
+1. `raw_c = damage × 100` (no mastery, skill or gear bonuses until P4).
+2. `crit_bp = clamp(500 + (acc − eva) × 50, 100, 7500)`; one roll. On a crit,
+   `raw_c = raw_c × crit_multiplier_pct / 100` (default 150) and **no glance roll
+   is made**.
+3. Otherwise `glance_bp = clamp(1000 + (eva − acc) × 200, 0, 6000)`; one roll; a
+   glance halves `raw_c` (integer division).
+4. No block step: no shields exist in P2 (Q-009). The code marks where it goes.
+5. Armor: `flat_c = armor × 10`; `armor_bp = min(8500, armor × 1_000_000 /
+   (armor × 100 + 10 × raw_c))` using `raw_c` **after** crit/glance and **before**
+   flat armor (armor 0 → 0%); `after_c = max(0, raw_c − flat_c) × (10000 −
+   armor_bp) / 10000`.
+6. `final = max(1, (after_c + 50) / 100)` (round half up). HP saturates at 0.
+
+A roll succeeds when `(next_u32 × 10000) >> 32 < chance_bp` on the run's
+`ChaCha8` combat stream. Each attack consumes one word on a crit and two
+otherwise; rejected commands consume none. The `Attacked` outcome reports `raw`
+(post crit/glance, pre-armor, rounded), `mitigated` (`raw − damage`, floored at
+0) and `damage`.
+
+The worked examples are formula cases using the first-draft stats in brackets
+(they match the unit tests). The shipped arena numbers are tuned separately in
+`base.ron`. Current tuning: player 40 HP, Shambler 12, Skeleton 8, Grave rat 5
+damage. Holding the door wins about 78% of seeds 1–50; charging into the hall
+wins about 4% (see the ignored `report_naive_door_fight_win_rate` probe).
+
+| Example | Working (centi-HP) | Final |
+|---|---|---|
+| Skeleton (5) hits player (armor 10) | 500 → armor 1666 bp; (500 − 100) × 0.8334 = 333 | 3 |
+| Skeleton crit on player | 750 → 1176 bp; 650 × 0.8824 = 573 | 6 |
+| Glancing Skeleton on player | 250 → 2857 bp; 150 × 0.7143 = 107 | 1 |
+| Player (7) hits Skeleton (armor 6) | 700 → 789 bp; 640 × 0.9211 = 589 | 6 |
+| Player crit on Grave rat (armor 0) | 1050 → 0 bp; 1050 | 11 |
+| Glancing Shambler (8) on player | 400 → 2000 bp; 300 × 0.8 = 240 | 2 |
+| Shambler crit on player | 1200 → 769 bp (1111 bp if pre-crit raw were used); 1100 × 0.9231 = 1015 | 10 |
+| Grave rat (3) on player | 300 → 2500 bp; 200 × 0.75 = 150 | 2 |
+| 1 damage vs armor 10 | 100 − 100 = 0 | 1 (minimum) |
+| Armor 100 vs 100 centi | 1_000_000 / 11_000 = 9090 bp → capped | 85% cap |
+
+Chance examples: player (acc 10) vs Skeleton (eva 4) crits on 800 bp and never
+glances; Skeleton (acc 6) vs player (eva 8) crits on 400 bp and glances on 1400 bp.
+
+Melee is bump-to-attack: moving into a Hostile actor attacks it, moving into a
+Passive actor is rejected as occupied, and the Q-008 corner rule rejects
+diagonal attacks exactly like diagonal moves. A non-player reduced to 0 HP is
+removed; the player stays on the map at 0 HP and the run ends (Q-021).
+
 ## Damage types
 
 | Type | Secondary effect (chance scales with damage) |

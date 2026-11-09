@@ -21,9 +21,10 @@ Status values: **Open**, **In progress**, **Blocked** (name the blocker),
 |---|---|---|---|---|
 | I-001 | Hands-on Windows launch of the packaged CI artifact | P0/P1 | Open | Needs the user on Windows; record build ID and hardware in playtest-plan.md. Q-013 |
 | I-002 | 4K and multiple UI scales readability check | P1 | Open | Needs a 4K display; Q-013 |
-| I-003 | Implement P2 combat pipeline, enemy AI, death and retry | P2 | In progress | Q-009 blocks shield block/facing only |
+| I-003 | Implement P2 combat pipeline, enemy AI, death and retry | P2 | In progress | Core rules done (combat, AI, death, new run, content-defined arena); combat presentation in UI/render pending. Q-009 blocks shield block/facing only |
 | I-004 | P2 placeholder attack/UI sound effects with mute and volume | P2 | Open | Only self-generated or licence-verified audio |
 | I-005 | Collect P2 hands-on findings (targeting, input, camera, readability, waiting) | P2 | Open | Record in playtest-plan.md before polishing |
+| I-007 | Retune the P2 arena from hands-on results | P2 | Open | Provisional: holding the door wins ~78% of seeds 1-50, charging ~4% (ignored balance probe in prl_core). Q-004/Q-019 |
 | I-006 | Decide the challenge model for combat skill gain | P4 | Blocked | Q-010 |
 
 ## Bugs

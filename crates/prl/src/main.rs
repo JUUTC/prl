@@ -78,7 +78,7 @@ fn content_path() -> Result<PathBuf, std::io::Error> {
     let packaged = executable
         .parent()
         .ok_or_else(|| std::io::Error::other("executable has no parent directory"))?
-        .join("assets/packs/prl/p1.ron");
+        .join("assets/packs/prl/base.ron");
     // Prefer an adjacent package even if its required content file is missing.
     if executable
         .parent()
@@ -86,5 +86,5 @@ fn content_path() -> Result<PathBuf, std::io::Error> {
     {
         return Ok(packaged);
     }
-    Ok(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl/p1.ron"))
+    Ok(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl/base.ron"))
 }
