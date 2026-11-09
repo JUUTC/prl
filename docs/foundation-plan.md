@@ -101,10 +101,12 @@ stream is part of the snapshot. Document the hash/encoding and RNG/version choic
 in Q-016. Avoid unspecified language hashes, ECS iteration order, wall-clock time
 and random UUIDs for rules. IDs and allocator state must round-trip too.
 
-P1's snapshot test serializes/restores supported state into a new headless world
-with different ECS entity allocation. It checks the next command's outcomes and
+P1's snapshot test must serialize/restore supported state into a new headless world
+with different ECS entity allocation, then check the next command's outcomes and
 canonical state hash. This is a narrow compatibility proof, not a production
-save file or a promise to preserve every pre-release format.
+save file or a promise to preserve every pre-release format. **Current status:**
+the existing tests compare RON round-trip and logical snapshot equality only;
+the fresh-ECS-world and canonical-hash checks are still open (backlog I-008, Q-016).
 
 P4 adds atomic file writes, recovery and death invalidation around that boundary.
 Version snapshots from their first use; incompatible state must fail explicitly.

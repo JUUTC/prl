@@ -54,9 +54,9 @@ shapes are not production approvals. Diagonal collision remains Q-008.
 - Big bad: Lich-Emperor with spreading undead blight.
 - Blight spreads over time (difficulty-scaled), can be pushed back.
 - Pantheon: required only for Clerics/Paladins.
-- Art: 64×64 tiles with integer zoom (4K-ready); DCSS CC0 32×32 tiles as 2× placeholders until original art.
-- Palette: locked ramp-based PRL palette (~24 ramps × 6–8 shades, ~150–190 colours), CI-checked.
-- Fonts: Pixelify Sans + Silkscreen (OFL); title font later.
+- Art: 64×64 tiles with integer zoom (4K-ready); DCSS CC0 32×32 tiles as 2× placeholders until original art (not yet imported; licence verification pending, Q-014).
+- Palette: locked ramp-based PRL palette (~24 ramps × 6–8 shades, ~150–190 colours), CI-checked. This is the target; no palette is locked yet (Q-014/Q-018).
+- Fonts: Pixelify Sans + Silkscreen (OFL); title font later. Not yet integrated; placeholder UI uses Bevy's Fira Mono.
 - UI: bevy_ui for the game; bevy_egui only for dev tools behind a feature flag.
 - Tone: grimdark-hopeful high fantasy; terse, archaic-lite prose.
 - Character art baseline: Gravebound; two unlabeled silhouettes, five looks per race/silhouette, actual equipped items and gear improvements visible independently of skill-derived PL.

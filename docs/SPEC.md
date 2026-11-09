@@ -195,12 +195,13 @@ expansion requires explicit approval of a finished in-world reference.
 - **Action coverage:** idle, walk, melee attack, archery draw/release, crafting, mining, tree chopping, gathering, eating, drinking, healing, and casting require dedicated action poses. Different crafting disciplines and weapon-specific actions can extend those families. Presentation never advances or gates game time.
 - **World asset coverage:** spell cast/travel/impact effects, distinct arrow appearances, monsters/enemies, townsfolk, animals (including pack animals), standing/falling/felled trees, intact/depleted ore, crafting stations, and food/drink props share the Gravebound direction. Visual arrow studies do not establish new damage or affix rules.
 - **Atmosphere/parallax:** subtle layered fog and drifting ash may use differential camera motion for depth. Terrain, characters, structures, resource nodes, and interactables stay grid-anchored. Preserve character/gear and targeting readability; provide reduced-motion and atmosphere-off controls. These effects are presentation-only, not a side-on or isometric camera change.
-- **Palette:** a locked, ramp-based PRL palette (~24 hue ramps × 6–8 shades, ~150–190 colours), extended from a Lospec base and checked in CI.
-- **Fonts:** Pixelify Sans (UI/body) and Silkscreen (small labels/numbers), both OFL; a fantasy display font for titles will be chosen later.
+- **Palette (target):** a locked, ramp-based PRL palette (~24 hue ramps × 6–8 shades, ~150–190 colours), extended from a Lospec base and checked in CI. *Status:* not yet locked. The [P0 candidate](style/gravebound-p0.md#palette-candidate) is an unapproved original proposal; the proposed seed (Resurrect 64 by Kerrie Lake) has unverified reuse terms. Do not install a palette or CI check until approved (Q-014/Q-018).
+- **Fonts (target):** Pixelify Sans (UI/body) and Silkscreen (small labels/numbers), both OFL; a fantasy display font for titles will be chosen later. *Status:* the gameplay placeholder UI still uses Bevy's bundled Fira Mono (credited in `assets/CREDITS.md`).
 - Hi-res UI elements (item icons, portraits); lighting/shader effects, particles.
 - Idle animations 2–4 frames; hit flashes; per-biome tilesets; light-radius rendering.
 - **Audio:** basic SFX (combat, spells, UI, footsteps, ambience loops) in v1; music in a later milestone.
-- **Art sourcing:** placeholder art is the CC0 subset of the Dungeon Crawl Stone Soup 32×32 tiles, shown at 2× until original 64×64 art replaces it. Every third-party asset's licence is tracked in `assets/CREDITS.md`.
+- **Art sourcing:** placeholder art may use the CC0 subset of the Dungeon Crawl Stone Soup 32×32 tiles, shown at 2× until original 64×64 art replaces it, once the subset's licence is verified. *Status:* no DCSS tiles are imported; gameplay builds use repository-owned procedural shapes. Every third-party asset's licence is tracked in `assets/CREDITS.md`.
+- **Placeholder rendering:** disposable gameplay placeholders must still respect the approved perspective rules where cheap to do so (for example, no visible floor-grid seams); they do not establish art direction.
 
 ## 15. Milestones
 
@@ -215,6 +216,11 @@ art quality gate or a gameplay milestone.
 
 Gameplay P1 ("Walk and see") and art P1 ("Finish one reference character") are
 separate gates. Disposable gameplay placeholders do not approve production art.
+
+**Current status (2026-11-09):** gameplay P1 is implemented provisionally
+(Windows hands-on acceptance pending); P2 combat core rules, enemy AI, death and
+new run are implemented with presentation pending. Art P0 is awaiting review.
+Track open work and defects in [backlog.md](backlog.md).
 
 | # | Milestone | Scope |
 |---|---|---|
