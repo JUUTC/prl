@@ -186,3 +186,132 @@ too busy (I-021); skeleton arms are too short (I-022); confirm that 64×64 gives
 recognisable sprites with hand-pixelled art (Q-028). Held-key movement (I-023)
 must read as continuous walking. See `docs/backlog.md` and
 `docs/open-questions.md`.
+
+## 8. Artist-light pipeline investigation (2026-11-09)
+
+**Recommendation, not an approved replacement for P0:** use rigged 3D sources
+and an automated Blender render/export step to produce the existing 2D asset
+contract. There will not be a dedicated asset artist. Prefer reusable rigs and
+motions over independently generated animation frames. AI-generated geometry
+is a candidate input, not a guarantee of correct anatomy, skin weights or style.
+Do not install assets, change the tile grid, soften production edges or replace
+the renderer on the strength of this investigation.
+
+This is a documentation-based shortlist, not a visual benchmark. Official
+documentation was located through web search; direct page retrieval failed
+with DNS errors in this session. Conflicting comparison-site claims were not
+used to establish prices or supported rigs. No vendor account, Azure subscription,
+generation, export or animation was exercised. Exact prices, deployment access
+and redistribution rights must be checked before expenditure or import.
+
+### Fit against PRL
+
+| Candidate | Relevant evidence | Assessment |
+|---|---|---|
+| Tripo generation + rigging/animation API | Developer docs describe humanoid and non-humanoid rigging, a compatibility check, animation retargeting and GLB/FBX outputs [1] | First AI candidate for the mixed creature roster. A supported rig type does not establish that rat anatomy, exposed skeleton bones, grips or required work animations will succeed. API billing is separate from the web product [2] |
+| Meshy generation + rigging/animation API | Rigging API documents standard textured humanoid/bipedal inputs; animation follows rigging [3] | Humanoid comparison/fallback, not the default solution for rats and other animals. Do not infer API quadruped support from marketing for other product surfaces |
+| Azure Foundry image models | Microsoft documents OpenAI image generation and FLUX deployment [4] | Useful for candidate reference images, props and appearance studies. These APIs produce images, not a rigged, interchangeable equipment system; independent frame generation is not the recommended animation path |
+| Microsoft TRELLIS / Foundry TRELLIS NIM catalog entry | Research project generates 3D assets; a NIM entry is listed in the catalog [5] | Azure-hosted geometry experiment if eligible GPU capacity and terms permit. Does not itself solve skeletal rigging or animation. A catalog entry is not evidence of a cheap serverless endpoint or access in this subscription |
+| Rodin / Hyper3D | Vendor describes animation-oriented, rigging-ready meshes [6] | Secondary geometry option. "Rigging-ready" is not a demonstrated automatic character-to-animation pipeline; not the first spend for this requirement |
+| Existing CC0 rigs and motions | KayKit Skeletons and Quaternius Universal Animation Library offer animated assets/motions [7] | Best low-risk control and possible reusable animation source after verifying the exact downloads. Their stylised appearance is not an approved Gravebound replacement, and different skeletons are not automatically compatible |
+| Three.js / Babylon.js or code-generated Blender geometry | Rendering, scene and skeletal-animation tools, not inherently trained asset generators | Suitable for preview or controlled construction. Coding agents can operate them, but the library alone does not supply convincing anatomy, weight transfer or topology. Another web runtime is unnecessary for the shipped Bevy game |
+
+Blender can render frame sequences in background mode and import/export animated
+glTF [8]. Use a fixed orthographic camera, screen-upper-left lighting, transparent
+output and a fixed foot anchor. Render both facing poses with the correct
+anatomical equipment assignments; never flip the finished composite. Do not
+assume rotating the whole model preserves the intended near/far equipment
+readability without review.
+
+**Largest production risk: equipment, not generating one impressive monster.**
+Generating an armoured character commonly bakes clothing and weapons into one
+mesh. The production route must retain separate equipment and compatible rigs,
+fit different bodies, support dual wield and two-handed grips, and handle
+occlusion. Baking every complete loadout would multiply appearance combinations.
+Layered exports need depth/occlusion information or bounded pose families; a
+single flattened sheet cannot prove the art P2 attachment gate.
+
+Mixamo is an optional humanoid motion source, not a universal creature rigger.
+Adobe permits use in games [9], but that is not permission to relicense raw
+animation files as MIT/CC0 or place them in a freely reusable asset repository.
+Verify source and rendered-output distribution terms before choosing it.
+
+### Azure credit route and limits
+
+The reported $150 monthly Azure credit makes an **Azure-first experiment** worth
+trying, not a reason to run a GPU endpoint continuously.
+
+- Establish the actual offer type first. If these are Visual Studio credits,
+  Microsoft's published benefit is for dev/test and excludes third-party branded
+  and Marketplace products [10]. Do not assume asset production for release is
+  covered merely because a visual experiment is covered.
+- Models sold directly by Azure and partner Marketplace offers have different
+  deployment/billing paths [11]. Start by checking an eligible Azure OpenAI image
+  deployment for reference generation. FLUX's presence in Foundry does not, by
+  itself, prove this credit offer covers it.
+- TRELLIS self-hosting would consume GPU compute, storage and possibly other
+  meters. Check region, GPU quota/capacity, model/dependency licences, NIM terms
+  if used, and offer eligibility. Do not equate original TRELLIS, newer research
+  releases and the NIM distribution: each has its own requirements.
+- Tripo/Meshy external API balances are not Azure credits. No verified
+  credit-eligible Foundry deployment of either was established here.
+- Before a pilot, price the selected model/SKU, set a small explicit allowance
+  within the monthly balance after other usage, retain any spending limit, and
+  record metered usage. Budget alerts are not hard spending caps. Deallocate
+  compute or delete managed endpoints after the job; residual storage can still
+  cost money. Never remove the spending limit to make a deployment work.
+
+### Bounded proof before choosing a vendor (I-024 / I-025)
+
+1. Perform the Azure offer/quota/licence preflight (I-025). No keys belong in
+   source control, and no existing repository artwork/code needs to be sent to a
+   generation service. Use a generic, newly written test brief.
+2. Compare one generated skeleton with one verified, already-animated control.
+   Try Tripo first for the complete character path; use an eligible TRELLIS run
+   as a geometry comparison only if the preflight permits it. Use one fixed
+   camera/material treatment so renderer differences do not decide the result.
+3. Produce idle, walk and melee, both facings, at 64 and 128 source pixels with
+   the same world-space footprint. Compare crisp and selectively anti-aliased
+   versions at the same actual gameplay size, not only enlarged contact sheets.
+   A 128-pixel bake does not require changing the 64-pixel logical grid.
+4. Require no clipped action frames, stable foot anchors, readable bone/limb
+   silhouettes, correct hand identity and no obvious joint collapse or foot
+   sliding. Check a quieter idle (I-021) and plausible arm reach (I-022). Then
+   prove one Human with a separate weapon/shield and one coordinated two-handed
+   action before approving the route for equipment-bearing actors.
+5. Record attempts/rejections, total billed generation and GPU cost, retargeting
+   and cleanup time, source licences, export sizes and reproducible settings.
+   Compare cost per **accepted** asset, not per generated mesh. Repeated anatomy
+   or skinning repair is a failure for the no-dedicated-artist constraint.
+
+No whole-roster generation, cloud deployment or art-direction revision is
+authorised by this research. B-009 movement interpolation is a separate
+presentation defect; replacing sprites will not fix snap-then-walk behaviour.
+Q-028/Q-029 remain review gates, not accepted changes to the SPEC.
+
+### Sources
+
+Located 2026-11-09; recheck current terms and billing before use.
+
+[1]: https://developers.tripo3d.ai/en/models/rig
+[2]: https://developers.tripo3d.ai/en/docs/billing
+[3]: https://docs.meshy.ai/en/api/rigging
+[4]: https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/dall-e
+[5]: https://ai.azure.com/catalog/models/Trellis-NIM-microservice
+[6]: https://hyper3d.ai/use-cases/animation
+[7]: https://kaylousberg.com/game-assets/characters-skeletons
+[8]: https://docs.blender.org/manual/en/latest/advanced/command_line/render.html
+[9]: https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html
+[10]: https://learn.microsoft.com/en-us/visualstudio/subscriptions/faq/subscriber/azure/
+[11]: https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/deploy-foundry-models
+
+- [Tripo animation documentation](https://developers.tripo3d.ai/en/models/animation)
+  and [API pricing](https://developers.tripo3d.ai/en/pricing).
+- [Meshy animation documentation](https://docs.meshy.ai/en/api/animation),
+  [API pricing](https://docs.meshy.ai/en/api/pricing) and
+  [commercial-use guidance](https://help.meshy.ai/en/articles/9992001-can-i-use-meshy-assets-commercially-license-copyright-explained).
+- [Tripo commercial-use guidance](https://www.tripo3d.ai/help/privacy-policy/how-to-use-tripo-models-commercially).
+- [FLUX deployment guidance](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/use-foundry-models-flux).
+- [Microsoft TRELLIS research](https://microsoft.github.io/TRELLIS/).
+- [Quaternius Universal Animation Library](https://opengameart.org/content/universal-animation-library).
+- [Blender glTF import/export](https://docs.blender.org/manual/en/latest/addons/scene_gltf2.html).
