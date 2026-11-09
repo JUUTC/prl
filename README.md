@@ -63,12 +63,26 @@ Requires a recent stable Rust toolchain.
 cargo run -p prl
 ```
 
-The P1 build uses temporary shapes to demonstrate movement, doors, turns and
-fog of war. See [playtest guide](docs/playtest-guide.md) for controls and
+The P2 build uses placeholder art to demonstrate movement, doors, turns, fog of
+war, melee combat, death and new runs. See [playtest guide](docs/playtest-guide.md) for controls and
 scope. The Windows playtest workflow packages the executable, fixture content
 and a diagnostic launcher; its downloadable build requires no Rust installation.
 
 Linux needs: `pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev`.
+
+Windows needs the MSVC Rust toolchain (`x86_64-pc-windows-msvc`) and, in the
+Visual Studio Installer, the **Desktop development with C++** workload with
+**MSVC x64/x86 build tools (Latest)** and a **Windows 11 SDK**. If linking fails
+with `LNK1104: cannot open file 'msvcrt.lib'` (or `kernel32.lib`), the linker was
+found but its libraries were not:
+
+1. Check `VC\Tools\MSVC\<version>\lib\x64\msvcrt.lib` exists under the Visual
+   Studio folder shown in the error. If it does not, add the x64/x86 build tools
+   above (ARM64 or Spectre-only libraries are not enough); add the Windows SDK if
+   `kernel32.lib` is missing.
+2. If it exists, run `rustup update`, then build from the **x64 Native Tools
+   Command Prompt** for your Visual Studio version, which sets `LIB` for the linker.
+3. Run `cargo clean` before retrying so failed build scripts are rebuilt.
 
 ## License
 
