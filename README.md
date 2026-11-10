@@ -60,13 +60,17 @@ source round-trips and per-layer atlas exports independently of placeholder art.
 Requires a recent stable Rust toolchain.
 
 ```sh
-cargo run -p prl
+cargo run -p prl -- --dev-assets
 ```
 
 The P2 build uses placeholder art to demonstrate movement, doors, turns, fog of
 war, melee combat, death and new runs. See [playtest guide](docs/playtest-guide.md) for controls and
 scope. The Windows playtest workflow packages the executable, fixture content
 and a diagnostic launcher; its downloadable build requires no Rust installation.
+`--dev-assets` explicitly allows the development checkout's assets when none
+are adjacent to the executable. Without it, missing packaged assets fail at boot,
+even on a machine that has the source checkout. An adjacent `assets` directory
+always takes priority; incomplete or malformed package content never falls back.
 
 Linux needs: `pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev`.
 

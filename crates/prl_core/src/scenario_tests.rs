@@ -124,6 +124,11 @@ fn same_seed_and_commands_give_identical_snapshots_including_crits_and_glances()
         let (first, fight) = play_door_fight(seed);
         let (second, _) = play_door_fight(seed);
         assert_eq!(first.snapshot(), second.snapshot(), "seed {seed}");
+        assert_eq!(
+            first.snapshot().canonical_hash().unwrap(),
+            second.snapshot().canonical_hash().unwrap(),
+            "seed {seed}"
+        );
         crits += fight.crits;
         glances += fight.glances;
     }
@@ -136,6 +141,10 @@ fn different_seeds_diverge_in_combat_rolls() {
     let (first, _) = play_door_fight(1);
     let (second, _) = play_door_fight(2);
     assert_ne!(first.snapshot(), second.snapshot());
+    assert_ne!(
+        first.snapshot().canonical_hash().unwrap(),
+        second.snapshot().canonical_hash().unwrap()
+    );
 }
 
 #[test]

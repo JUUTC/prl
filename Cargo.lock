@@ -4306,6 +4306,7 @@ name = "prl_core"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "blake3",
  "prl_content",
  "rand_chacha",
  "rand_core",

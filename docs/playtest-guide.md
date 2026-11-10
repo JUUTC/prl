@@ -18,12 +18,17 @@ when you report a launch failure.
 For local development:
 
 ```sh
-cargo run -p prl
+cargo run -p prl -- --dev-assets
 ```
 
 Linux development also needs the system packages listed in the repository README.
 Windows is the first downloadable target. A Linux build working does not prove
 the Windows build works.
+The development flag opts into checkout assets only when no `assets` directory
+exists next to the executable. Packaged launches omit it and require adjacent
+assets, regardless of build profile or current working directory. Missing or
+malformed adjacent content produces the boot-error screen, never a checkout
+fallback.
 
 ## Goal
 
@@ -36,7 +41,7 @@ hostile enemies, each moving at a different speed:
 
 You are the figure with a shield and coif. Your character faces left or right
 from the horizontal part of each move or attack; straight up or down keeps the
-last facing. Creatures have only one placeholder facing so far.
+last facing. Creatures have independent left/right idle, walk and attack clips.
 
 Survive and kill them. If you die, start a new run straight away. Each new run
 uses the next seed.

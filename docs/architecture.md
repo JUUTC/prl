@@ -31,7 +31,12 @@ PRL is a **Cargo workspace** with a thin binary and focused library crates (stan
 
 ## Separation of logic and presentation
 
-Game rules must be **deterministic and headless-testable**. `prl_core` and `prl_gen` operate on the Bevy ECS `World` but are driven by explicit `Command`s (player intents), not by frame time, and never depend on rendering, UI or audio crates.
+Game rules must be **deterministic and headless-testable**. The current
+`prl_core` owns logical actors/maps in a `CoreState` resource, not actor entities.
+The Bevy plugin resolves explicit `Command`s (player intents); headless callers
+can use the same resolver without an ECS world. Core/generation never depend on
+frame time, rendering, UI or audio crates. Presentation entities map to logical
+IDs at runtime and are not serialized.
 
 The turn scheduler runs in a Bevy `FixedUpdate`-independent state machine:
 
@@ -58,6 +63,31 @@ All races, classes, skills, abilities, synergies, spells, items, affixes, monste
 - Save = seed + settings + NG+ tier + dungeon instance states (incl. reset counts) + overworld state (blight, houses, pack animals en route) + gameplay RNG state + entities.
 - Writes are atomic (write temp file, then rename).
 - Versioned format; incompatible versions refuse to load gracefully.
+
+### Current snapshot proof (I-008, Q-016)
+
+The version-2 in-memory DTO round-trips through compact RON. It is not a disk
+save implementation. A mid-combat snapshot is restored into a fresh headless
+Bevy app with different entity allocation for logical-ID stand-ins; queued
+commands produce identical RNG positions, ordered outcomes/messages and snapshots,
+including continuation through new run. No authoritative actor entity remapping
+is needed because rules state contains no `Entity` references.
+
+The provisional canonical digest is BLAKE3 with derive-key context
+`PRL core snapshot RON hash v1` over the UTF-8 bytes from `CoreSnapshot::to_ron()`
+(RON 0.10 compact serialization). It includes the DTO version, full validated
+content, ordered logical state, allocator, visibility/memory, portable RNG
+position, clock and retained feedback. Struct field order and `BTreeMap` ordering
+are canonical; presentation settings, handles and ECS IDs are absent. A base-arena
+golden digest detects encoding/content drift, and mutation tests cover future
+rule inputs. BLAKE3 is MIT/Apache-2.0/CC0 licensed and already in the dependency
+graph; core now uses it directly.
+
+This digest is for pre-release regression/replay comparisons, not a permanent
+cross-version save checksum. Content, DTO or message changes can change it.
+Review the golden fixture on such changes; version the hash context if the
+encoding changes. Q-016 still tracks generation-domain encoding before more
+seeded streams are introduced.
 
 ## Testing
 

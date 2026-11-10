@@ -105,8 +105,13 @@ P1's snapshot test must serialize/restore supported state into a new headless wo
 with different ECS entity allocation, then check the next command's outcomes and
 canonical state hash. This is a narrow compatibility proof, not a production
 save file or a promise to preserve every pre-release format. **Current status:**
-the existing tests compare RON round-trip and logical snapshot equality only;
-the fresh-ECS-world and canonical-hash checks are still open (backlog I-008, Q-016).
+I-008 is implemented: a mid-combat snapshot continues through the command plugin
+in a fresh headless app with different logical-ID entity allocations; outcomes,
+RNG positions, snapshots and canonical hashes match. Core actors are logical
+records in a resource, so entity stand-ins are not authoritative state.
+The provisional hash is domain-separated BLAKE3 over versioned compact RON,
+with a base-arena golden fixture; see [architecture.md](architecture.md#current-snapshot-proof-i-008-q-016).
+Q-016 remains provisional for future stream/domain encoding.
 
 P4 adds atomic file writes, recovery and death invalidation around that boundary.
 Version snapshots from their first use; incompatible state must fail explicitly.
@@ -176,6 +181,9 @@ Before approving P1:
    commands; core hashes remain equal.
 5. Pause at input, browse UI and lose focus; rules don't advance. Missing content
    and invalid intents have explicit feedback, not success-shaped fallbacks.
+   Packaged launches require adjacent assets in every build profile; only
+   explicit `--dev-assets` allows checkout assets when no adjacent assets exist
+   (B-006). An incomplete adjacent package never falls back.
 6. Launch the ZIP outside the source checkout on Windows. Record build identity,
    hardware, check results and unresolved questions in the playtest stage record.
 

@@ -11,12 +11,14 @@ Deliver a Windows build that can be downloaded, extracted and played without
 installing Rust. First prove that moving, exploring and fighting feel readable;
 then build a repeatable 10-15 minute dungeon run with loot and save/resume.
 
-The repository now has an initial P1 implementation: a fixed logical map,
-validated tile/actor fixture content, command/energy scheduling, recursive
-shadowcasting and memory, placeholder rendering, HUD/input and a versioned RON
-snapshot proof. A Windows packaging workflow is included. There is no combat,
-generation, production pack manifest or disk save yet; Windows hands-on
-acceptance remains pending. See [playtest-guide.md](playtest-guide.md).
+The repository now has P1 foundations and P2 fight/retry code: a fixed logical
+arena, validated tile/actor fixture content, command/energy scheduling, recursive
+shadowcasting and memory, deterministic melee/AI, death/new run, placeholder
+rendering/audio and HUD/input. The versioned RON snapshot proof now includes
+fresh-headless-ECS continuation and canonical hashes (I-008). A Windows packaging
+workflow is included. There is no generation, inventory, production pack manifest
+or disk save yet; Windows hands-on acceptance remains pending.
+See [playtest-guide.md](playtest-guide.md).
 
 The recorded UX decisions are 64x64 world tiles, integer zoom, independent UI
 scaling, `bevy_ui`, Pixelify Sans/Silkscreen, and cosmetic movement tweening.
@@ -78,7 +80,10 @@ build/commit identifier and a short launch/readme file as a downloadable ZIP.
 Test from a fresh folder whose working directory is not the repository. Surface
 missing assets and unsupported graphics explicitly, with an actionable log.
 
-Native Windows `cargo run -p prl` is the local playtest loop. Use debug builds
+Native Windows `cargo run -p prl -- --dev-assets` is the local playtest loop.
+Packaged launches omit the flag and require adjacent assets even in debug builds;
+missing or malformed package content cannot silently load the checkout (B-006).
+Use debug builds
 locally; measure a small playtest profile for downloadable builds. Benchmark
 dynamic linking/linker changes before adopting them (**Q-011**); distributed
 builds must not require a development DLL. Avoid repeated full release builds or
@@ -248,11 +253,23 @@ its code compiles.
 | Stage | Status | Evidence / remaining work |
 |---|---|---|
 | P0 | Implementation present | Packaging workflow and boot errors added; extracted-package Linux software-rendering smoke passed; Windows launch acceptance pending |
-| P1 | Implementation present | Commands/scheduler, shadowcasting, map memory, input/HUD/zoom and snapshot proof implemented; 36 workspace tests pass; Windows/4K acceptance pending |
+| P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Planned | Generation, pack loading and inventory not implemented |
 | P4 | Planned | Progression and persistence not implemented |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
+
+Foundation follow-up, 2026-11-09: B-006 now requires explicit checkout-asset
+opt-in, including for debug packages; missing/incomplete/malformed package tests
+exercise the actual content loader. I-008 adds the fresh-ECS/RNG/outcome/hash
+continuation and a versioned golden digest. These are automated foundation
+checks, not a packaged Windows launch or hands-on stage acceptance.
+Workspace format, clippy (`--all-targets`, warnings denied), tests (116 passed,
+one ignored balance probe) and warning-free API docs passed on Linux.
+The isolated core/content test run also passed (66 tests), without presentation
+feature unification.
+The separate local session owns Foundry preflight (I-025); no cloud/art pipeline
+work is part of this follow-up.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

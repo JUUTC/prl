@@ -54,6 +54,28 @@ impl CoreSnapshot {
         ron::to_string(self).map_err(|error| SnapshotError::Encoding(error.to_string()))
     }
 
+    /// Canonical digest for pre-release replay and restore comparisons (Q-016).
+    ///
+    /// BLAKE3 derive-key context `PRL core snapshot RON hash v1` hashes the UTF-8
+    /// compact RON returned by [`Self::to_ron`], including snapshot version,
+    /// content, logical IDs, RNG position and retained outcomes/messages.
+    /// Ordered maps and integer rules state make this independent of ECS
+    /// allocation, platform endianness and presentation settings.
+    ///
+    /// This is not a permanent save-compatibility or file-integrity contract.
+    /// DTO/content/serializer changes may change the digest; encoding changes
+    /// require reviewing the golden test and versioning the hash context.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SnapshotError::Encoding`] if serialization fails.
+    pub fn canonical_hash(&self) -> Result<[u8; 32], SnapshotError> {
+        let encoded = self.to_ron()?;
+        let mut hasher = blake3::Hasher::new_derive_key("PRL core snapshot RON hash v1");
+        hasher.update(encoded.as_bytes());
+        Ok(*hasher.finalize().as_bytes())
+    }
+
     /// Decodes a versioned RON snapshot DTO.
     ///
     /// # Errors
@@ -306,11 +328,38 @@ fn validate_map(data: &CoreStateData) -> Result<(), CoreError> {
 
 #[cfg(test)]
 mod tests {
+    use bevy::prelude::{App, Component, Entity, MinimalPlugins};
     use prl_content::{ActorBehavior, ContentId};
 
     use super::*;
     use crate::test_support::arena;
     use crate::{Command, Direction};
+
+    #[derive(Component)]
+    struct LogicalActor(ActorId);
+
+    fn headless_app(state: CoreState, unrelated_entities: usize) -> App {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, crate::PrlCorePlugin));
+        for _ in 0..unrelated_entities {
+            app.world_mut().spawn_empty();
+        }
+        // Stand-ins for presentation entities, not a second copy of rule state.
+        for actor in state.actors() {
+            app.world_mut().spawn(LogicalActor(actor.id()));
+        }
+        app.insert_resource(state);
+        app
+    }
+
+    fn actor_entities(app: &mut App) -> BTreeMap<ActorId, Entity> {
+        let world = app.world_mut();
+        world
+            .query::<(Entity, &LogicalActor)>()
+            .iter(world)
+            .map(|(entity, actor)| (actor.0, entity))
+            .collect()
+    }
 
     fn fight_commands() -> Vec<Command> {
         let mut commands = vec![
@@ -345,6 +394,119 @@ mod tests {
             assert_eq!(original.issue(command), restored.issue(command));
             assert_eq!(original.snapshot(), restored.snapshot());
         }
+    }
+
+    #[test]
+    fn fresh_ecs_restore_preserves_hash_rng_and_next_outcomes_despite_entity_allocation() {
+        let mut state = arena();
+        for command in fight_commands() {
+            state.issue(command);
+        }
+        assert!(!state.is_player_dead());
+        assert!(state.rng_position().word_pos > 0);
+        assert!(
+            state
+                .actors()
+                .any(|actor| matches!(actor.ai, AiState::Chasing { .. }))
+        );
+        let snapshot = state.snapshot();
+        let decoded = CoreSnapshot::from_ron(&snapshot.to_ron().unwrap()).unwrap();
+        assert_eq!(
+            snapshot.canonical_hash().unwrap(),
+            decoded.canonical_hash().unwrap()
+        );
+        let restored = CoreState::restore(decoded).unwrap();
+        let mut original_app = headless_app(state, 0);
+        let mut restored_app = headless_app(restored, 37);
+        let original_entities = actor_entities(&mut original_app);
+        let restored_entities = actor_entities(&mut restored_app);
+        assert_eq!(
+            original_entities.keys().collect::<Vec<_>>(),
+            restored_entities.keys().collect::<Vec<_>>()
+        );
+        for (actor, entity) in original_entities {
+            assert_ne!(entity, restored_entities[&actor]);
+        }
+        let mut saw_attack = false;
+        for command in std::iter::repeat_n(Command::Wait, 20).chain([
+            Command::NewRun,
+            Command::Move(Direction::East),
+            Command::Wait,
+        ]) {
+            let after = original_app
+                .world()
+                .resource::<CoreState>()
+                .outcomes()
+                .last()
+                .unwrap()
+                .sequence;
+            for app in [&mut original_app, &mut restored_app] {
+                app.world_mut()
+                    .resource_mut::<crate::CoreCommandQueue>()
+                    .push(command);
+                app.update();
+            }
+            let original = original_app.world().resource::<CoreState>();
+            let restored = restored_app.world().resource::<CoreState>();
+            assert_eq!(original.rng_position(), restored.rng_position());
+            assert_eq!(original.outcomes(), restored.outcomes());
+            assert_eq!(original.messages(), restored.messages());
+            assert_eq!(original.snapshot(), restored.snapshot());
+            assert_eq!(
+                original.snapshot().canonical_hash().unwrap(),
+                restored.snapshot().canonical_hash().unwrap()
+            );
+            saw_attack |= original.outcomes().iter().any(|outcome| {
+                outcome.sequence > after
+                    && matches!(outcome.kind, crate::OutcomeKind::Attacked { .. })
+            });
+        }
+        assert!(saw_attack, "continuation must consume combat RNG");
+    }
+
+    #[test]
+    fn canonical_hash_covers_future_rule_inputs_and_retained_feedback() {
+        let snapshot = arena().snapshot();
+        let expected = snapshot.canonical_hash().unwrap();
+        let mut variants = Vec::new();
+        let mut rng = snapshot.clone();
+        rng.state.rng.word_pos += 1;
+        variants.push(rng);
+        let mut allocator = snapshot.clone();
+        allocator.state.next_actor_id += 1;
+        variants.push(allocator);
+        let mut actor = snapshot.clone();
+        actor.state.actors.get_mut(&ActorId::new(1)).unwrap().hp -= 1;
+        variants.push(actor);
+        let mut clock = snapshot.clone();
+        clock.state.clock.ticks += 1;
+        variants.push(clock);
+        let mut memory = snapshot.clone();
+        memory.state.map.remembered.fill(None);
+        variants.push(memory);
+        let mut log = snapshot.clone();
+        log.state.log.record(
+            crate::OutcomeKind::ActorWaited {
+                actor: ActorId::new(1),
+            },
+            None,
+        );
+        variants.push(log);
+        let mut content = snapshot.clone();
+        content.state.pack.id = ContentId::new("test", "different_pack").unwrap();
+        variants.push(content);
+        for changed in variants {
+            assert_ne!(expected, changed.canonical_hash().unwrap());
+        }
+    }
+
+    #[test]
+    fn canonical_hash_has_a_versioned_golden_for_the_base_arena() {
+        let hash = arena().snapshot().canonical_hash().unwrap();
+        assert_eq!(
+            blake3::Hash::from_bytes(hash).to_hex().as_str(),
+            "5c7172cf2a88a546f29715970d26ce89eb168b013f1f535047f2434877a711e1"
+        );
     }
 
     #[test]

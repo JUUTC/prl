@@ -9,6 +9,7 @@ repository.workspace = true
 
 [dependencies]
 bevy.workspace = true
+blake3.workspace = true
 prl_content.workspace = true
 rand_chacha.workspace = true
 rand_core.workspace = true

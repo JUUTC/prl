@@ -1,10 +1,11 @@
 //! PRL game binary: wires the engine and every PRL plugin together. Keep this thin.
 
 use bevy::prelude::*;
-use std::path::PathBuf;
+
+mod assets;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let pack_path = content_path()?;
+    let pack_path = assets::content_path()?;
     let state = prl_core::CoreState::load_demo(&pack_path);
     let build = option_env!("PRL_BUILD_ID").unwrap_or("local development");
     let mut app = App::new();
@@ -103,20 +104,4 @@ fn show_boot_failure(mut commands: Commands<'_, '_>, failure: Res<'_, BootFailur
             ..default()
         },
     ));
-}
-
-fn content_path() -> Result<PathBuf, std::io::Error> {
-    let executable = std::env::current_exe()?;
-    let packaged = executable
-        .parent()
-        .ok_or_else(|| std::io::Error::other("executable has no parent directory"))?
-        .join("assets/packs/prl/base.ron");
-    // Prefer an adjacent package even if its required content file is missing.
-    if executable
-        .parent()
-        .is_some_and(|path| path.join("assets").exists())
-    {
-        return Ok(packaged);
-    }
-    Ok(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl/base.ron"))
 }
