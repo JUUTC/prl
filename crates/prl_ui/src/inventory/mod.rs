@@ -9,6 +9,7 @@ use prl_core::{
 
 use crate::input::{Overlay, UiMode};
 
+mod details;
 mod packing;
 #[cfg(test)]
 mod tests;
