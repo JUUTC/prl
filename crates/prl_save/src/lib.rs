@@ -1,12 +1,13 @@
 //! Persistence: character saves, crash-safety checkpoints, the meta-progression
 //! profile and morgue files. The headless snapshot store provides versioned,
 //! validated atomic replacement, provisional checkpoints, quit-save and
-//! death-barrier recovery. Profiles and morgue files remain future work.
+//! death-barrier recovery and text morgues. Profiles remain future work.
 
 use bevy::app::OnAppExitSystems;
 use bevy::prelude::*;
 use prl_core::{CoreSet, CoreState, OutcomeKind};
 
+mod morgue;
 mod store;
 
 pub use store::{SaveError, SnapshotStore};
@@ -26,6 +27,20 @@ mod tests {
             .insert_resource(controller)
             .add_plugins((PrlCorePlugin, PrlSavePlugin));
         app
+    }
+
+    fn dead_arena() -> CoreState {
+        let mut dead = CoreState::demo().unwrap();
+        dead.issue(Command::Move(prl_core::Direction::East));
+        dead.issue(Command::Move(prl_core::Direction::East));
+        dead.issue(Command::OpenDoor(prl_core::Direction::East));
+        for _ in 0..2000 {
+            if dead.is_player_dead() {
+                return dead;
+            }
+            dead.issue(Command::Wait);
+        }
+        panic!("arena player did not die");
     }
 
     fn route_to_exit(state: &CoreState) -> Vec<prl_core::Direction> {
@@ -152,17 +167,7 @@ mod tests {
         let store = SnapshotStore::new(directory.path().join("slot.ron"));
         let previous = CoreState::demo().unwrap();
         store.write(&previous).unwrap();
-        let mut dead = previous.clone();
-        dead.issue(Command::Move(prl_core::Direction::East));
-        dead.issue(Command::Move(prl_core::Direction::East));
-        dead.issue(Command::OpenDoor(prl_core::Direction::East));
-        for _ in 0..2000 {
-            if dead.is_player_dead() {
-                break;
-            }
-            dead.issue(Command::Wait);
-        }
-        assert!(dead.is_player_dead());
+        let dead = dead_arena();
 
         let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
             "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
@@ -172,6 +177,12 @@ mod tests {
         let mut app = app_with_state(dead, store.clone());
         app.insert_resource(factory);
         app.update();
+        let archives: Vec<_> = std::fs::read_dir(store.morgue_directory())
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .collect();
+        assert_eq!(archives.len(), 1);
+        let report = std::fs::read_to_string(&archives[0]).unwrap();
         assert!(
             store
                 .load()
@@ -188,6 +199,7 @@ mod tests {
         let state = app.world().resource::<CoreState>();
         assert_eq!(state.run_number(), run + 1);
         assert_eq!(store.load().unwrap().unwrap().snapshot(), state.snapshot());
+        assert_eq!(std::fs::read_to_string(&archives[0]).unwrap(), report);
     }
 
     #[test]
@@ -207,6 +219,43 @@ mod tests {
                 .error
                 .as_deref()
                 .is_some_and(|error| error.contains("could not create temporary save"))
+        );
+    }
+
+    #[test]
+    fn failed_morgue_is_visible_and_retry_does_not_forget_pending_archive() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = SnapshotStore::new(directory.path().join("slot.ron"));
+        std::fs::write(store.morgue_directory(), "blocked archive directory").unwrap();
+        let dead = dead_arena();
+        let mut app = app_with_state(dead, store.clone());
+        app.insert_resource(prl_core::RunFactory::new(|seed| {
+            let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+                "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+            ))
+            .unwrap();
+            config.build(&prl_content::ContentPack::placeholder().unwrap(), seed)
+        }));
+        app.update();
+        assert!(app.world().resource::<PersistenceStatus>().error.is_some());
+        assert!(store.load().is_err());
+        app.world_mut()
+            .resource_mut::<CoreCommandQueue>()
+            .push(Command::NewRun);
+        app.update();
+        assert!(app.world().resource::<PersistenceStatus>().error.is_some());
+        assert!(store.load().is_err());
+
+        std::fs::remove_file(store.morgue_directory()).unwrap();
+        app.update();
+        assert!(app.world().resource::<PersistenceStatus>().error.is_none());
+        assert_eq!(
+            store.load().unwrap().unwrap().snapshot(),
+            app.world().resource::<CoreState>().snapshot()
+        );
+        assert_eq!(
+            std::fs::read_dir(store.morgue_directory()).unwrap().count(),
+            1
         );
     }
 
@@ -293,10 +342,6 @@ fn persist_state(
         outcome.sequence > controller.last_sequence
             && matches!(outcome.kind, OutcomeKind::FloorChanged { .. })
     });
-    let run_started = state.outcomes().iter().any(|outcome| {
-        outcome.sequence > controller.last_sequence
-            && matches!(outcome.kind, OutcomeKind::RunStarted { .. })
-    });
     controller.last_sequence = state
         .outcomes()
         .last()
@@ -305,7 +350,7 @@ fn persist_state(
         invalidate_dead_run(&state, &mut controller, &mut status);
         return;
     }
-    if run_started && state.run_number() > controller.last_saved_run {
+    if state.run_number() > controller.last_saved_run {
         if save(&state, &mut controller, &mut status) {
             controller.last_saved_run = state.run_number();
             controller.invalidated_run = None;
@@ -349,7 +394,11 @@ fn invalidate_dead_run(
         Ok(()) => {
             controller.invalidated_run = Some(state.run_number());
             status.error = None;
-            status.message = "death recorded".into();
+            status.message = "death and morgue recorded".into();
+            bevy::log::info!(
+                "Morgue preserved in {}",
+                controller.store.morgue_directory().display()
+            );
         }
         Err(error) => {
             status.error = Some(error.to_string());

@@ -117,7 +117,9 @@ On observed death, the controller writes a dead-run barrier before removing the
 old living slot. Startup gives that barrier precedence, builds seed + 1 through
 `RunFactory`, commits the new living run and then clears the barrier. A failed
 write is surfaced and the barrier remains whenever it was successfully written.
-Explorer respawn, profile, morgue and skills remain later P4 work.
+Text morgues are now preserved before removing the old living slot and before
+clearing the barrier (I-031). Explorer respawn, profile and skills remain later
+work.
 
 Q-012's interval remains provisional. A hard crash can roll back up to 19
 committed actions (or progress since the most recent floor transition); there
@@ -127,6 +129,34 @@ command protocol and does not claim crash-proof permadeath or sudden-power-loss
 durability. A save failure is shown while the application remains open and
 reported in logs; a failed death-barrier write cannot establish the normal
 no-resurrection guarantee.
+
+### Current dead-run morgues (I-031)
+
+Each save slot owns a sibling directory, for example
+`PRL/character.morgues/`. Reports are UTF-8 text with a format-1 heading and
+`run-<number>-seed-<seed>-<canonical-dead-snapshot-hash>.txt` filenames.
+This keeps separate slots and different terminal snapshots from overwriting
+one another. The report includes engine version and snapshot fingerprint, seed,
+run, pack/map/floor, clock/actions, crypt objective status, fatal attacker when
+retained, equipped/backpack items using known-only labels, and recent messages.
+It does not expose ground loot or unknown affixes.
+
+The bounded outcome/message log is not a full replay or a lifetime kill counter.
+Reports explicitly label unavailable cause information and unimplemented
+skills/settings/kill totals rather than inventing values. Full terminal-run
+accounting (including abandonment) and an in-game history screen remain I-032.
+
+The death barrier is committed **first**. The report then uses the existing
+bounded temporary-write/file-sync mechanism with a no-clobber publication;
+Unix directory sync also covers directory creation and report publication.
+Retrying an identical snapshot accepts only an identical existing report.
+A conflicting/corrupt report is preserved and produces an explicit error.
+On startup, a barrier left before archiving recreates the report before building
+the new run; a living new-run save cannot clear the barrier until the dead run's
+report is preserved. Archive failures surface through the existing save
+error/HUD path and leave the barrier in place for recovery. No new gameplay
+snapshot shape, RNG input or game-time cost is introduced. The existing Q-012
+hard-crash and Windows power-loss limitations still apply.
 
 ### Current snapshot proof (I-008, Q-016)
 

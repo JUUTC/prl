@@ -19,7 +19,8 @@ fresh-headless-ECS continuation and canonical hashes (I-008). A Windows packagin
 workflow is included. P3 now boots a seeded two-floor crypt with persistent
 stairs/return travel, loot/equipment, consumables, examine and a guardian endpoint
 (I-012/I-017/I-026/I-027). P4 now adds playable single-slot Continue,
-checkpoint/quit-save and death-barrier recovery (I-030); skills and production
+checkpoint/quit-save and death-barrier recovery (I-030), plus persistent text
+dead-run morgues (I-031); skills and production
 pack manifests remain deferred. Windows hands-on acceptance remains pending.
 See [playtest-guide.md](playtest-guide.md).
 
@@ -191,7 +192,12 @@ clock, floors, inventory and feedback. It uses atomic writes at the configured
 checkpoint boundaries and on quit. Test interruption during writing,
 incompatible/corrupt saves, resume equivalence and death-barrier recovery.
 Resolve checkpoint frequency via **Q-012**; profile, morgue, skills and general
-content-pack compatibility are not part of this increment.
+content-pack compatibility are not part of the save-lifecycle increment.
+I-031 now adds dead-run text reports before barrier cleanup, with seed,
+clock/actions, location, cause, carried gear and recent messages. Full lifetime
+kill accounting, skills/settings records, abandoned-run records and the history
+screen remain I-032; the bounded recent log must not be presented as complete
+run history. These reports do not close P4's progression gate.
 
 ### P5 - Package and evaluate
 
@@ -285,7 +291,7 @@ its code compiles.
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
-| P4 | Playable persistence slice implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery; full Linux gates and Windows workflow tests/build/package pass. Q-012 remains provisional; crash window, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and morgue remain open |
+| P4 | Playable persistence and dead-run reports implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery. I-031 adds persistent text morgues. Q-012 remains provisional; crash window, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and full run accounting/history (I-032) remain open |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
 Foundation follow-up, 2026-11-09: B-006 now requires explicit checkout-asset

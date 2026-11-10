@@ -227,9 +227,14 @@ comparisons share one stat evaluator; ground labels use the Default loot filter.
 The [P3 subset](items-and-crafting.md#current-p3-subset) documents reversible
 limits: fixed supplies/affixes, no stacks or curses, a hard carry cap before
 STR-derived encumbrance, frozen inactive floors and run-local IDs (Q-015/Q-019).
-These do not replace the full rules above or mark M3/M5 complete. P4 now wires the headless atomic snapshot storage API (I-029) into automatic
+These do not replace the full rules above or mark M3/M5 complete. P4 now wires
+the headless atomic snapshot storage API (I-029) into automatic
 Continue, quit-save, provisional 20-action/floor checkpoints and death-barrier
-recovery (I-030). The interval remains provisional under Q-012; hard crashes
+recovery (I-030). I-031 adds text morgues for dead runs: seed, run, elapsed
+time/actions, floor, cause, carried gear and recent messages survive retry and
+startup recovery. Lifetime kill totals, skills, selectable settings, abandoned
+run records and the history UI are not yet implemented (I-032).
+The interval remains provisional under Q-012; hard crashes
 can lose actions since the last checkpoint, and a crash between death resolution
 and the barrier write can still expose the previous checkpoint. This is not a
 power-loss or hands-on packaged Windows Continue acceptance claim; Windows CI

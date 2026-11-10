@@ -2,7 +2,7 @@
 
 This build tests a seeded two-floor crypt: exploring, fighting, looting, equipping,
 using consumables, returning upstairs and retrying after death. It is not the full
-game: there are no skills, profile, morgue, overworld, towns or campaign. The
+game: there are no skills, profile, overworld, towns or campaign. The
 sprites are a generated placeholder atlas of the project's own Gravebound
 studies; if it fails
 to load, the game draws coloured shapes instead. Sprites, shapes, colours, the
@@ -33,6 +33,14 @@ corruption or content incompatibility; it is not silently replaced.
 The 20-action interval is still provisional (Q-012). A hard crash can lose
 actions since the last checkpoint, and a crash immediately after death resolves
 but before its barrier is written can still leave the previous checkpoint.
+
+Death also writes a text report under `character.morgues` in the same PRL
+data directory. It records the run/seed, cause of death, floor, elapsed time,
+carried equipment and recent messages, and remains after retry. Skills and
+lifetime kills are explicitly untracked; there is no in-game history browser
+yet. Archive failures appear as save errors. If an existing report conflicts
+with recovery, preserve that file and the `.dead` barrier and report the error;
+the game will not silently overwrite it or resume the dead character.
 
 Linux development also needs the system packages listed in the repository README.
 Windows is the first downloadable target. A Linux build working does not prove
@@ -162,8 +170,9 @@ Combat numbers are provisional (`docs/combat.md`). Shield block and facing wait
 on Q-009. Gear bonuses now derive through one core function; actor base numbers
 remain provisional until P4 stats/skills (Q-019). Sounds are short waveforms
 generated in code at startup; with no audio device the game runs silently.
-Snapshots store logical state, independent of Bevy Entity allocations. Profile,
-morgue, general world/reset identities and NG+ are later work.
+Snapshots store logical state, independent of Bevy Entity allocations. Text
+dead-run morgues are implemented; full run totals/history, profile, general
+world/reset identities and NG+ are later work.
 Inactive crypt floors are frozen with no catch-up or respawning. The slice uses
 a temporary 60 kg hard pickup cap, no stacking/repacking, and only Main hand/Body
 slots; failed transfers never lose items. The repository's

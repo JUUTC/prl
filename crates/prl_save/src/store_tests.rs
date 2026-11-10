@@ -405,3 +405,148 @@ fn death_barrier_rejects_living_records_and_failed_cleanup_keeps_barrier() {
             .contains("death barrier")
     );
 }
+
+fn dead_arena() -> CoreState {
+    let mut state = CoreState::demo().unwrap();
+    state.issue(Command::Move(Direction::East));
+    state.issue(Command::Move(Direction::East));
+    state.issue(Command::OpenDoor(Direction::East));
+    for _ in 0..2000 {
+        if state.is_player_dead() {
+            return state;
+        }
+        state.issue(Command::Wait);
+    }
+    panic!("arena player did not die");
+}
+
+fn morgues(store: &SnapshotStore) -> Vec<PathBuf> {
+    fs::read_dir(store.morgue_directory())
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect()
+}
+
+#[test]
+fn morgue_preserves_dead_run_details_once_without_mutating_rules() {
+    let (_directory, store) = slot();
+    let dead = dead_arena();
+    let before = dead.snapshot();
+    store.record_death(&dead).unwrap();
+    let archives = morgues(&store);
+    assert_eq!(archives.len(), 1);
+    let report = fs::read_to_string(&archives[0]).unwrap();
+    let killer = dead
+        .outcomes()
+        .iter()
+        .find_map(|outcome| match outcome.kind {
+            prl_core::OutcomeKind::ActorDied { actor, killer } if actor == dead.player_id() => {
+                Some(killer)
+            }
+            _ => None,
+        })
+        .unwrap();
+    assert!(report.contains("PRL morgue - playtest report format 1"));
+    assert!(report.contains(&format!("Seed: {}\n", dead.seed())));
+    assert!(report.contains(&format!("Run: {}\n", dead.run_number())));
+    assert!(report.contains(&format!("Ticks: {}\n", dead.clock().ticks())));
+    assert!(report.contains(&format!(
+        "Committed player actions: {}\n",
+        dead.clock().player_actions()
+    )));
+    assert!(report.contains(dead.actor(killer).unwrap().name()));
+    assert!(report.contains("Lifetime kills: not tracked"));
+    assert!(report.contains("Skills: not implemented"));
+    assert_eq!(dead.snapshot(), before);
+    store.record_death(&dead).unwrap();
+    assert_eq!(morgues(&store), archives);
+    assert_eq!(fs::read_to_string(&archives[0]).unwrap(), report);
+}
+
+#[test]
+fn startup_recovers_missing_morgue_before_clearing_death_barrier() {
+    let (_directory, store) = slot();
+    let dead = dead_arena();
+    SnapshotStore::new(store.death_path())
+        .write_snapshot(&dead, true)
+        .unwrap();
+    assert!(!store.morgue_directory().exists());
+    let factory = RunFactory::new(|seed| Ok(crypt(seed)));
+    let next = store.recover_death(&factory).unwrap().unwrap();
+    assert!(!next.is_player_dead());
+    assert!(!store.death_path().exists());
+    assert_eq!(morgues(&store).len(), 1);
+    let report = fs::read_to_string(&morgues(&store)[0]).unwrap();
+    assert!(report.contains(&format!("Run: {}\n", dead.run_number())));
+    assert_eq!(store.load().unwrap().unwrap().snapshot(), next.snapshot());
+}
+
+#[test]
+fn failed_morgue_keeps_barrier_and_blocks_recovery_until_archive_is_writable() {
+    let (_directory, store) = slot();
+    store.write(&CoreState::demo().unwrap()).unwrap();
+    fs::write(store.morgue_directory(), "not a directory").unwrap();
+    let dead = dead_arena();
+    assert!(store.record_death(&dead).is_err());
+    assert!(store.death_path().exists());
+    assert!(store.load().is_err());
+    let factory = RunFactory::new(|seed| Ok(crypt(seed)));
+    assert!(store.recover_death(&factory).is_err());
+    assert!(store.death_path().exists());
+    fs::remove_file(store.morgue_directory()).unwrap();
+    store.recover_death(&factory).unwrap().unwrap();
+    assert!(!store.death_path().exists());
+    assert_eq!(morgues(&store).len(), 1);
+}
+
+#[test]
+fn new_run_cannot_clear_barrier_before_morgue_is_preserved() {
+    let (_directory, store) = slot();
+    let mut dead = dead_arena();
+    SnapshotStore::new(store.death_path())
+        .write_snapshot(&dead, true)
+        .unwrap();
+    fs::write(store.morgue_directory(), "not a directory").unwrap();
+    RunFactory::new(|seed| Ok(crypt(seed))).issue(&mut dead, Command::NewRun);
+    assert!(store.write(&dead).is_err());
+    assert!(store.death_path().exists());
+    assert!(store.load().is_err());
+    fs::remove_file(store.morgue_directory()).unwrap();
+    store.write(&dead).unwrap();
+    assert!(!store.death_path().exists());
+    assert_eq!(morgues(&store).len(), 1);
+}
+
+#[test]
+fn corrupt_existing_morgue_is_not_overwritten_or_silently_discarded() {
+    let (_directory, store) = slot();
+    let dead = dead_arena();
+    store.record_death(&dead).unwrap();
+    let path = morgues(&store).pop().unwrap();
+    fs::write(&path, "preserve this unexpected report").unwrap();
+    let error = store.record_death(&dead).unwrap_err().to_string();
+    assert!(error.contains("existing morgue differs"));
+    assert!(store.death_path().exists());
+    assert_eq!(
+        fs::read_to_string(path).unwrap(),
+        "preserve this unexpected report"
+    );
+    assert_eq!(morgues(&store).len(), 1);
+}
+
+#[test]
+fn morgues_are_scoped_to_the_slot_and_distinct_dead_snapshots_do_not_collide() {
+    let (_directory, first) = slot();
+    let second = SnapshotStore::new(first.parent().join("another.ron"));
+    let mut dead = dead_arena();
+    first.record_death(&dead).unwrap();
+    let original = morgues(&first).pop().unwrap();
+    let report = fs::read(&original).unwrap();
+    second.record_death(&dead).unwrap();
+    assert_ne!(first.morgue_directory(), second.morgue_directory());
+    assert_eq!(morgues(&second).len(), 1);
+    dead.issue(Command::Wait);
+    first.record_death(&dead).unwrap();
+    assert_eq!(morgues(&first).len(), 2);
+    assert_eq!(fs::read(original).unwrap(), report);
+}

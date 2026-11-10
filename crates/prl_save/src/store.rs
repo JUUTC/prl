@@ -94,6 +94,12 @@ impl SnapshotStore {
         &self.path
     }
 
+    /// Directory holding text morgues for this slot, alongside its save file.
+    #[must_use]
+    pub fn morgue_directory(&self) -> PathBuf {
+        self.path.with_extension("morgues")
+    }
+
     /// Validates and atomically replaces the slot with a living committed state.
     ///
     /// A unique temporary file is written and synchronized in the destination
@@ -113,7 +119,7 @@ impl SnapshotStore {
         self.write_snapshot(state, false)
     }
 
-    /// Records a durable death barrier before removing the previous living slot.
+    /// Records a durable death barrier and morgue before removing the living slot.
     ///
     /// On next startup the tombstone takes precedence and the supplied
     /// [`RunFactory`] must create a new run before the slot can be continued.
@@ -121,14 +127,16 @@ impl SnapshotStore {
     /// # Errors
     ///
     /// Returns [`SaveError`] if state is living, the barrier cannot be written,
-    /// or the old slot cannot be removed. A failed removal leaves the barrier
-    /// in place, so [`Self::load`] refuses to return the stale living save.
+    /// the morgue cannot be archived, or the old slot cannot be removed. Once
+    /// written, the barrier remains on later failure, so [`Self::load`] refuses
+    /// to return the stale living save.
     pub fn record_death(&self, state: &CoreState) -> Result<(), SaveError> {
         if !state.is_player_dead() {
             return Err(self.invalid("death barrier requires a dead run"));
         }
         let marker = Self::new(self.death_path());
         marker.write_snapshot(state, true)?;
+        self.archive_morgue(state)?;
         match std::fs::remove_file(&self.path) {
             Ok(()) => Self::sync_directory(self.parent())?,
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
@@ -160,6 +168,7 @@ impl SnapshotStore {
         if !dead.is_player_dead() {
             return Err(marker.invalid("death barrier contains a living run"));
         }
+        self.archive_morgue(&dead)?;
         match factory.issue(&mut dead, Command::NewRun) {
             CommandResult::Accepted { .. } => {}
             CommandResult::Rejected { .. } => {
@@ -309,7 +318,51 @@ impl SnapshotStore {
         {
             return Err(self.invalid("refusing to clear death barrier for a non-new run"));
         }
+        self.archive_morgue(&dead)?;
         self.clear_death_barrier()
+    }
+
+    fn archive_morgue(&self, dead: &CoreState) -> Result<(), SaveError> {
+        let fingerprint = dead
+            .snapshot()
+            .canonical_hash()
+            .map_err(|error| self.invalid(error.to_string()))?;
+        let fingerprint = blake3::Hash::from(fingerprint).to_hex().to_string();
+        let directory = self.morgue_directory();
+        match std::fs::create_dir(&directory) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(Self::io("create morgue directory", &directory, error)),
+        }
+        Self::sync_directory(self.parent())?;
+        let archive = Self::new(directory.join(format!(
+            "run-{}-seed-{}-{fingerprint}.txt",
+            dead.run_number(),
+            dead.seed(),
+        )));
+        let report = crate::morgue::summary(dead, &fingerprint);
+        if report.len() as u64 > MAX_FILE_BYTES {
+            return Err(archive.invalid("morgue exceeds the 16 MiB pre-release limit"));
+        }
+        let temp = archive.prepare(report.as_bytes())?;
+        match temp.persist_noclobber(archive.path()) {
+            Ok(_) => {}
+            Err(error) if error.error.kind() == io::ErrorKind::AlreadyExists => {
+                let mut existing = Vec::new();
+                File::open(archive.path())
+                    .and_then(|file| file.take(MAX_FILE_BYTES + 1).read_to_end(&mut existing))
+                    .map_err(|error| Self::io("read existing morgue", archive.path(), error))?;
+                if existing != report.as_bytes() {
+                    return Err(archive.invalid(
+                        "existing morgue differs from the death record; preserve it for review",
+                    ));
+                }
+            }
+            Err(error) => {
+                return Err(Self::io("publish morgue", archive.path(), error.error));
+            }
+        }
+        Self::sync_directory(&directory)
     }
 
     fn prepare(&self, bytes: &[u8]) -> Result<NamedTempFile, SaveError> {
