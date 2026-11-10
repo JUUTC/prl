@@ -38,6 +38,12 @@ all items shown). `V` bypasses label hiding; examine and manual pickup always
 bypass filtering, but never visibility/access rules. No auto-pickup, custom rule
 editor, optimizer or storage UI is implied (I-013 through I-018).
 
+Interaction design for this existing subset is proposed in
+[inventory-ux.md](inventory-ux.md), with an isolated clickable study. The game
+still uses text inventory; I-034/I-035 track Bevy delivery, and B-010 tracks the
+current hidden-type Identify-source lookup. No item rule/cost changes are made
+by the study.
+
 ## Rarity (Diablo-style)
 
 | Rarity | Colour / marker | Affixes | Notes |

@@ -176,6 +176,11 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 - Movement tweening is cosmetic only and never affects game time.
 - Key rebinding; colour-blind-friendly rarity markers (shape + colour).
 
+Inventory interaction proposal and staged delivery: [inventory-ux.md](inventory-ux.md)
+(I-033/I-034/I-035, Q-030/Q-031). The executable browser study uses synthetic
+items/actions; the playable Bevy inventory is still a text overlay. The proposal
+does not approve final art or add the target belt/bag/storage systems.
+
 ## 14. Art & Audio Direction
 
 Production requirements, decision status, asset contracts and dependency-ordered

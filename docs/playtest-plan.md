@@ -216,6 +216,8 @@ it does not delay the basic slice:
 | Part | When | Why then |
 |---|---|---|
 | `derive_stats`, containers, atomic transfers, basic compare tooltip | P3 | Loot/equip arrives at P3; retrofitting a second stats path later would let comparisons disagree with combat |
+| Inventory/item interaction design and clickable synthetic study (I-033) | Delivered; review before Bevy UX work | [Inventory UX](inventory-ux.md) defines equipment/backpack/details/ground, known-only comparisons, healing, explicit Identify, costs and failures; this is not the in-game UI |
+| Bevy read-only inventory workspace, then action journeys (I-034/I-035) | Bounded P3/P4 UX follow-up before P5 | Improve the existing two-slot/10x6 slice without importing post-P5 item breadth; Q-030 reviews commitment policy, B-010 tracks hidden Identify-source selection |
 | Full comparison view (sets, both weapon loadouts, reference target) | After P5, with more affixes/sets | Needs more item types than the P3 subset |
 | `ItemPredicate` rules and the Default loot-filter preset for ground labels | P3 | Ground loot arrives at P3; one rule language serves filters, auto-sort and optimizer constraints |
 | Custom loot filters, all presets, editor, auto-pickup, import/export | After P5, before or with the first town slice | Needs enough item variety for filtering to matter |
@@ -225,6 +227,10 @@ it does not delay the basic slice:
 
 Open choices are tracked as Q-022 to Q-027; work items as I-012 to I-018 in
 [backlog.md](backlog.md).
+
+Packing/dragging, rotations and stack splits remain I-028/Q-031; the study does
+not approve their command semantics. Inventory layout work preserves the separate
+art/Foundry effort and its production gates.
 
 ## Animation and UX contract
 

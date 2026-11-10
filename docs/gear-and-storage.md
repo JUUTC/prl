@@ -19,6 +19,11 @@ Main hand/Body and selected-item comparisons are implemented, as are the shared
 The rest of this document remains target design; see the exact
 [slice limits](items-and-crafting.md#current-p3-subset).
 
+The [inventory/item UX proposal](inventory-ux.md) describes the equipment,
+backpack, ground and persistent item-card workspace, including knowledge-safe
+comparison and action flows. Its browser study is mock data, not another stats
+path. Bevy delivery is I-034/I-035; optimizer/storage breadth remains after P5.
+
 ## Principles
 
 1. **One rules path.** Comparison, the optimizer, tooltips and real combat use
