@@ -453,3 +453,9 @@ idle-frame widget replacement and a high-scale footer hiding the workspace.
 This is developer interaction evidence, not human usability sign-off, real audio,
 4K or a packaged Windows launch. I-001/I-002/I-005 and the separate art gates
 remain open. I-036 and unknown-scroll/skill-risk brainstorming are not delivered.
+
+Windows workflow 42788438271 at implementation commit 9265bb7 also passed format,
+headless/workspace tests, strict lint, API docs, executable build, packaging and
+upload. Its artifact is
+`prl-windows-x86_64-9265bb7d5eecc9ff5d838cb75fc9304e46303dd2`.
+This verifies the downloadable Windows build, not a packaged Windows launch.

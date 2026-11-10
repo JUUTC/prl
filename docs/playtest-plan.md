@@ -440,6 +440,13 @@ high-scale footer overflow found in this smoke were fixed before delivery.
 See [inventory-ux.md](inventory-ux.md#native-workspace-verification-2026-11-10)
 for limits. Windows/4K/human UX/audio acceptance and separate art gates stay open.
 
+Delivery commit: 9265bb7. Native Windows workflow
+[42788438271](https://github.com/JUUTC/prl/actions/runs/42788438271) passed format,
+headless/workspace tests, strict lint, API docs, executable build, packaging and
+upload. The uploaded artifact is
+`prl-windows-x86_64-9265bb7d5eecc9ff5d838cb75fc9304e46303dd2`.
+No packaged Windows launch was performed by this session.
+
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.
 Housing, crafting, companions and NG+ remain later spec milestones. P0-P5 cover
