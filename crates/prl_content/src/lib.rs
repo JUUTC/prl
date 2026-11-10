@@ -6,6 +6,7 @@
 mod actor;
 mod error;
 mod id;
+mod item;
 mod map;
 mod pack;
 mod tile;
@@ -13,6 +14,9 @@ mod tile;
 pub use actor::{ActorBehavior, ActorDefinition, DEFAULT_CRIT_MULTIPLIER_PCT};
 pub use error::{ActorProblem, ContentError};
 pub use id::{ContentId, ContentIdError};
+pub use item::{
+    EquipSlot, ItemBonus, ItemCatalog, ItemDefinition, ItemKind, ItemPredicate, LootRule, Rarity,
+};
 pub use map::{MapDefinition, MapProblem, SpawnDefinition};
 pub use pack::{CONTENT_SCHEMA_VERSION, ContentPack};
 pub use tile::TileDefinition;

@@ -6,7 +6,7 @@ mod assets;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pack_path = assets::content_path()?;
-    let state = prl_core::CoreState::load_demo(&pack_path);
+    let state = load_playtest(&pack_path);
     let build = option_env!("PRL_BUILD_ID").unwrap_or("local development");
     let mut app = App::new();
     app.add_plugins(
@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .set(ImagePlugin::default_nearest())
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: format!("PRL P2 placeholders - {build}"),
+                    title: format!("PRL P3 placeholders - {build}"),
                     resolution: (1280, 900).into(),
                     ..default()
                 }),
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }),
     );
     let boot_error = match state {
-        Ok(state) => {
+        Ok((state, factory)) => {
             if let Some(pack) = pack_path.parent() {
                 app.insert_resource(prl_render::PlaceholderArtSource(pack.to_path_buf()));
                 // `assets/packs/prl` -> `assets`, which holds the OFL fonts.
@@ -31,6 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             app.insert_resource(state)
+                .insert_resource(factory)
                 .add_plugins((
                     prl_content::PrlContentPlugin,
                     prl_core::PrlCorePlugin,
@@ -60,6 +61,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(std::io::Error::other(format!("PRL exited with code {code}")).into())
         }
     }
+}
+
+fn load_playtest(
+    path: &std::path::Path,
+) -> Result<(prl_core::CoreState, prl_core::RunFactory), Box<dyn std::error::Error>> {
+    let base = prl_content::ContentPack::load_from_path(path)?;
+    let settings = path
+        .parent()
+        .ok_or_else(|| std::io::Error::other("pack path has no parent"))?
+        .join("data/dungeons/crypt_playtest.ron");
+    let source = std::fs::read_to_string(&settings)
+        .map_err(|error| std::io::Error::other(format!("{}: {error}", settings.display())))?;
+    let config: prl_gen::CryptPlaytest = ron::from_str(&source)
+        .map_err(|error| std::io::Error::other(format!("{}: {error}", settings.display())))?;
+    let state = config
+        .build(&base, 1)
+        .map_err(|error| std::io::Error::other(format!("{}: {error}", settings.display())))?;
+    Ok((state, config.factory(base)))
 }
 
 #[derive(Resource)]

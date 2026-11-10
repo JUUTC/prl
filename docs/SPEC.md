@@ -217,9 +217,19 @@ art quality gate or a gameplay milestone.
 Gameplay P1 ("Walk and see") and art P1 ("Finish one reference character") are
 separate gates. Disposable gameplay placeholders do not approve production art.
 
-**Current status (2026-11-09):** gameplay P1 is implemented provisionally
+**Current implementation:** gameplay P1 is implemented provisionally
 (Windows hands-on acceptance pending); P2 combat core rules, enemy AI, death and
 new run are implemented, with placeholder presentation awaiting a hands-on check.
+P3 now boots a seeded two-floor crypt with persistent return travel, a guardian
+endpoint, examine mode, a 10x6 first-fit backpack, Main hand/Body equipment,
+Normal/Magic gear, healing potions and Identify scrolls. Combat and known-only
+comparisons share one stat evaluator; ground labels use the Default loot filter.
+The [P3 subset](items-and-crafting.md#current-p3-subset) documents reversible
+limits: fixed supplies/affixes, no stacks or curses, a hard carry cap before
+STR-derived encumbrance, frozen inactive floors and run-local IDs (Q-015/Q-019).
+These do not replace the full rules above or mark M3/M5 complete. Disk saves,
+skills, campaign victory and general content-pack manifests remain later work.
+P2/P3 Windows hands-on/audio acceptance is still pending.
 Actors and terrain draw from the disposable Gravebound placeholder atlas; this
 does not complete art P1. Art P0 is awaiting review.
 Track open work and defects in [backlog.md](backlog.md).

@@ -61,7 +61,12 @@ pub(crate) fn accepted(command: Command) -> Option<String> {
         Command::Move(_) => Some("You move.".into()),
         Command::Wait => Some("You wait.".into()),
         Command::OpenDoor(_) => Some("You open the door.".into()),
-        Command::NewRun => None,
+        Command::NewRun
+        | Command::Stairs(_)
+        | Command::Transfer(_)
+        | Command::Quaff(_)
+        | Command::Identify { .. }
+        | Command::Drop(_) => None,
     }
 }
 
@@ -74,6 +79,16 @@ pub(crate) fn rejected(reason: RejectReason) -> String {
         RejectReason::NoClosedDoor => "There is no closed door there.".into(),
         RejectReason::PlayerDead => "You are dead. Start a new run.".into(),
         RejectReason::RunUnavailable => "A new run could not be built from content.".into(),
+        RejectReason::NoStairs => "There are no usable stairs in that direction here.".into(),
+        RejectReason::GuardianAlive => "Defeat the crypt guardian before leaving.".into(),
+        RejectReason::AlreadyCompleted => {
+            "This crypt is already cleared. Start a new run to try again.".into()
+        }
+        RejectReason::InvalidItem => "That item cannot be used for this action.".into(),
+        RejectReason::ItemInaccessible => "That item or container is not accessible here.".into(),
+        RejectReason::BackpackFull => "There is no room in the backpack for that shape.".into(),
+        RejectReason::TooHeavy => "That pickup would exceed your carrying limit.".into(),
+        RejectReason::NoEffect => "That would have no effect; no item or time spent.".into(),
     }
 }
 

@@ -127,9 +127,9 @@ fn consume_outcomes(
             || position_of(id).is_some_and(|position| state.is_visible(position))
     };
     let mut stacked: BTreeMap<ActorId, u8> = BTreeMap::new();
-    for outcome in fresh {
+    for outcome in floor_local_outcomes(fresh) {
         match &outcome.kind {
-            OutcomeKind::RunStarted { .. } => {
+            OutcomeKind::RunStarted { .. } | OutcomeKind::FloorChanged { .. } => {
                 effects.lunges.clear();
                 effects.flashes.clear();
                 stacked.clear();
@@ -202,6 +202,20 @@ fn consume_outcomes(
             _ => {}
         }
     }
+}
+
+fn floor_local_outcomes(fresh: &[prl_core::CoreOutcome]) -> &[prl_core::CoreOutcome] {
+    // Earlier spawns are still deferred and absent from the transient query.
+    let start = fresh
+        .iter()
+        .rposition(|outcome| {
+            matches!(
+                outcome.kind,
+                OutcomeKind::RunStarted { .. } | OutcomeKind::FloorChanged { .. }
+            )
+        })
+        .unwrap_or(0);
+    &fresh[start..]
 }
 
 fn last_seen(views: &Query<'_, '_, (&ActorView, &Sprite)>) -> BTreeMap<ActorId, LastSeen> {

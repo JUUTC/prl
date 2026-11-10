@@ -60,6 +60,8 @@ impl CoreState {
             rng: CombatRng::new(seed),
             clock: TurnClock::default(),
             log,
+            dungeon: None,
+            inventory: None,
         };
         state.refresh_visibility();
         state.log.record(

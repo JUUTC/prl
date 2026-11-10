@@ -1,5 +1,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use prl_core::{Command, CoreCommandQueue, CoreSet, CoreState, Direction, RunStatus};
+use prl_core::{
+    Command, CoreCommandQueue, CoreSet, CoreState, Direction, RunStatus, StairDirection,
+};
 
 /// Seconds a first `R` press waits for confirmation during a live run.
 pub(super) const CONFIRM_SECONDS: f32 = 2.0;
@@ -12,14 +14,19 @@ pub struct UiMode {
     /// App time when `R` was pressed during a live run, awaiting confirmation.
     pub(super) confirm_new_run: Option<f32>,
     focused: bool,
+    pub(super) selection: usize,
+    pub(super) look: Option<prl_core::Position>,
+    pub(super) show_all_loot: bool,
 }
 
-#[derive(Default, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Overlay {
     #[default]
     None,
     Help,
     Menu,
+    Inventory,
+    Look,
 }
 
 impl UiMode {
@@ -97,10 +104,43 @@ fn handle_input(
     } else if keys.just_pressed(KeyCode::BracketLeft) {
         scale.0 = (scale.0 - 0.25).max(0.75);
     }
+    if mode.overlay == Overlay::Inventory {
+        inventory_input(&keys, &mut mode, &mut queue, state.as_deref());
+        return;
+    }
+    if mode.overlay == Overlay::Look {
+        if let Some(direction) = pressed_direction(&keys)
+            && let Some(next) = mode.look.and_then(|position| position.offset(direction))
+            && state.as_ref().is_some_and(|core| {
+                next.x >= 0
+                    && next.y >= 0
+                    && next.x < i32::from(core.map().width())
+                    && next.y < i32::from(core.map().height())
+            })
+        {
+            mode.look = Some(next);
+        }
+        return;
+    }
     if mode.is_paused() {
         return;
     }
-    let dead = state.is_some_and(|core| core.run_status() == RunStatus::Dead);
+    gameplay_input(&keys, &mut mode, &mut queue, state.as_deref(), now);
+}
+
+fn gameplay_input(
+    keys: &ButtonInput<KeyCode>,
+    mode: &mut UiMode,
+    queue: &mut CoreCommandQueue,
+    state: Option<&CoreState>,
+    now: f32,
+) {
+    if !queue.is_empty() {
+        return;
+    }
+    let dead = state
+        .as_ref()
+        .is_some_and(|core| core.run_status() == RunStatus::Dead);
     if keys.just_pressed(KeyCode::KeyR) {
         mode.door = false;
         // A stray R must not abandon a live run; a dead run restarts at once.
@@ -116,10 +156,7 @@ fn handle_input(
         if keys.just_pressed(KeyCode::KeyY) {
             mode.confirm_new_run = None;
             queue.push(Command::NewRun);
-        } else if pressed_direction(&keys).is_some()
-            || keys.just_pressed(KeyCode::KeyO)
-            || is_wait(&keys)
-        {
+        } else if keys.get_just_pressed().next().is_some() {
             // Any other gameplay key cancels the prompt and is consumed.
             mode.confirm_new_run = None;
         }
@@ -130,11 +167,63 @@ fn handle_input(
         mode.door = false;
         return;
     }
+    if [
+        KeyCode::KeyI,
+        KeyCode::KeyX,
+        KeyCode::KeyG,
+        KeyCode::KeyV,
+        KeyCode::Comma,
+        KeyCode::Enter,
+    ]
+    .iter()
+    .any(|key| keys.just_pressed(*key))
+    {
+        mode.door = false;
+    }
+    if keys.just_pressed(KeyCode::KeyI) {
+        mode.overlay = Overlay::Inventory;
+        mode.selection = 0;
+        mode.door = false;
+        return;
+    }
+    if keys.just_pressed(KeyCode::KeyX) {
+        mode.overlay = Overlay::Look;
+        mode.look = state
+            .as_ref()
+            .and_then(|core| core.player())
+            .map(prl_core::Actor::position);
+        mode.door = false;
+        return;
+    }
+    if keys.just_pressed(KeyCode::KeyG) {
+        if let Some(command) = state.as_ref().and_then(|core| core.pickup_command()) {
+            queue.push(command);
+        } else {
+            queue.push(Command::Transfer(prl_core::TransferItems {
+                item: prl_core::ItemId(0),
+                destination: prl_core::BACKPACK,
+                cell: None,
+            }));
+        }
+        return;
+    }
+    if keys.just_pressed(KeyCode::KeyV) {
+        mode.show_all_loot = !mode.show_all_loot;
+        return;
+    }
     if keys.just_pressed(KeyCode::KeyO) {
         mode.door = true;
         return;
     }
-    if let Some(direction) = pressed_direction(&keys) {
+    if keys.just_pressed(KeyCode::Comma) {
+        queue.push(Command::Stairs(StairDirection::Up));
+        return;
+    }
+    if keys.just_pressed(KeyCode::Enter) {
+        queue.push(Command::Stairs(StairDirection::Down));
+        return;
+    }
+    if let Some(direction) = pressed_direction(keys) {
         let command = if mode.door {
             Command::OpenDoor(direction)
         } else {
@@ -142,8 +231,71 @@ fn handle_input(
         };
         mode.door = false;
         queue.push(command);
-    } else if !mode.door && is_wait(&keys) {
+    } else if !mode.door && is_wait(keys) {
         queue.push(Command::Wait);
+    }
+}
+
+fn inventory_input(
+    keys: &ButtonInput<KeyCode>,
+    mode: &mut UiMode,
+    queue: &mut CoreCommandQueue,
+    state: Option<&CoreState>,
+) {
+    let Some(core) = state else { return };
+    let Some(inventory) = core.inventory() else {
+        return;
+    };
+    let items: Vec<_> = inventory
+        .items()
+        .filter(|item| matches!(item.container, prl_core::BACKPACK | prl_core::EQUIPMENT))
+        .collect();
+    mode.selection = mode.selection.min(items.len().saturating_sub(1));
+    if keys.just_pressed(KeyCode::ArrowDown) {
+        mode.selection = (mode.selection + 1).min(items.len().saturating_sub(1));
+    }
+    if keys.just_pressed(KeyCode::ArrowUp) {
+        mode.selection = mode.selection.saturating_sub(1);
+    }
+    let Some(item) = items.get(mode.selection) else {
+        return;
+    };
+    let command = if keys.just_pressed(KeyCode::KeyE) {
+        Some(Command::Transfer(prl_core::TransferItems {
+            item: item.id,
+            destination: if item.container == prl_core::BACKPACK {
+                prl_core::EQUIPMENT
+            } else {
+                prl_core::BACKPACK
+            },
+            cell: None,
+        }))
+    } else if keys.just_pressed(KeyCode::KeyD) {
+        Some(Command::Drop(item.id))
+    } else if keys.just_pressed(KeyCode::KeyQ) {
+        Some(Command::Quaff(item.id))
+    } else if keys.just_pressed(KeyCode::KeyC) {
+        let scroll = inventory
+            .items()
+            .find(|candidate| {
+                candidate.container == prl_core::BACKPACK
+                    && inventory.definition(candidate).is_some_and(|definition| {
+                        definition.kind == prl_content::ItemKind::Identify
+                    })
+            })
+            .map_or(prl_core::ItemId(0), |scroll| scroll.id);
+        Some(Command::Identify {
+            scroll,
+            target: item.id,
+        })
+    } else {
+        None
+    };
+    if let Some(command) = command {
+        if queue.is_empty() {
+            queue.push(command);
+        }
+        mode.overlay = Overlay::None;
     }
 }
 
@@ -251,6 +403,90 @@ mod tests {
 
     fn fixture_app() -> Result<App, prl_core::CoreError> {
         Ok(app_with(CoreState::demo()?))
+    }
+
+    #[test]
+    fn crypt_browsing_examine_filters_and_rejections_are_free_and_modal() {
+        let mut app = app_with(crate::crypt_fixture());
+        let before = app.world().resource::<CoreState>().snapshot();
+        press(&mut app, KeyCode::KeyX);
+        for _ in 0..10 {
+            press(&mut app, KeyCode::ArrowRight);
+        }
+        press(&mut app, KeyCode::Enter);
+        assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
+        press(&mut app, KeyCode::Escape);
+        press(&mut app, KeyCode::KeyV);
+        assert!(app.world().resource::<UiMode>().show_all_loot);
+        assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
+        press(&mut app, KeyCode::KeyI);
+        press(&mut app, KeyCode::ArrowDown);
+        press(&mut app, KeyCode::Space);
+        assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
+        press(&mut app, KeyCode::Escape);
+        press(&mut app, KeyCode::KeyG);
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            1
+        );
+        press(&mut app, KeyCode::KeyI);
+        press(&mut app, KeyCode::KeyQ); // Selected sword is not a potion.
+        assert!(!app.world().resource::<UiMode>().is_paused());
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            1
+        );
+        assert!(matches!(
+            app.world()
+                .resource::<CoreState>()
+                .outcomes()
+                .last()
+                .unwrap()
+                .kind,
+            prl_core::OutcomeKind::CommandRejected {
+                reason: prl_core::RejectReason::InvalidItem,
+                ..
+            }
+        ));
+        press(&mut app, KeyCode::KeyI);
+        press(&mut app, KeyCode::KeyE);
+        let core = app.world().resource::<CoreState>();
+        assert_eq!(core.clock().player_actions(), 2);
+        assert!(
+            core.inventory()
+                .unwrap()
+                .items()
+                .any(|item| item.container == prl_core::EQUIPMENT)
+        );
+        release(&mut app);
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            2
+        );
+    }
+
+    #[test]
+    fn crypt_keys_cancel_live_retry_and_unrelated_actions_cancel_door_direction() {
+        for key in [
+            KeyCode::KeyI,
+            KeyCode::KeyG,
+            KeyCode::KeyX,
+            KeyCode::Enter,
+            KeyCode::Comma,
+        ] {
+            let mut app = app_with(crate::crypt_fixture());
+            press(&mut app, KeyCode::KeyR);
+            press(&mut app, key);
+            assert!(app.world().resource::<UiMode>().confirm_new_run.is_none());
+            assert_eq!(run_number(&app), 1);
+            assert_eq!(
+                app.world().resource::<CoreState>().clock().player_actions(),
+                0
+            );
+            press(&mut app, KeyCode::KeyO);
+            press(&mut app, key);
+            assert!(!app.world().resource::<UiMode>().door);
+        }
     }
 
     fn app_with(state: CoreState) -> App {

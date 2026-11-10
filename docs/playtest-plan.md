@@ -16,9 +16,9 @@ arena, validated tile/actor fixture content, command/energy scheduling, recursiv
 shadowcasting and memory, deterministic melee/AI, death/new run, placeholder
 rendering/audio and HUD/input. The versioned RON snapshot proof now includes
 fresh-headless-ECS continuation and canonical hashes (I-008). A Windows packaging
-workflow is included. P3 now has a headless seeded crypt-floor generator (I-026),
-but the playable build still uses the P2 arena. Two-floor persistence, stairs,
-inventory, production pack manifests and disk saves are not implemented;
+workflow is included. P3 now boots a seeded two-floor crypt with persistent
+stairs/return travel, loot/equipment, consumables, examine and a guardian endpoint
+(I-012/I-017/I-026/I-027). Production pack manifests and disk saves remain deferred;
 Windows hands-on acceptance remains pending.
 See [playtest-guide.md](playtest-guide.md).
 
@@ -130,9 +130,16 @@ rooms/corridors floor from the versioned content settings in
 `assets/packs/prl/data/dungeons/playtest_crypt.ron`. It reserves distinct
 entrance/exit cells and validates all walkable cells using the same terrain/corner
 rules as gameplay. Headless tests repeat 100 seeds and walk to the exit and back
-via real commands with matching hashes. This is I-026, not the playable P3 gate:
-I-027 still owns stairs, multiple persistent floors, encounters and guardian;
-I-012/I-017 own the loot/equipment foundations. No new UI or art is implied.
+via real commands with matching hashes (I-026). `CryptPlaytest` now composes
+two 32x24 floors, content-defined encounters, optional corridor doors, supplies
+and rewards from `data/dungeons/crypt_playtest.ron` (I-027). Both floors are built
+up front; only the active one is scheduled. Return travel restores terrain,
+memory, enemies and ground items instead of regenerating them. The final
+skeleton is the guardian; Enter at its exit completes the slice after it dies.
+Floor one's arrival marker has no overworld destination. See
+[world-generation.md](world-generation.md#current-playable-crypt-i-027) for
+run-local identity/frozen-floor limits and
+[items-and-crafting.md](items-and-crafting.md#current-p3-subset) for item limits.
 
 Start with one rooms-and-corridors generator. Validate spawn, stairs, doors and
 guardian reachability using the same movement rules as gameplay, not a looser
@@ -266,7 +273,7 @@ its code compiles.
 | P0 | Implementation present | Packaging workflow and boot errors added; extracted-package Linux software-rendering smoke passed; Windows launch acceptance pending |
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
-| P3 | Foundation in progress; not playable | I-026 headless seeded rooms/corridors proof implemented; shared gameplay-rule connectivity and command-replayed return routes across 100 seeds. Persistent two-floor integration (I-027), production pack loading and inventory (I-012/I-017) remain open |
+| P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
 | P4 | Planned | Progression and persistence not implemented |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
@@ -290,6 +297,27 @@ API docs passed on Linux. Isolated core/content/generation tests passed
 repeat exactly and gameplay commands traverse the reserved exit and return;
 additional boundary-dimension and corner-shortcut tests pass. I-027 remains the
 next playable integration task. No Windows hands-on acceptance is claimed.
+
+P3 playable integration follow-up: I-012/I-017/I-027 now have implementation
+and regression coverage. Snapshot v3 retains frozen floors and inventory;
+arena v2 migrates automatically. Multi-floor command continuations are compared
+against RON-restored state, including combat RNG and retained feedback.
+Pickup is 50 energy, equip/unequip 100 (Body 300), quaff/read/stairs 100.
+Browsing/examine/filter toggles are free; rejected actions leave rules and
+ownership unchanged. The fixed 60 kg cap, item numbers and appearances are
+provisional slice data, not accepted interview balance decisions.
+Hands-on Windows runs/audio and feedback remain I-001/I-004/I-005/I-007;
+4K/UI-scale checks remain I-002. Held-key repeat I-023 and walk tween B-009 are
+still deferred as requested. The local Foundry/art effort is unchanged.
+
+Verification for the playable increment: workspace format, clippy (all targets,
+warnings denied), tests (144 passed; one ignored balance probe) and warning-free
+API docs passed on Linux. Isolated core/content/generation tests passed
+(90 tests). A copied executable/assets package launched outside the checkout
+under Linux Xvfb/software rendering, stayed responsive through seven pickups,
+inventory, UI scaling to 2x, modal scrolling, retry and help, and logged no
+errors/panics. Screenshots confirmed the inventory at 1x and the scrollable
+2x modal. This verifies neither a real audio device nor Windows/4K acceptance.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

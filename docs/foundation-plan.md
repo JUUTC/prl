@@ -21,8 +21,10 @@ points and a Windows packaging workflow. The fixed room demonstrates logical IDs
 validated fixture definitions, command scheduling, recursive shadowcasting,
 placeholder presentation and versioned RON snapshot/restore. P2 added a portable
 combat RNG stream; I-026 adds a separate headless crypt-generation stream and
-rooms/corridors proof. Production pack manifests, disk persistence and multiple
-map/world ownership remain later work or open contracts. Windows launch
+rooms/corridors proof. I-027 now adds a persistent two-floor playtest registry;
+I-012/I-017 add logical item/container ownership and shared stats/predicates.
+Production pack manifests, disk persistence and general world/reset ownership
+remain later work or open contracts. Windows launch
 acceptance is still pending.
 
 ## Contracts to establish before gameplay grows
@@ -94,7 +96,13 @@ actions, not clock ticks.
 At P3, extend map identity with world/dungeon/reset-count/floor ownership and
 persist visited instances; do not make a scene transition erase game-state maps.
 At NG+, keep character-owned state distinct from world-owned state. The exact
-scope and ID rules are Q-015, reviewed before serializable identity is committed.
+scope and ID rules are Q-015. The current bounded P3 implementation stores
+one local instance: MapIds 1/2 are floor ordinals, actors allocate monotonically
+across both floors, and items/containers have their own run-local allocators.
+Inactive terrain, memory, actors and ground ownership persist without simulation
+or respawning. No claim is made that these ordinals identify future
+world/dungeon/reset instances; that expansion needs a new reviewed identity
+descriptor and snapshot migration.
 
 ### Reproducibility and save readiness
 

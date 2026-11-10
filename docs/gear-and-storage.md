@@ -10,6 +10,15 @@ Status: design baseline, added 2026-11-09. Rows marked with a `Q-NNN` ID use
 provisional defaults (see [open-questions.md](open-questions.md)). Delivery
 stages are in [playtest-plan.md](playtest-plan.md#gear-and-storage-delivery).
 
+Current P3 foundation: `derive_stats(actor, loadout, known_only)` is pure;
+combat uses actual affixes, while comparison uses only known bonuses. Actor
+definitions still provide the provisional base until P4 stats/skills (Q-019).
+`ItemId`/`ContainerId` ownership, atomic transfers, a 10x6 first-fit backpack,
+Main hand/Body and selected-item comparisons are implemented, as are the shared
+`ItemPredicate` and read-only content-defined Default ground-label preset.
+The rest of this document remains target design; see the exact
+[slice limits](items-and-crafting.md#current-p3-subset).
+
 ## Principles
 
 1. **One rules path.** Comparison, the optimizer, tooltips and real combat use

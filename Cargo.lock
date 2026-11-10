@@ -4282,6 +4282,7 @@ dependencies = [
  "prl_render",
  "prl_save",
  "prl_ui",
+ "ron 0.10.1",
 ]
 
 [[package]]
@@ -4354,6 +4355,8 @@ dependencies = [
  "bevy",
  "prl_content",
  "prl_core",
+ "prl_gen",
+ "ron 0.10.1",
 ]
 
 [[package]]

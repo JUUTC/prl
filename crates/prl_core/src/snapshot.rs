@@ -36,6 +36,10 @@ struct CoreStateData {
     rng: RngPosition,
     clock: TurnClock,
     log: OutcomeLog,
+    #[serde(default)]
+    dungeon: Option<crate::dungeon::Dungeon>,
+    #[serde(default)]
+    inventory: Option<crate::Inventory>,
 }
 
 impl CoreSnapshot {
@@ -56,7 +60,7 @@ impl CoreSnapshot {
 
     /// Canonical digest for pre-release replay and restore comparisons (Q-016).
     ///
-    /// BLAKE3 derive-key context `PRL core snapshot RON hash v1` hashes the UTF-8
+    /// BLAKE3 derive-key context `PRL core snapshot RON hash v2` hashes the UTF-8
     /// compact RON returned by [`Self::to_ron`], including snapshot version,
     /// content, logical IDs, RNG position and retained outcomes/messages.
     /// Ordered maps and integer rules state make this independent of ECS
@@ -71,7 +75,7 @@ impl CoreSnapshot {
     /// Returns [`SnapshotError::Encoding`] if serialization fails.
     pub fn canonical_hash(&self) -> Result<[u8; 32], SnapshotError> {
         let encoded = self.to_ron()?;
-        let mut hasher = blake3::Hasher::new_derive_key("PRL core snapshot RON hash v1");
+        let mut hasher = blake3::Hasher::new_derive_key("PRL core snapshot RON hash v2");
         hasher.update(encoded.as_bytes());
         Ok(*hasher.finalize().as_bytes())
     }
@@ -133,6 +137,8 @@ impl CoreState {
                 rng: self.rng.position(),
                 clock: self.clock,
                 log: self.log.clone(),
+                dungeon: self.dungeon.clone(),
+                inventory: self.inventory.clone(),
             },
         }
     }
@@ -144,7 +150,14 @@ impl CoreState {
     /// # Errors
     ///
     /// Returns [`CoreError::Snapshot`] if the version or logical invariants fail.
-    pub fn restore(snapshot: CoreSnapshot) -> Result<Self, CoreError> {
+    pub fn restore(mut snapshot: CoreSnapshot) -> Result<Self, CoreError> {
+        // Version 2 had no dungeon state; all other fields retain their shape.
+        if snapshot.version == 2
+            && snapshot.state.dungeon.is_none()
+            && snapshot.state.inventory.is_none()
+        {
+            snapshot.version = SNAPSHOT_VERSION;
+        }
         if snapshot.version != SNAPSHOT_VERSION {
             return Err(SnapshotError::UnsupportedVersion(snapshot.version).into());
         }
@@ -162,6 +175,8 @@ impl CoreState {
             rng: CombatRng::restore(data.rng),
             clock: data.clock,
             log: data.log,
+            dungeon: data.dungeon,
+            inventory: data.inventory,
         })
     }
 }
@@ -199,8 +214,106 @@ fn validate(data: &CoreStateData) -> Result<(), CoreError> {
     }
     validate_actors(data)?;
     validate_map(data)?;
+    validate_dungeon(data)?;
+    if let Some(inventory) = &data.inventory {
+        inventory.validate()?;
+        for container in inventory.containers.values() {
+            if let crate::Container::Ground { map, position } = container {
+                let terrain = if *map == data.map.id {
+                    Some(&data.map)
+                } else {
+                    data.dungeon
+                        .as_ref()
+                        .and_then(|dungeon| dungeon.inactive.get(map))
+                        .map(|floor| &floor.map)
+                }
+                .ok_or_else(|| invalid("item references unknown map"))?;
+                if terrain.blocks_movement(&data.pack, *position) {
+                    return Err(invalid("ground item container is on blocked terrain"));
+                }
+            }
+        }
+    }
     if !data.log.is_consistent() {
         return Err(invalid("outcome sequence state is invalid"));
+    }
+    Ok(())
+}
+
+fn validate_dungeon(data: &CoreStateData) -> Result<(), CoreError> {
+    let Some(dungeon) = &data.dungeon else {
+        return Ok(());
+    };
+    if !(2..=32).contains(&dungeon.plans.len()) || dungeon.inactive.len() + 1 != dungeon.plans.len()
+    {
+        return Err(invalid("dungeon floor registry is incomplete"));
+    }
+    let mut ids: BTreeSet<ActorId> = data.actors.keys().copied().collect();
+    let mut definitions = BTreeSet::new();
+    for (index, plan) in dungeon.plans.iter().enumerate() {
+        let map_id = crate::MapId::new(
+            u64::try_from(index).map_err(|_| invalid("floor index overflow"))? + 1,
+        );
+        if !definitions.insert(&plan.definition) {
+            return Err(invalid("dungeon floor definitions repeat"));
+        }
+        let map = if map_id == data.map.id {
+            &data.map
+        } else {
+            let stored = dungeon
+                .inactive
+                .get(&map_id)
+                .ok_or_else(|| invalid("dungeon floor missing"))?;
+            if stored.map.id != map_id {
+                return Err(invalid("inactive floor identity disagrees"));
+            }
+            // Validate terrain with the same checks as the active map.
+            let mut view = data.clone();
+            view.map = stored.map.clone();
+            view.dungeon = None;
+            validate_map(&view)?;
+            let player = data
+                .actors
+                .get(&data.player)
+                .ok_or_else(|| invalid("player missing"))?;
+            let mut positions = BTreeSet::new();
+            for (id, actor) in &stored.actors {
+                if actor.is_player() || !ids.insert(*id) || !positions.insert(actor.position) {
+                    return Err(invalid("inactive actor identity or occupancy is invalid"));
+                }
+                // Inactive floors are frozen at their committed scheduling boundary.
+                validate_actor(&view, *id, actor, player, false)?;
+            }
+            &stored.map
+        };
+        let expected = usize::from(map.width) * usize::from(map.height);
+        let definition = data
+            .pack
+            .map(&map.definition)
+            .ok_or_else(|| invalid("dungeon map definition missing"))?;
+        if map.width == 0
+            || map.height == 0
+            || map.tiles.len() != expected
+            || map.visible.len() != expected
+            || map.remembered.len() != expected
+            || map.definition != plan.definition
+            || map.width != definition.width()
+            || map.height != definition.height()
+            || plan.entrance == plan.exit
+            || map.blocks_movement(&data.pack, plan.entrance)
+            || map.blocks_movement(&data.pack, plan.exit)
+        {
+            return Err(invalid(
+                "dungeon floor terrain or stair endpoints are invalid",
+            ));
+        }
+    }
+    if ids.iter().any(|id| id.get() >= data.next_actor_id)
+        || dungeon.guardian.get() == 0
+        || dungeon.guardian.get() >= data.next_actor_id
+        || (dungeon.completed && ids.contains(&dungeon.guardian))
+    {
+        return Err(invalid("dungeon allocator or guardian state is invalid"));
     }
     Ok(())
 }
@@ -227,7 +340,7 @@ fn validate_actors(data: &CoreStateData) -> Result<(), CoreError> {
     }
     let mut occupied_positions = BTreeSet::new();
     for (index, actor) in &data.actors {
-        validate_actor(data, *index, actor, player)?;
+        validate_actor(data, *index, actor, player, true)?;
         if !occupied_positions.insert(actor.position) {
             return Err(invalid("multiple actors occupy the same position"));
         }
@@ -244,6 +357,7 @@ fn validate_actor(
     index: ActorId,
     actor: &Actor,
     player: &Actor,
+    active: bool,
 ) -> Result<(), CoreError> {
     if index.get() == 0 || actor.id != index {
         return Err(invalid("actor identity is invalid"));
@@ -278,6 +392,14 @@ fn validate_actor(
         }
     }
     if data.status == RunStatus::Dead {
+        return Ok(());
+    }
+    if !active {
+        if actor.energy > ACTION_ENERGY.saturating_add(player.speed.saturating_sub(1)) {
+            return Err(invalid(
+                "inactive actor energy exceeds a committed boundary",
+            ));
+        }
         return Ok(());
     }
     if actor.is_player() {
@@ -505,7 +627,7 @@ mod tests {
         let hash = arena().snapshot().canonical_hash().unwrap();
         assert_eq!(
             blake3::Hash::from_bytes(hash).to_hex().as_str(),
-            "5c7172cf2a88a546f29715970d26ce89eb168b013f1f535047f2434877a711e1"
+            "dda1e1cd1c802a3e0dda99db7c510ece414a53c03d3099d8da4d3b6626c6faf6"
         );
     }
 
@@ -553,6 +675,82 @@ mod tests {
                 "snapshot must contain exactly one player actor"
             )))
         ));
+    }
+
+    #[test]
+    fn version_two_arena_migrates_but_cannot_claim_new_world_fields() {
+        let current = arena().snapshot();
+        let old = current
+            .to_ron()
+            .unwrap()
+            .replacen("version:3", "version:2", 1)
+            .replace(",dungeon:None,inventory:None", "");
+        assert!(!old.contains("inventory:"));
+        let restored = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
+        assert_eq!(restored.snapshot(), current);
+        let mut wrong_version = crate::test_support::dungeon().snapshot();
+        wrong_version.version = 2;
+        assert!(CoreState::restore(wrong_version).is_err());
+    }
+
+    #[test]
+    fn dungeon_snapshot_rejects_duplicate_ids_missing_floors_and_bad_item_ownership() {
+        let state = crate::test_support::dungeon();
+        let mut missing = state.snapshot();
+        missing.state.dungeon.as_mut().unwrap().inactive.clear();
+        assert!(CoreState::restore(missing).is_err());
+        let mut corrupt = state.snapshot();
+        corrupt
+            .state
+            .inventory
+            .as_mut()
+            .unwrap()
+            .containers
+            .insert(crate::ContainerId(3), crate::Container::Backpack);
+        assert!(CoreState::restore(corrupt).is_err());
+        let mut corrupt = state.snapshot();
+        corrupt
+            .state
+            .inventory
+            .as_mut()
+            .unwrap()
+            .catalog
+            .default_filter[0]
+            .predicate =
+            prl_content::ItemPredicate::Definition(ContentId::new("prl", "missing_item").unwrap());
+        assert!(CoreState::restore(corrupt).is_err());
+        let mut corrupt = state.snapshot();
+        let floor = corrupt
+            .state
+            .dungeon
+            .as_mut()
+            .unwrap()
+            .inactive
+            .values_mut()
+            .next()
+            .unwrap();
+        floor
+            .actors
+            .insert(state.player_id(), state.player().unwrap().clone());
+        assert!(CoreState::restore(corrupt).is_err());
+        let mut corrupt = state.snapshot();
+        let inventory = corrupt.state.inventory.as_mut().unwrap();
+        inventory.items.values_mut().next().unwrap().container = crate::ContainerId(999);
+        assert!(CoreState::restore(corrupt).is_err());
+        let mut corrupt = state.snapshot();
+        corrupt
+            .state
+            .dungeon
+            .as_mut()
+            .unwrap()
+            .inactive
+            .values_mut()
+            .next()
+            .unwrap()
+            .map
+            .tiles
+            .clear();
+        assert!(CoreState::restore(corrupt).is_err());
     }
 
     #[test]

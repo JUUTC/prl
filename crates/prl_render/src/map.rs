@@ -43,6 +43,27 @@ fn refresh(
         commands.entity(entity).despawn();
     }
     spawn_terrain(&mut commands, &state, art.as_deref());
+    spawn_loot(&mut commands, &state);
+    if let Some(plan) = state.floor_plan() {
+        for (position, label) in [(plan.entrance, "<"), (plan.exit, ">")] {
+            if !state.map().is_visible(position) && state.map().remembered_tile(position).is_none()
+            {
+                continue;
+            }
+            let centre = tile_to_world(position.x, position.y);
+            commands.spawn((
+                Name::new("Placeholder stairs"),
+                Text2d::new(label),
+                TextFont {
+                    font_size: FontSize::Px(36.0),
+                    ..default()
+                },
+                TextColor(tint(state.is_visible(position))),
+                Transform::from_xyz(centre.x, centre.y, 0.1),
+                Placeholder,
+            ));
+        }
+    }
     if let Some(player) = state.player() {
         let position = player.position();
         let centre = tile_to_world(position.x, position.y);
@@ -50,6 +71,32 @@ fn refresh(
             camera.translation.x = centre.x;
             camera.translation.y = centre.y;
         }
+    }
+}
+
+fn spawn_loot(commands: &mut Commands<'_, '_>, state: &CoreState) {
+    let Some(inventory) = state.inventory() else {
+        return;
+    };
+    for position in state.map().visible_positions() {
+        if !state
+            .ground_items(position)
+            .any(|item| inventory.ground_label(item).0)
+        {
+            continue;
+        }
+        let centre = tile_to_world(position.x, position.y);
+        commands.spawn((
+            Name::new("Placeholder ground loot"),
+            Text2d::new("*"),
+            TextFont {
+                font_size: FontSize::Px(24.0),
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Transform::from_xyz(centre.x + 16.0, centre.y - 16.0, 0.11),
+            Placeholder,
+        ));
     }
 }
 

@@ -1,5 +1,43 @@
 # Items, Loot & Crafting
 
+## Current P3 subset
+
+The sections below remain the full-game target. The playable crypt currently
+implements only single-instance Normal/Magic Main hand and Body gear, one healing
+potion type and one Identify scroll type. Catalog, base/affix bonuses, fixed
+supplies/rewards and Default label rules live in
+`assets/packs/prl/data/dungeons/crypt_playtest.ron`; they are provisional tuning,
+not recovered interview decisions. No random affix rolls, stacks, durability,
+requirements, curses/blessings, auto-identification from wearing gear or crafting
+are claimed.
+
+The 10x6 backpack uses deterministic row-major first-fit placement; equipment has
+slots but no grid coordinates. Picking up, swapping equipment, unequipping and
+dropping are atomic ownership transfers: failed space/weight/access checks change
+no items, time or RNG. UI browsing is free. Pickup costs 50 energy, equip/unequip
+100 (Body 300), quaff/read 100, drop 100 (removing worn Body 300).
+Failed healing at full HP or identifying a known target consumes nothing.
+
+The slice temporarily **rejects pickup above 60,000 g** rather than implementing
+the full STR-derived carry/encumbrance model. This reversible limit does not
+change [housing-and-logistics.md](housing-and-logistics.md#inventory).
+Repacking/rotation, stacks, other slots and the full weight model remain later
+work (I-028).
+
+Normal gear is known. Unknown Magic gear shows base/rarity (`*`), not affix text;
+comparison omits unknown affix bonuses while actual combat includes them.
+Consumable appearances use BLAKE3 context `PRL consumable appearance v1` over
+seed LE-u64 plus namespaced definition ID UTF-8; the first digest byte selects
+an appearance modulo that definition's list length. Consuming identifies the
+type across all copies in the run; Identify reveals one gear instance or a
+consumable type and identifies its own scroll type. Distinct-type appearance
+permutations need review before multiple consumable types ship.
+
+Ground labels apply the shared `ItemPredicate` Default rules (Magic emphasized,
+all items shown). `V` bypasses label hiding; examine and manual pickup always
+bypass filtering, but never visibility/access rules. No auto-pickup, custom rule
+editor, optimizer or storage UI is implied (I-013 through I-018).
+
 ## Rarity (Diablo-style)
 
 | Rarity | Colour / marker | Affixes | Notes |

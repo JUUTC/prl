@@ -1,6 +1,6 @@
 //! Player-facing UI built on `bevy_ui`: shared theme and widgets, HUD, menus, screens.
 //!
-//! P2 uses procedural panels and the SPEC's OFL fonts, not final PRL styling.
+//! P2/P3 use procedural panels and the SPEC's OFL fonts, not final PRL styling.
 //! Input submits core commands; UI never changes position, visibility or time.
 
 use bevy::prelude::*;
@@ -45,4 +45,15 @@ impl Plugin for PrlUiPlugin {
             .add_systems(PreStartup, theme::load)
             .add_plugins((input::plugin, hud::plugin));
     }
+}
+
+#[cfg(test)]
+fn crypt_fixture() -> prl_core::CoreState {
+    let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+        "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+    ))
+    .unwrap();
+    config
+        .build(&prl_content::ContentPack::placeholder().unwrap(), 1)
+        .unwrap()
 }

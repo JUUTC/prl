@@ -42,7 +42,42 @@ rule. It never silently retries or substitutes a fallback floor.
 The connectivity proof covers 100 seeds plus boundary dimensions, and actual
 move commands walk the endpoint route and return with equal replay hashes.
 Doors, functional stairs, guardian/loot placement and persistent floor
-transitions are not implemented here (I-027). The playable P2 arena is unchanged.
+transitions are composed separately by I-027 below.
+
+### Current playable crypt (I-027)
+
+The binary requires `data/dungeons/crypt_playtest.ron` beside `base.ron`.
+Its format-1 `CryptPlaytest` describes two 32x24 floors, hostile actor references,
+one final guardian, a closed-door tile and the item catalog/filter. Both generated
+maps are validated and instantiated before play; malformed/missing required data
+fails explicitly, without using the arena or a checkout as fallback.
+
+Spawn cells are walkable, at least six Chebyshev cells from arrival and three
+from other spawns, never on stairs. The final skeleton is the sole guardian;
+the other encounters use shambler/grave-rat definitions. A closed door is placed
+when a suitable orthogonal corridor choke point exists, never on a reserved
+endpoint or spawn. Opening it uses normal commands; some layouts have no door.
+Supplies occupy each entrance; fixed Magic rewards occupy each exit.
+
+P3 is one persistent **run-local instance**, not the general world system.
+MapIds are floor ordinals 1/2, actor IDs allocate monotonically across floors,
+and items/containers have separate run-local allocators. Travel costs 100 energy,
+moves the same player record to the corresponding arrival/departure cell and
+activates stored terrain/actors. Inactive floors retain memory, open doors,
+kills, AI/energy and item ownership but are completely frozen: no catch-up,
+regeneration or respawn. RunFactory retry rebuilds both maps at seed + 1.
+World/dungeon/reset/NG+ identity and lazy generation remain future work (Q-015).
+
+Use Enter at `>` to descend; comma at `<` returns upstairs. Floor one's `<`
+is an arrival marker with no outside map. On floor two, Enter at `>` requires
+the guardian to be dead and commits a one-time playtest completion outcome.
+There is no Malgareth victory, feat, morgue or campaign save.
+
+Regression checks build/repeat/restore 100 complete crypt registries. Three
+scripted runs use public commands for fighting, loot, gear, Identify, healing,
+stairs, return travel, completion and regenerated retries; restored-state
+continuations must match. These checks complement the generator's 100-seed
+gameplay-rule connectivity/return proof, not a Windows hands-on acceptance.
 
 ## Overworld
 

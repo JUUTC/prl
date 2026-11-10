@@ -30,6 +30,7 @@ prl_gen.workspace = true
 prl_render.workspace = true
 prl_save.workspace = true
 prl_ui.workspace = true
+ron.workspace = true
 
 [lints]
 workspace = true

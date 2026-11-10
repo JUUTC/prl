@@ -26,7 +26,7 @@ jobs:
       - name: Format
         run: cargo fmt --all --check
       - name: Headless foundation tests
-        run: cargo test --locked -p prl_core -p prl_content
+        run: cargo test --locked -p prl_core -p prl_content -p prl_gen
       - name: Lints
         run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - name: Workspace tests
@@ -48,7 +48,7 @@ jobs:
           Copy-Item LICENSE package/prl/
           Copy-Item docs/playtest-guide.md package/prl/PLAYTEST.md
           Copy-Item tools/Launch.cmd package/prl/
-          Set-Content package/prl/BUILD.txt "PRL P2 placeholder build`nCommit: $env:GITHUB_SHA`nRun: $env:GITHUB_RUN_ID"
+          Set-Content package/prl/BUILD.txt "PRL P3 placeholder crypt`nCommit: $env:GITHUB_SHA`nRun: $env:GITHUB_RUN_ID"
       - name: Upload Windows playtest
         uses: actions/upload-artifact@v4
         with:

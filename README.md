@@ -63,8 +63,9 @@ Requires a recent stable Rust toolchain.
 cargo run -p prl -- --dev-assets
 ```
 
-The P2 build uses placeholder art to demonstrate movement, doors, turns, fog of
-war, melee combat, death and new runs. See [playtest guide](docs/playtest-guide.md) for controls and
+The P3 build uses placeholder art to demonstrate two seeded crypt floors, persistent
+stairs/return travel, melee combat, loot, equipment, consumables, death and new runs.
+See [playtest guide](docs/playtest-guide.md) for controls and
 scope. The Windows playtest workflow packages the executable, fixture content
 and a diagnostic launcher; its downloadable build requires no Rust installation.
 `--dev-assets` explicitly allows the development checkout's assets when none
@@ -72,9 +73,10 @@ are adjacent to the executable. Without it, missing packaged assets fail at boot
 even on a machine that has the source checkout. An adjacent `assets` directory
 always takes priority; incomplete or malformed package content never falls back.
 
-P3 has a headless seeded rooms/corridors foundation, exercised with
-`cargo test -p prl_gen`. This is not yet the playable two-floor dungeon:
-`cargo run` still starts the P2 arena. See
+`cargo run` starts the two-floor crypt. Pick up entrance supplies with `G`, equip
+them through `I`, and descend with Enter at `>`. Defeat the lower-floor guardian
+and use its `>` to finish the playtest endpoint. This is not campaign victory.
+Headless generation and scripted run tests use `cargo test -p prl_gen`. See
 [world generation](docs/world-generation.md#current-p3-generation-proof-i-026).
 
 Linux needs: `pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev`.

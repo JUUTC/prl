@@ -56,11 +56,15 @@ impl ActorMotion {
                 OutcomeKind::ActorDied { actor, .. } => {
                     self.actors.remove(actor);
                 }
-                OutcomeKind::RunStarted { .. } => self.actors.clear(),
+                OutcomeKind::RunStarted { .. } | OutcomeKind::FloorChanged { .. } => {
+                    self.actors.clear();
+                }
                 OutcomeKind::CommandAccepted { .. }
                 | OutcomeKind::CommandRejected { .. }
                 | OutcomeKind::TickAdvanced { .. }
-                | OutcomeKind::ActorWaited { .. } => {}
+                | OutcomeKind::ActorWaited { .. }
+                | OutcomeKind::SliceCompleted
+                | OutcomeKind::ItemsChanged => {}
             }
         }
     }

@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ActorId, Command, Position, RejectReason};
+use crate::{ActorId, Command, MapId, Position, RejectReason};
 
 /// Newest outcomes retained for presentation consumers.
 pub(crate) const OUTCOME_LIMIT: usize = 256;
@@ -21,6 +21,17 @@ pub struct CoreOutcome {
 /// Core-resolved event data suitable for independent presentation consumers.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OutcomeKind {
+    /// Active map changed; presentation must discard old floor effects.
+    FloorChanged {
+        /// Previous map identity.
+        from: MapId,
+        /// New map identity.
+        to: MapId,
+    },
+    /// Final playtest endpoint reached after defeating its guardian.
+    SliceCompleted,
+    /// Item ownership, knowledge or consumable state changed.
+    ItemsChanged,
     /// A player action changed authoritative state and consumed energy.
     CommandAccepted {
         /// Accepted player intent.

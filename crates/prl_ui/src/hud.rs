@@ -27,6 +27,9 @@ struct LogText;
 struct OverlayText;
 
 #[derive(Component)]
+struct OverlayPanel;
+
+#[derive(Component)]
 struct DeathBanner;
 
 #[derive(Component)]
@@ -42,6 +45,12 @@ struct MessageLog {
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<MessageLog>()
         .add_systems(Startup, setup)
+        .add_systems(
+            Update,
+            scroll_overlay
+                .in_set(CoreSet::Presentation)
+                .run_if(resource_exists::<ButtonInput<KeyCode>>),
+        )
         .add_systems(
             Update,
             (
@@ -150,24 +159,65 @@ fn setup(mut commands: Commands<'_, '_>, theme: Res<'_, PlaceholderTheme>) {
             },
             DeathText,
         ));
-    commands.spawn((
-        Name::new("P2 placeholder pause/help overlay"),
-        Text::default(),
-        theme.font(),
-        TextColor(theme.text),
-        BackgroundColor(theme.panel),
-        Node {
-            position_type: PositionType::Absolute,
-            top: percent(10),
-            left: percent(10),
-            max_width: percent(80),
-            padding: UiRect::all(px(24)),
-            display: Display::None,
-            ..default()
-        },
-        ZIndex(10),
-        OverlayText,
-    ));
+    spawn_overlay(&mut commands, &theme);
+}
+
+fn spawn_overlay(commands: &mut Commands<'_, '_>, theme: &PlaceholderTheme) {
+    commands
+        .spawn((
+            Name::new("Placeholder modal panel"),
+            BackgroundColor(theme.panel),
+            Node {
+                position_type: PositionType::Absolute,
+                top: percent(10),
+                left: percent(10),
+                max_width: percent(80),
+                max_height: percent(80),
+                flex_direction: FlexDirection::Column,
+                overflow: Overflow::scroll_y(),
+                padding: UiRect::all(px(24)),
+                display: Display::None,
+                ..default()
+            },
+            ZIndex(10),
+            ScrollPosition::default(),
+            OverlayPanel,
+        ))
+        .with_children(|panel| {
+            panel.spawn((
+                Name::new("Placeholder modal text"),
+                Text::default(),
+                theme.font(),
+                TextColor(theme.text),
+                Node {
+                    flex_shrink: 0.0,
+                    ..default()
+                },
+                OverlayText,
+            ));
+        });
+}
+
+fn scroll_overlay(
+    keys: Res<'_, ButtonInput<KeyCode>>,
+    mode: Res<'_, UiMode>,
+    mut previous: Local<'_, Overlay>,
+    mut panels: Query<'_, '_, &mut ScrollPosition, With<OverlayPanel>>,
+) {
+    for mut position in &mut panels {
+        if *previous != mode.overlay {
+            position.0.y = 0.0;
+        }
+        if mode.is_paused() {
+            if keys.just_pressed(KeyCode::PageDown) {
+                position.0.y += 120.0;
+            }
+            if keys.just_pressed(KeyCode::PageUp) {
+                position.0.y = (position.0.y - 120.0).max(0.0);
+            }
+        }
+    }
+    *previous = mode.overlay;
 }
 
 /// Consumes new outcomes in order and keeps their correlated message text.
@@ -212,8 +262,19 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
     } else {
         String::new()
     };
+    let dungeon = core.floor_number().map_or_else(String::new, |floor| {
+        let weight = core.inventory().map_or_else(String::new, |inventory|
+            format!(" | Carry {}/{} g", inventory.carried_weight(), inventory.carry_capacity()));
+        format!("\nCrypt floor {floor}/2{weight} | G pickup | I inventory | X examine | Enter down | , up{}",
+            if core.slice_completed() { "\nCRYPT CLEARED - playtest endpoint. R: new run." } else { "" })
+    });
+    let stage = if core.floor_number().is_some() {
+        "P3"
+    } else {
+        "P2"
+    };
     format!(
-        "P2 PLACEHOLDER - not final art/font/audio | F1 help\nRun {} | Seed {} | {vitals}\nTick {} | Clock {}s | Actions {} | Motion {} (T) | Sound {} (M, 9/0){prompt}",
+        "{stage} PLACEHOLDER - not final art/font/audio | F1 help\nRun {} | Seed {} | {vitals}\nTick {} | Clock {}s | Actions {} | Motion {} (T) | Sound {} (M, 9/0){prompt}{dungeon}",
         core.run_number(),
         core.seed(),
         core.clock().ticks(),
@@ -245,13 +306,170 @@ fn sight_text(core: &CoreState) -> String {
     }
 }
 
-fn overlay_text(mode: &UiMode) -> String {
-    match mode.overlay {
+fn inventory_text(core: &CoreState, selection: usize) -> String {
+    let Some(inventory) = core.inventory() else {
+        return "No inventory in this fixture. Esc: close.".into();
+    };
+    let items: Vec<_> = inventory
+        .items()
+        .filter(|item| matches!(item.container, prl_core::BACKPACK | prl_core::EQUIPMENT))
+        .collect();
+    let mut grid = [['.'; 10]; 6];
+    for (index, item) in items.iter().enumerate() {
+        if let (Some(cell), Some(definition)) = (item.cell, inventory.definition(item)) {
+            for row in grid
+                .iter_mut()
+                .skip(usize::from(cell.y))
+                .take(usize::from(definition.height))
+            {
+                for value in row
+                    .iter_mut()
+                    .skip(usize::from(cell.x))
+                    .take(usize::from(definition.width))
+                {
+                    *value = char::from(b'A' + u8::try_from(index % 26).unwrap_or(0));
+                }
+            }
+        }
+    }
+    let grid = grid
+        .iter()
+        .map(|row| row.iter().collect::<String>())
+        .collect::<Vec<_>>()
+        .join("\n");
+    let page_start = selection / 8 * 8;
+    let lines = items
+        .iter()
+        .enumerate()
+        .skip(page_start)
+        .take(8)
+        .map(|(index, item)| {
+            format!(
+                "{} {} [{}] {}",
+                if index == selection { ">" } else { " " },
+                char::from(b'A' + u8::try_from(index % 26).unwrap_or(0)),
+                if item.container == prl_core::EQUIPMENT {
+                    "worn"
+                } else {
+                    "bag"
+                },
+                inventory.label(item)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let comparison = items.get(selection).and_then(|item| {
+        inventory.compare(core.player()?, item.id).map(|(before, after)|
+            format!("\nKnown comparison: damage {} -> {}, armor {} -> {}\nAccuracy {} -> {}, evasion {} -> {}. Unknown affixes excluded.",
+                before.damage, after.damage, before.armor, after.armor,
+                before.accuracy, after.accuracy, before.evasion, after.evasion))
+    }).unwrap_or_default();
+    format!(
+        "INVENTORY - browsing is free | Carry {}/{} g\n{grid}\n{lines}{comparison}\nUp/Down: select | E: equip/unequip | D: drop | Q: drink selected\nC: identify selected with a carried scroll | Esc: close\nEach item action closes this view and spends time; failed actions cost nothing.",
+        inventory.carried_weight(),
+        inventory.carry_capacity()
+    )
+}
+
+fn examine_text(core: &CoreState, position: Option<prl_core::Position>) -> String {
+    let Some(position) = position else {
+        return "No selected cell.".into();
+    };
+    let mut lines = vec![format!(
+        "EXAMINE ({}, {}) - no time passes\nArrows/vi: move selection | Esc: close\n",
+        position.x, position.y
+    )];
+    if let Some(memory) = core.map().remembered_tile(position) {
+        lines.push(format!(
+            "\nTerrain: {}{}",
+            memory.definition,
+            if core.is_visible(position) {
+                ""
+            } else {
+                " (remembered; no live contents shown)"
+            }
+        ));
+    } else {
+        lines.push("\nUnexplored.".into());
+    }
+    if core.is_visible(position) {
+        for actor in core
+            .visible_actors()
+            .filter(|actor| actor.position() == position)
+        {
+            lines.push(format!(
+                "\n{}: HP {}/{}",
+                actor.name(),
+                actor.hp(),
+                actor.max_hp()
+            ));
+        }
+        if let Some(inventory) = core.inventory() {
+            for item in core.ground_items(position) {
+                lines.push(format!(
+                    "\n{} ({} g)",
+                    inventory.label(item),
+                    inventory
+                        .definition(item)
+                        .map_or(0, |definition| definition.weight)
+                ));
+            }
+        }
+        if let Some(plan) = core.floor_plan() {
+            if position == plan.entrance {
+                lines.push("\n< Arrival / stairs up (comma; floor 1 has no outside map).".into());
+            }
+            if position == plan.exit {
+                lines.push("\n> Stairs down / guardian endpoint (Enter).".into());
+            }
+        }
+    }
+    lines.concat()
+}
+
+fn loot_text(core: &CoreState, show_all: bool) -> String {
+    let Some(inventory) = core.inventory() else {
+        return String::new();
+    };
+    let mut labels = Vec::new();
+    for position in core.map().visible_positions() {
+        for item in core.ground_items(position) {
+            let (show, emphasize) = inventory.ground_label(item);
+            if show || show_all {
+                labels.push(format!(
+                    "{}{},{}: {}",
+                    if emphasize { "! " } else { "" },
+                    position.x,
+                    position.y,
+                    inventory.label(item)
+                ));
+            }
+        }
+    }
+    if labels.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "\nGround loot (V: show all = {show_all})\n{}",
+            labels.into_iter().take(6).collect::<Vec<_>>().join("\n")
+        )
+    }
+}
+
+fn overlay_text(mode: &UiMode, core: Option<&CoreState>) -> String {
+    let text = match mode.overlay {
         Overlay::Help => format!(
-            "HELP - gameplay paused\n\n{CONTROLS}\n\n{LEGEND}\n\nOne key press, one intent; held keys do not repeat.\nEffects never delay input. Inventory, saves and final assets are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
+            "HELP - gameplay paused\n\n{CONTROLS}\nG: pick up one item | I: inventory/equipment | X: examine with arrows\nEnter: descend/finish at > | Comma: ascend at <\n\n{LEGEND}\n\nOne key press, one intent; held keys do not repeat.\nInventory browsing/examine are free; item actions spend turns.\nSaves and final assets are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
         ),
-        Overlay::Menu => "PAUSED - P2 arena menu\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\nT: motion | M: mute | 9 / 0: volume\n\nNo turns pass while browsing.\nClose this menu, then R to start a new run.\nFull options, saving and character creation are unavailable.".to_owned(),
+        Overlay::Menu => "PAUSED - placeholder playtest\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\nT: motion | M: mute | 9 / 0: volume\n\nNo turns pass while browsing.\nClose this menu, then R to start a new run.\nFull options, saving and character creation are unavailable.".to_owned(),
         Overlay::None => String::new(),
+        Overlay::Inventory => core.map_or_else(|| "No inventory available.".into(), |core| inventory_text(core, mode.selection)),
+        Overlay::Look => core.map_or_else(|| "No map available.".into(), |core| examine_text(core, mode.look)),
+    };
+    if mode.is_paused() {
+        format!("PgUp/PgDn: scroll this view\n{text}")
+    } else {
+        text
     }
 }
 
@@ -267,11 +485,12 @@ fn refresh(
             Query<'_, '_, &mut Text, With<HudText>>,
             Query<'_, '_, &mut Text, With<SightText>>,
             Query<'_, '_, &mut Text, With<LogText>>,
-            Query<'_, '_, (&mut Text, &mut Node), With<OverlayText>>,
+            Query<'_, '_, &mut Text, With<OverlayText>>,
             Query<'_, '_, &mut Text, With<DeathText>>,
+            Query<'_, '_, &mut Node, With<OverlayPanel>>,
         ),
     >,
-    mut banners: Query<'_, '_, &mut Node, (With<DeathBanner>, Without<OverlayText>)>,
+    mut banners: Query<'_, '_, &mut Node, (With<DeathBanner>, Without<OverlayPanel>)>,
 ) {
     if !mode.is_changed()
         && !settings.is_changed()
@@ -290,7 +509,11 @@ fn refresh(
         text.0.clone_from(&header);
     }
     if let Some(core) = state.as_ref() {
-        let sight = sight_text(core);
+        let sight = format!(
+            "{}{}",
+            sight_text(core),
+            loot_text(core, mode.show_all_loot)
+        );
         for mut text in &mut texts.p1() {
             text.0.clone_from(&sight);
         }
@@ -303,13 +526,15 @@ fn refresh(
             text.0.clone_from(&lines);
         }
     }
-    for (mut text, mut node) in &mut texts.p3() {
+    for mut text in &mut texts.p3() {
+        **text = overlay_text(&mode, state.as_deref());
+    }
+    for mut node in &mut texts.p5() {
         node.display = if mode.is_paused() {
             Display::Flex
         } else {
             Display::None
         };
-        **text = overlay_text(&mode);
     }
     let dead = state
         .as_ref()
@@ -335,6 +560,66 @@ fn refresh(
 mod tests {
     use super::*;
     use prl_core::{Command, Direction};
+
+    #[test]
+    fn crypt_views_label_subset_and_do_not_disclose_unseen_live_contents() {
+        let core = crate::crypt_fixture();
+        let header = header_text(&core, &UiMode::default(), &SettingsStatus::default());
+        assert!(header.contains("P3 PLACEHOLDER"));
+        assert!(header.contains("Crypt floor 1/2"));
+        assert!(inventory_text(&core, 0).contains("browsing is free"));
+        let entrance = core.floor_plan().unwrap().entrance;
+        let exit = core.floor_plan().unwrap().exit;
+        assert!(!core.is_visible(exit));
+        let unseen = examine_text(&core, Some(exit));
+        assert!(unseen.contains("Unexplored"));
+        assert!(!unseen.contains("Steel"));
+        assert!(!unseen.contains("guardian endpoint"));
+        let visible = examine_text(&core, Some(entrance));
+        assert!(visible.contains("Iron sword"));
+        assert!(visible.contains("Arrival"));
+        assert!(loot_text(&core, false).contains("Iron sword"));
+        assert!(!loot_text(&core, true).contains("Steel"));
+    }
+
+    #[test]
+    fn modal_scrolling_never_changes_rules_and_resets_on_view_change() {
+        let mut app = hud_app(crate::crypt_fixture());
+        app.insert_resource(ButtonInput::<KeyCode>::default());
+        let before = app.world().resource::<CoreState>().snapshot();
+        app.world_mut().resource_mut::<UiMode>().overlay = Overlay::Inventory;
+        app.update();
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::PageDown);
+        app.update();
+        let world = app.world_mut();
+        assert_eq!(
+            world
+                .query_filtered::<&ScrollPosition, With<OverlayPanel>>()
+                .single(world)
+                .unwrap()
+                .0
+                .y,
+            120.0
+        );
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .reset_all();
+        app.world_mut().resource_mut::<UiMode>().overlay = Overlay::Help;
+        app.update();
+        let world = app.world_mut();
+        assert_eq!(
+            world
+                .query_filtered::<&ScrollPosition, With<OverlayPanel>>()
+                .single(world)
+                .unwrap()
+                .0
+                .y,
+            0.0
+        );
+        assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
+    }
 
     fn hud_app(state: CoreState) -> App {
         let mut app = App::new();

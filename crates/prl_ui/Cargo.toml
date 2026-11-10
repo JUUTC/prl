@@ -12,5 +12,9 @@ bevy = { workspace = true, features = ["bevy_log", "bevy_ui", "bevy_ui_render", 
 prl_content.workspace = true
 prl_core.workspace = true
 
+[dev-dependencies]
+prl_gen.workspace = true
+ron.workspace = true
+
 [lints]
 workspace = true

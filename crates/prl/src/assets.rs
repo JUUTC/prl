@@ -84,14 +84,14 @@ mod tests {
         let package = PackageDirectory::new();
         let path = resolve_content_path(&package.executable(), false).unwrap();
         assert_eq!(path, package.0.join("assets/packs/prl/base.ron"));
-        assert!(prl_core::CoreState::load_demo(path).is_err());
+        assert!(crate::load_playtest(&path).is_err());
     }
 
     #[test]
     fn development_opt_in_loads_checkout_when_no_adjacent_assets_exist() {
         let package = PackageDirectory::new();
         let path = resolve_content_path(&package.executable(), true).unwrap();
-        assert!(prl_core::CoreState::load_demo(path).is_ok());
+        assert!(crate::load_playtest(&path).is_ok());
     }
 
     #[test]
@@ -101,7 +101,7 @@ mod tests {
         for development in [false, true] {
             let path = resolve_content_path(&package.executable(), development).unwrap();
             assert_eq!(path, package.0.join("assets/packs/prl/base.ron"));
-            assert!(prl_core::CoreState::load_demo(path).is_err());
+            assert!(crate::load_playtest(&path).is_err());
         }
     }
 
@@ -113,15 +113,32 @@ mod tests {
         let source =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl/base.ron");
         std::fs::copy(source, pack.join("base.ron")).unwrap();
+        let dungeon = pack.join("data/dungeons/crypt_playtest.ron");
+        std::fs::create_dir_all(dungeon.parent().unwrap()).unwrap();
+        let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../assets/packs/prl/data/dungeons/crypt_playtest.ron");
+        std::fs::copy(source, &dungeon).unwrap();
         for development in [false, true] {
             let path = resolve_content_path(&package.executable(), development).unwrap();
             assert_eq!(path, pack.join("base.ron"));
-            assert!(prl_core::CoreState::load_demo(&path).is_ok());
+            assert!(crate::load_playtest(&path).is_ok());
         }
+        std::fs::remove_file(&dungeon).unwrap();
+        let error = crate::load_playtest(&pack.join("base.ron"))
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("crypt_playtest.ron"));
+        std::fs::write(&dungeon, "invalid required dungeon").unwrap();
+        let error = crate::load_playtest(&pack.join("base.ron"))
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("crypt_playtest.ron"));
         std::fs::write(pack.join("base.ron"), "invalid content").unwrap();
         for development in [false, true] {
             let path = resolve_content_path(&package.executable(), development).unwrap();
-            assert!(prl_core::CoreState::load_demo(path).is_err());
+            assert!(crate::load_playtest(&path).is_err());
         }
     }
 }

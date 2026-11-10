@@ -38,8 +38,14 @@ Speed modifiers: encumbrance, armor, haste/slow, terrain (swamp, deep snow), rac
 | Rest / wait | 100 |
 | Gather / craft | multi-turn, recipe-dependent, interruptible |
 
-P2 provisional (Q-020, Q-021): every implemented action — move, bump melee
-attack, open door and wait — costs 100 energy for the player and for monsters.
+P2/P3 provisional (Q-020, Q-021): move, bump melee attack, open door,
+wait and stairs cost 100 energy. P3 adds pickup 50, equip/unequip 100
+(Body 300), quaff/read 100 and drop 100 (removing worn Body 300).
+Item actions take effect on commitment, then scheduling runs until the next
+player input boundary; body changes can expose the player to multiple enemy
+actions. The scheduler accounts for the complete cost even if current carried
+energy is below it; no negative-energy debt remains at the committed snapshot
+boundary. Monsters still use 100-energy actions.
 Rejected commands cost nothing. Once the player dies the scheduler stops at once
 and every command except starting a new run is rejected without spending
 energy, advancing the clock or consuming RNG.
@@ -51,6 +57,8 @@ energy, advancing the clock or consuming RNG.
 - **Day/night cycle** (24h): affects light, monster spawns, shop hours, herb availability.
 - Per-tick world systems: HP/Mana/Stamina regen, hunger, status effect durations, cooldowns, poison/bleed, fire spread, light sources burning down, node regrowth, spawn timers.
 - Off-screen levels are **frozen** while the player is elsewhere, then "caught up" with a coarse simulation on return (regeneration, node regrowth). Dungeon instances never respawn monsters; only resets refresh them. Overworld encounters respawn over time.
+- P3 subset: inactive crypt floors remain entirely frozen, including actor
+  energy/AI and terrain memory; coarse catch-up is not implemented yet.
 - Pack-animal trips and house sieges advance with the world clock.
 
 ## Interruption rules

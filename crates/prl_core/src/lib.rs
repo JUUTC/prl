@@ -9,11 +9,13 @@ mod actor;
 mod ai;
 mod combat;
 mod command;
+mod dungeon;
 mod error;
 mod fixture;
 mod fov;
 mod geometry;
 mod ids;
+mod inventory;
 mod map;
 mod narration;
 mod outcome;
@@ -30,9 +32,14 @@ use bevy::prelude::{App, Plugin, ResMut, SystemSet, Update};
 
 pub use actor::{Actor, ActorBehavior, AiState, CombatStats};
 pub use command::{Command, CommandResult, CoreCommandQueue, RejectReason};
+pub use dungeon::{FloorPlan, RunFactory, StairDirection};
 pub use error::CoreError;
 pub use geometry::{Direction, Position};
 pub use ids::{ActorId, MapId};
+pub use inventory::{
+    BACKPACK, Container, ContainerId, EQUIPMENT, GridCell, Inventory, Item, ItemId, TransferItems,
+    derive_stats,
+};
 pub use map::{CoreMap, RememberedTile, TileState};
 pub use outcome::{CoreMessage, CoreOutcome, OutcomeKind};
 pub use rng::{COMBAT_STREAM, RngPosition};
@@ -44,7 +51,7 @@ pub const SECONDS_PER_TICK: u64 = 6;
 /// Energy cost of every P2 action: wait, move, open door and melee attack.
 pub const ACTION_ENERGY: u16 = 100;
 /// Version of the headless snapshot DTO.
-pub const SNAPSHOT_VERSION: u32 = 2;
+pub const SNAPSHOT_VERSION: u32 = 3;
 
 /// Registers the headless command resolver and its ordered extension sets.
 pub struct PrlCorePlugin;
@@ -74,12 +81,17 @@ pub enum CoreSet {
 fn resolve_commands(
     mut commands: ResMut<'_, CoreCommandQueue>,
     mut state: Option<ResMut<'_, CoreState>>,
+    factory: Option<bevy::prelude::Res<'_, RunFactory>>,
 ) {
     let Some(command) = commands.pop() else {
         return;
     };
     if let Some(state) = state.as_deref_mut() {
-        state.issue(command);
+        if let Some(factory) = factory {
+            factory.issue(state, command);
+        } else {
+            state.issue(command);
+        }
     }
 }
 

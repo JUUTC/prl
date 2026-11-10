@@ -1,8 +1,8 @@
-# Playtest Guide (P2 "Fight and retry")
+# Playtest Guide (P3 "Explore and loot")
 
-This build tests one question: is a fight in the small arena readable and fair,
-and is it quick to try again after dying? It is not the full game. There is no
-loot, inventory, procedural dungeon, disk save or campaign. The sprites are a
+This build tests a seeded two-floor crypt: exploring, fighting, looting, equipping,
+using consumables, returning upstairs and retrying after death. It is not the full
+game: there are no skills, disk saves, overworld, towns or campaign. The sprites are a
 generated placeholder atlas of the project's own Gravebound studies; if it fails
 to load, the game draws coloured shapes instead. Sprites, shapes, colours, the
 font and the sounds are all temporary placeholders. The separate
@@ -32,8 +32,11 @@ fallback.
 
 ## Goal
 
-You start in a small room. A closed door is to the east. Behind it are three
-hostile enemies, each moving at a different speed:
+You start at `<` on the upper floor with supplies at your feet. Press `G`
+seven times to pick them up, then `I` to select and equip sword/mail with `E`
+(reopen inventory for each action). Supplies include three healing potions and
+two Identify scrolls; their descriptions are unknown until used.
+The crypt has enemies with different speeds:
 
 - Shambler: slow (fallback shape: a green wide block).
 - Skeleton: normal speed (fallback: an orange tall block).
@@ -43,8 +46,14 @@ You are the figure with a shield and coif. Your character faces left or right
 from the horizontal part of each move or attack; straight up or down keeps the
 last facing. Creatures have independent left/right idle, walk and attack clips.
 
-Survive and kill them. If you die, start a new run straight away. Each new run
-uses the next seed.
+Explore toward `>`; some corridors have closed doors (`O`, then direction).
+Both exits contain Magic gear; `I`, select an unknown item, then `C` uses a
+carried Identify scroll. Enter at the upper `>` descends; comma at the lower
+`<` returns, preserving kills, loot and doors. Floor one's `<` has no outside
+destination. Defeat the lower-floor skeleton guardian, reach its `>` and press
+Enter to clear the crypt. This is a playtest endpoint, not campaign victory.
+If you die, `R` starts a fresh crypt at the next seed.
+The depicted shield is placeholder art, not a working shield/block mechanic.
 
 ## Controls
 
@@ -53,12 +62,20 @@ uses the next seed.
 | Arrows, numpad 1-9, vi `ykuhlbjn` | Move; bump an enemy to attack it (numpad and vi keys include diagonals) |
 | `.` / numpad 5 / Space | Wait one turn |
 | `O`, then a direction | Open an adjacent door |
+| `G` | Pick up one item at your feet (50 energy) |
+| `I`; Up/Down | Open inventory/equipment; select an item (free) |
+| `E` / `D` in inventory | Equip/unequip / drop selected item; closes the view |
+| `Q` / `C` in inventory | Drink selected potion / identify selected item with a carried scroll |
+| `X`; arrows/vi | Examine a selected cell without taking a turn; Esc closes |
+| Enter at `>` / comma at `<` | Descend or finish / ascend (100 energy) |
+| `V` | Show all ground labels, bypassing the Default filter (free) |
 | `R` twice within 2 s, or `R` then `Y` | Start a new run while alive (any other key cancels) |
 | `R` once | Start a new run after death |
 | `T` | Motion speed: Normal, Fast or Off (visual only) |
 | `M` / `9` / `0` | Mute sound, or turn the volume down/up in 10% steps |
 | F1 / `?` | Help, including the art legend |
 | Esc | Pause menu, or close an overlay |
+| PgUp / PgDn in an overlay | Scroll long inventory/help/examine text (free) |
 | `+` / `-` | World zoom, 1-4x in whole steps |
 | `[` / `]` | UI scale, separate from world zoom |
 
@@ -69,9 +86,12 @@ the clock. After you die, only new run, help, menu, zoom and settings keys work.
 ## What you see
 
 - The top-left panel shows the run number, seed, HP, turns, the clock, and the
-  current motion and sound settings.
+  current motion/sound settings, floor and carried weight.
 - The top-right panel lists the enemies you can see, with their HP and speed
-  (slow, normal or fast).
+  (slow, normal or fast), followed by up to six visible ground labels.
+- `<`/`>` mark stairs; `*` marks visible loot cells. Equipment letters correspond
+  to the 10x6 bag occupancy view. Normal items use `o`, Magic items `*`;
+  unknown affixes remain hidden in names and comparisons.
 - The bottom-left log keeps the last five messages. Each hit lists its raw
   damage and how much armor removed, so you can see why HP changed.
 - Attackers lunge toward their target, and the target flashes (red on sprites). A number floats
@@ -87,13 +107,17 @@ timing differs.
 
 ## What to try
 
-1. Hold the door. Open it, then step back and wait so enemies reach you one at a
-   time. Then try charging through the doorway. Which works better, and why?
+1. Equip entrance supplies, explore both floors, loot/identify Magic gear and
+   return upstairs. Are kills, doors and looted cells still as you left them?
+   Can you find the guardian and understand the endpoint message?
 2. Fight each speed of enemy. Can you tell them apart at a glance? Does the
    fast rat feel fair, or does it get free hits you could not see coming?
 3. Die on purpose. Is it clear that you died and what killed you? Is it clear
    how to start again? Does a stray `R` mid-fight cost you a run? It should not.
-4. Change motion speed (`T`) and sound (`M`, `9`, `0`) during a fight. Does Fast
+4. Drink an unknown potion when hurt (`I`, select it, `Q`); its type becomes known.
+   At full HP it should reject without consuming it. Body equip/unequip costs
+   three standard turns, so avoid changing armor while surrounded.
+5. Change motion speed (`T`) and sound (`M`, `9`, `0`) during a fight. Does Fast
    or Off feel better? Are the sounds useful or irritating?
 
 ## What to report
@@ -116,12 +140,19 @@ steps to reproduce. We are especially interested in:
 ## Implementation boundary
 
 `assets/packs/prl/base.ron` holds the validated tile and actor definitions for
-the arena. It is a small content schema, not the full mod/DLC manifest described
+the actors/terrain. Required `data/dungeons/crypt_playtest.ron` supplies two floor
+settings, encounters, items and Default filter. This is not the full mod/DLC manifest described
 in `docs/standards/extensibility.md`. Unknown or invalid required content must
 fail with an error; there is no silent fallback when a packaged file is broken.
 
 Combat numbers are provisional (`docs/combat.md`). Shield block and facing wait
-on Q-009. Gear-derived stats come later (Q-019). Sounds are short waveforms
+on Q-009. Gear bonuses now derive through one core function; actor base numbers
+remain provisional until P4 stats/skills (Q-019). Sounds are short waveforms
 generated in code at startup; with no audio device the game runs silently.
 Snapshots store logical state, independent of Bevy Entity allocations. Full
-save recovery, world instances and NG+ are later work.
+save recovery, general world/reset identities and NG+ are later work.
+Inactive crypt floors are frozen with no catch-up or respawning. The slice uses
+a temporary 60 kg hard pickup cap, no stacking/repacking, and only Main hand/Body
+slots; failed transfers never lose items. The repository's
+`docs/items-and-crafting.md` records the full subset limits.
+Windows launch/audio and 4K/UI-scale hands-on acceptance remain unverified.

@@ -15,6 +15,8 @@ pub enum CoreError {
     MissingDefinition(ContentId),
     /// Snapshot invariants were not satisfied.
     Snapshot(SnapshotError),
+    /// Run blueprint or generation input was invalid.
+    InvalidRun(String),
 }
 
 impl fmt::Display for CoreError {
@@ -23,6 +25,7 @@ impl fmt::Display for CoreError {
             Self::Content(error) => write!(formatter, "content error: {error}"),
             Self::MissingDefinition(id) => write!(formatter, "missing definition `{id}`"),
             Self::Snapshot(error) => write!(formatter, "snapshot error: {error}"),
+            Self::InvalidRun(reason) => write!(formatter, "invalid run: {reason}"),
         }
     }
 }

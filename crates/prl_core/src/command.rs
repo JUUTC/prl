@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use bevy::prelude::Resource;
 use serde::{Deserialize, Serialize};
 
-use crate::Direction;
+use crate::{Direction, StairDirection};
 
 /// Runtime intent accepted by the core command path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,6 +19,21 @@ pub enum Command {
     /// Abandon the current run (alive or dead) and start the next one
     /// (Q-021 provisional). Costs no game time.
     NewRun,
+    /// Use stairs or the final playtest endpoint under the player.
+    Stairs(StairDirection),
+    /// Atomically move one item between accessible containers.
+    Transfer(crate::TransferItems),
+    /// Drink a carried potion.
+    Quaff(crate::ItemId),
+    /// Put a carried/equipped item on the current cell.
+    Drop(crate::ItemId),
+    /// Read a carried Identify scroll, targeting a carried item.
+    Identify {
+        /// Scroll instance.
+        scroll: crate::ItemId,
+        /// Target instance.
+        target: crate::ItemId,
+    },
 }
 
 /// Why an intent was rejected. Rejections do not consume energy, advance time
@@ -39,6 +54,22 @@ pub enum RejectReason {
     PlayerDead,
     /// A new run could not be built from the loaded content.
     RunUnavailable,
+    /// No usable stairs in this direction under the player.
+    NoStairs,
+    /// The final guardian must be defeated before completing the slice.
+    GuardianAlive,
+    /// The playtest endpoint was already completed.
+    AlreadyCompleted,
+    /// Item is absent or not suitable for this action.
+    InvalidItem,
+    /// Item/container is not reachable here.
+    ItemInaccessible,
+    /// Grid shape cannot fit without overlap.
+    BackpackFull,
+    /// Pickup would exceed the current slice carry limit.
+    TooHeavy,
+    /// Healing at full health or identifying a known item does not spend time.
+    NoEffect,
 }
 
 /// Public result returned from synchronous command resolution.

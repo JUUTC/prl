@@ -54,12 +54,19 @@ impl TurnClock {
 }
 
 /// A validated action ready to be applied by any actor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Action {
     Wait,
     Step(Position),
     Attack(ActorId),
     OpenDoor(Position),
+    Travel(crate::dungeon::TravelPlan),
+    Items {
+        inventory: Box<crate::Inventory>,
+        cost: u16,
+        healing: u16,
+        message: String,
+    },
 }
 
 /// Authoritative, headless run state.
@@ -79,6 +86,8 @@ pub struct CoreState {
     pub(crate) rng: CombatRng,
     pub(crate) clock: TurnClock,
     pub(crate) log: OutcomeLog,
+    pub(crate) dungeon: Option<crate::dungeon::Dungeon>,
+    pub(crate) inventory: Option<crate::Inventory>,
 }
 
 impl CoreState {
@@ -134,7 +143,13 @@ impl CoreState {
             Ok(action) => action,
             Err(reason) => return self.reject(command, reason),
         };
-        let cost = ACTION_ENERGY;
+        let cost = match &action {
+            Action::Items { cost, .. } => *cost,
+            _ => ACTION_ENERGY,
+        };
+        let player_debt = self
+            .player()
+            .map_or(0, |player| cost.saturating_sub(player.energy));
         if let Some(player) = self.actors.get_mut(&self.player) {
             player.energy = player.energy.saturating_sub(cost);
         }
@@ -150,7 +165,7 @@ impl CoreState {
         // Only player actions move the viewpoint or open doors, so this keeps the
         // shared FOV current for every AI decision until the player acts again.
         self.refresh_visibility();
-        self.advance_until_player_ready();
+        self.advance_until_player_ready(player_debt);
         CommandResult::Accepted { sequence }
     }
 
@@ -263,7 +278,7 @@ impl CoreState {
         self.pack.actor(id)
     }
 
-    fn reject(&mut self, command: Command, reason: RejectReason) -> CommandResult {
+    pub(crate) fn reject(&mut self, command: Command, reason: RejectReason) -> CommandResult {
         let sequence = self.log.record(
             OutcomeKind::CommandRejected { command, reason },
             Some(narration::rejected(reason)),
@@ -272,6 +287,9 @@ impl CoreState {
     }
 
     fn start_new_run(&mut self) -> CommandResult {
+        if self.dungeon.is_some() {
+            return self.reject(Command::NewRun, RejectReason::RunUnavailable);
+        }
         let seed = self.seed.wrapping_add(1);
         let run = self.run_number.saturating_add(1);
         match Self::build_run(self.pack.clone(), seed, run, self.log.clone()) {
@@ -289,6 +307,27 @@ impl CoreState {
         match command {
             Command::Wait => Ok(Action::Wait),
             Command::NewRun => Err(RejectReason::RunUnavailable),
+            Command::Stairs(direction) => self.plan_stairs(direction).map(Action::Travel),
+            Command::Transfer(transfer) => {
+                let player = self.player().ok_or(RejectReason::InvalidItem)?;
+                let inventory = self.inventory.as_ref().ok_or(RejectReason::InvalidItem)?;
+                let label = inventory
+                    .items
+                    .get(&transfer.item)
+                    .map(|item| inventory.label(item))
+                    .ok_or(RejectReason::InvalidItem)?;
+                let (next, cost) =
+                    inventory.transferred(transfer, self.map.id(), player.position())?;
+                Ok(Action::Items {
+                    inventory: Box::new(next),
+                    cost,
+                    healing: 0,
+                    message: format!("You transfer {label}."),
+                })
+            }
+            Command::Quaff(item) => self.plan_quaff(item),
+            Command::Drop(item) => self.plan_drop(item),
+            Command::Identify { scroll, target } => self.plan_identify(scroll, target),
             Command::OpenDoor(direction) => {
                 let target = player
                     .position
@@ -358,6 +397,19 @@ impl CoreState {
             }
             Action::Attack(target) => self.attack(actor_id, target),
             Action::OpenDoor(position) => self.map.open_door(position),
+            Action::Travel(target) => self.travel(target),
+            Action::Items {
+                inventory,
+                healing,
+                message,
+                ..
+            } => {
+                self.inventory = Some(*inventory);
+                if let Some(player) = self.actors.get_mut(&self.player) {
+                    player.hp = player.hp.saturating_add(healing).min(player.max_hp);
+                }
+                self.log.record(OutcomeKind::ItemsChanged, Some(message));
+            }
         }
     }
 
@@ -367,8 +419,8 @@ impl CoreState {
         else {
             return;
         };
-        let attacker_stats = attacker.combat;
-        let target_stats = target.combat;
+        let attacker_stats = self.derived_stats(attacker);
+        let target_stats = self.derived_stats(target);
         let result = combat::resolve_attack(&attacker_stats, &target_stats, &mut self.rng);
         let target_hp = target.hp.saturating_sub(result.damage);
         let attacker_view = Participant {
@@ -420,8 +472,13 @@ impl CoreState {
 
     /// Spec: `docs/time-and-turns.md#energy-model`. Highest energy acts first;
     /// ties go to the lower actor ID. Stops at the player's turn or death.
-    fn advance_until_player_ready(&mut self) {
+    fn advance_until_player_ready(&mut self, mut player_debt: u16) {
         while self.status == RunStatus::Active {
+            if let Some(player) = self.actors.get_mut(&self.player) {
+                let payment = player.energy.min(player_debt);
+                player.energy -= payment;
+                player_debt -= payment;
+            }
             let ready_actor = self
                 .actors
                 .values()
