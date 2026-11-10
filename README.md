@@ -66,7 +66,8 @@ cargo run -p prl -- --dev-assets
 The P3 build uses placeholder art to demonstrate two seeded crypt floors, persistent
 stairs/return travel, melee combat, loot, equipment, consumables, death and new runs.
 Inventory now has native equipment/grid/List/details/ground panels, pointer and
-keyboard actions, and persistent warning options; packing/rotation remain follow-up.
+keyboard actions, persistent warning options, free backpack placement/rotation
+and explicit atomic best-effort Organize. Unknown-scroll Read remains deferred.
 See [playtest guide](docs/playtest-guide.md) for controls and
 scope. The Windows playtest workflow packages the executable, fixture content
 and a diagnostic launcher; its downloadable build requires no Rust installation.

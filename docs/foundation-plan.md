@@ -34,8 +34,12 @@ ownership remain later work or open contracts.
 I-034/I-035 now provide the native inventory workspace and action journeys:
 stable item IDs, shared read-only core cost validation, explicit known Identify
 sources and normal costed commands. Separate versioned warning preferences
-survive character death/restart without changing snapshots. Free organization
-and orientation migration remain I-036; see [inventory-ux.md](inventory-ux.md).
+survive character death/restart independently of snapshots. I-036 adds atomic
+same-bag placement/rotation and deterministic all-or-nothing Organize, costing
+zero energy, actions, clocks, AI or RNG. Snapshot v5 persists orientation and
+migrates v4 items as unrotated without losing kill history. Drag/drop,
+click-place and keyboard share core validation; pickup never repacks existing
+items. See [inventory-ux.md](inventory-ux.md).
 
 ## Contracts to establish before gameplay grows
 

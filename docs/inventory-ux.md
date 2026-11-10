@@ -1,10 +1,10 @@
 # Inventory and item UX
 
-**Status: native workspace/action increment delivered, 2026-11-10.**
+**Status: native workspace/actions and free organization implemented, 2026-11-10.**
 Requested focus: make inventory and item decisions understandable and comfortable
 with placeholder art. I-034/I-035 replace the text overlay with a working Bevy
-workspace and accepted action flows; B-010 is fixed. Free packing, rotation and
-Organize remain approved follow-up I-036. This does not approve final art or
+workspace and accepted action flows; B-010 is fixed. I-036 adds free packing,
+rotation and explicit Organize. This does not approve final art or
 close Windows/4K/human usability acceptance. The earlier, superseded browser
 study is in [`tools/inventory-ux/`](../tools/inventory-ux/README.md).
 
@@ -81,21 +81,31 @@ controls. World zoom must not change its geometry.
 - Offer a **List** view with the same items, order, actions and details.
   Switching view is free and retains selection. Keyboard/list access is not a
   second-class alternative to dragging.
-- MVP grid is read-only placement plus selection. No drag-to-repack illusion:
-  current core disallows same-container transfers. The user approved free
-  rearrangement and 90-degree rotation, even in danger, with drag/drop,
-  click-to-pick-up/place and keyboard equivalents. Implement the headless
-  commands first (I-036/Q-031); Escape cancels and invalid placement is atomic.
+- Same-bag rearrangement and 90-degree rotation are free, even in danger.
+  Drag a grid item and release at its desired top-left cell; `R` rotates while
+  held. Alternatively select an item, choose **Move / rotate** (`P`), then click
+  a destination; arrows move the preview, `R` rotates and Enter places.
+  Preview validity uses both OK/X text and colour. Escape, release outside the
+  visible grid, focus loss or an interrupted resize cancels without mutation.
+  Invalid placement retains the original item and permits correction. Placement
+  temporarily shows the grid and restores the previous Grid/List choice.
 - Label both capacity measures. In the current game: `18.4 / 60.0 kg -
   playtest pickup limit`; do not call it STR-derived capacity or invent
   encumbrance tiers. Empty-cell count does not guarantee an item fits.
 - Do not auto-sort/repack the grid on pickup, inspection or list sorting.
   An explicit **Organize** action may rearrange/rotate all backpack items at no
-  time cost. Use deterministic best-effort packing, commit only if every item
+  time cost (`O` or **Organize**). Use deterministic best-effort packing, commit only if every item
   fits, and otherwise preserve the complete layout with an explanation. It need
   not find every mathematically possible arrangement. Never organize silently.
   Future list filters dim nonmatching grid items instead of collapsing their
   occupied cells. An item-list filter is not a ground loot filter.
+- Core placement validates ownership, orientation, bounds and overlap atomically.
+  Organize sorts by descending area, descending longest side, then persistent
+  ItemId. Each item tries base orientation in row-major first-fit order, then
+  rotated orientation. No optimal-fit guarantee is implied. Both commands cost
+  zero energy and advance no clock, action counter, AI, visibility or RNG.
+  Orientation survives equipment/ground transfers and save/Continue; snapshot v5
+  migrates v4 items as unrotated and preserves their run history.
 
 ### Ground
 
@@ -352,9 +362,9 @@ mouse **or** keyboard, without guessing keys; manual movement never leaks
 through; repeated input produces at most one command. Reopening retains context.
 Current game regression tests and save/restore conservation continue passing.
 
-### UX-3 - Free backpack organization (I-036; after UX-1/UX-2)
+### UX-3 - Free backpack organization (I-036; implemented after UX-1/UX-2)
 
-Implement accepted same-bag placement, 90-degree rotation and explicit Organize
+Implemented accepted same-bag placement, 90-degree rotation and explicit Organize
 through deterministic headless commands. Preserve item IDs, weight, ownership,
 stats, clock and RNG; persist orientation with a versioned migration. Share
 atomic placement validation across drag/drop, click-place and keyboard controls.
@@ -367,7 +377,7 @@ Do not add dummy live tabs for bags/belt/storage/optimizer now.
 Explicit `TransferItems.cell` already supports desired bag pickup/unequip
 placement. Accepted same-bag packing/rotation/Organize is UX-3; stack splitting
 and locks still need separate command semantics and migration where applicable.
-Prove item conservation and interrupted operations before drag/drop delivery.
+Item conservation and interrupted operations remain required regression checks.
 Then extend the same item details/actions to:
 
 - Belt/hotbar with charges and known effects; stacks/split amounts.
@@ -427,8 +437,9 @@ acceptance. Q-030's later interview decisions supersede its interaction policy.
 The actual Bevy implementation now has equipment, true 10x6 grid/List, persistent
 known-only details/comparison, current-cell ground, costed actions, explicit
 known Identify sources, review/cancel and independently persisted warning flags.
-The UI submits normal core commands; snapshot orientation/packing rules are
-unchanged. Initial scrolls are unknown, so a fresh run intentionally has no known
+The UI submits normal core commands; this workspace increment did not change
+snapshot orientation/packing rules (the later I-036 increment below does).
+Initial scrolls are unknown, so a fresh run intentionally has no known
 Identify source until general Read is designed; this limitation is explicit.
 
 All required workspace gates pass: format, strict all-target clippy, 201 tests
@@ -452,10 +463,36 @@ idle-frame widget replacement and a high-scale footer hiding the workspace.
 
 This is developer interaction evidence, not human usability sign-off, real audio,
 4K or a packaged Windows launch. I-001/I-002/I-005 and the separate art gates
-remain open. I-036 and unknown-scroll/skill-risk brainstorming are not delivered.
+remain open. I-036 was not part of this workspace increment; unknown-scroll/
+skill-risk brainstorming remains deferred.
 
 Windows workflow 42788438271 at implementation commit 9265bb7 also passed format,
 headless/workspace tests, strict lint, API docs, executable build, packaging and
 upload. Its artifact is
 `prl-windows-x86_64-9265bb7d5eecc9ff5d838cb75fc9304e46303dd2`.
 This verifies the downloadable Windows build, not a packaged Windows launch.
+
+### Native organization verification, 2026-11-10
+
+I-036 implements the UX-3 contract above. Required Linux format, strict
+all-target clippy, workspace tests (212 passed, one existing ignored balance
+probe), warning-free API docs and native executable build pass.
+Core regressions cover free atomic placement, rotated transfers/restore,
+deterministic idempotent packing, required rotation, inaccessible ground items
+and a valid layout that best effort cannot repack without losing anything.
+Disk tests load v4 and round-trip rotated v5. UI regressions cover organization
+in real visible danger, preview/cancel/rejection, List context and actual
+pointer-event propagation: only a picked grid target can accept a drop, not a
+footer that obscures the same coordinates.
+
+Native Linux Xvfb/software rendering exercised drag/rotate/release with OK/X
+preview, click-place, keyboard placement, explicit Organize, overlap rejection,
+Escape/outside-grid cancellation, List restoration after placement and
+interrupted-resize cancellation without stale commands. 1280x900/720 and actual
+2x UI scale retained reachable placement controls with scrolling/focus reveal.
+Repeated free operations left the saved player action count at seven; ordinary
+equip/unequip advanced it to nine, followed by another free rotation. Clean
+quit/restart retained orientation in v5 and the native log had no application
+errors. These are developer checks, not packaged Windows launch, 4K or human
+usability acceptance. Unknown-scroll Read, stacks/locks and the separate
+Foundry/art work remain unchanged.

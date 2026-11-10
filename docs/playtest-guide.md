@@ -131,8 +131,18 @@ changes in danger. Uncheck **Warn me next time** to disable just that category;
 Inventory **Options** can re-enable it. These flags survive runs/restarts in
 `character.warnings.ron`, separate from the character save. A visible **NOT
 SAVED** or options error means persistence failed; keep the file and report it.
-Backpack placement is currently read-only: free repacking, rotation and explicit
-Organize are approved follow-up work, not functional controls yet.
+Backpack organization is free, even in danger. Drag a grid item and release at
+its desired top-left cell; press `R` while holding to rotate. Or select an item,
+choose **Move / rotate** (`P`), then click a destination. In placement mode,
+arrows move the preview, `R` rotates and Enter places. Green/OK and red/X show
+validity; an invalid move preserves the original and allows correction.
+Escape, release outside the visible grid, focus loss or interrupted resize
+cancels. Placement temporarily shows the grid and restores your List/Grid choice.
+`O` / **Organize** explicitly tries a deterministic whole-bag layout, including
+rotation; if best effort cannot fit everything, nothing moves. Pickup never
+rearranges existing items. Orientation survives equipment/ground transfers and
+Continue. Packing spends no energy, time or player actions; normal pickup,
+equip, use and drop retain their costs.
 
 ## What you see
 
@@ -208,7 +218,7 @@ death/abandonment morgues and per-run kill counters are implemented; skills,
 settings/victory history, the history browser, profile, general
 world/reset identities and NG+ are later work.
 Inactive crypt floors are frozen with no catch-up or respawning. The slice uses
-a temporary 60 kg hard pickup cap, no stacking/repacking, and only Main hand/Body
+a temporary 60 kg hard pickup cap, no stacking, and only Main hand/Body
 slots; failed transfers never lose items. The repository's
 `docs/items-and-crafting.md` records the full subset limits.
 Windows launch/audio and 4K/UI-scale hands-on acceptance remain unverified.

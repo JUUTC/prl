@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Actor, CombatStats, CoreError, CoreState, MapId, Position, RejectReason};
 
+mod packing;
+pub use packing::PlaceItem;
+
 /// Logical persistent item identity, scoped to a run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ItemId(pub u64);
@@ -55,6 +58,9 @@ pub struct Item {
     pub container: ContainerId,
     /// Grid origin for a backpack item; absent in ground/equipment containers.
     pub cell: Option<GridCell>,
+    /// Backpack footprint turned 90 degrees; retained while equipped/on ground.
+    #[serde(default)]
+    pub rotated: bool,
 }
 
 /// Explicit item transfer; validation completes before any mutation or time cost.
@@ -227,9 +233,20 @@ impl Inventory {
         ))
     }
 
-    fn fits(&self, id: ItemId, definition: &ItemDefinition, cell: GridCell) -> bool {
-        if u16::from(cell.x) + u16::from(definition.width) > 10
-            || u16::from(cell.y) + u16::from(definition.height) > 6
+    /// Actual footprint in cells, including the item's persisted orientation.
+    #[must_use]
+    pub fn footprint(&self, item: &Item) -> Option<(u8, u8)> {
+        self.definition(item).map(|definition| {
+            if item.rotated {
+                (definition.height, definition.width)
+            } else {
+                (definition.width, definition.height)
+            }
+        })
+    }
+
+    fn fits(&self, id: ItemId, shape: (u8, u8), cell: GridCell) -> bool {
+        if u16::from(cell.x) + u16::from(shape.0) > 10 || u16::from(cell.y) + u16::from(shape.1) > 6
         {
             return false;
         }
@@ -237,20 +254,20 @@ impl Inventory {
             .values()
             .filter(|item| item.id != id && item.container == BACKPACK)
             .all(|item| {
-                let (Some(other), Some(origin)) = (self.definition(item), item.cell) else {
+                let (Some(other), Some(origin)) = (self.footprint(item), item.cell) else {
                     return false;
                 };
-                u16::from(cell.x) + u16::from(definition.width) <= u16::from(origin.x)
-                    || u16::from(origin.x) + u16::from(other.width) <= u16::from(cell.x)
-                    || u16::from(cell.y) + u16::from(definition.height) <= u16::from(origin.y)
-                    || u16::from(origin.y) + u16::from(other.height) <= u16::from(cell.y)
+                u16::from(cell.x) + u16::from(shape.0) <= u16::from(origin.x)
+                    || u16::from(origin.x) + u16::from(other.0) <= u16::from(cell.x)
+                    || u16::from(cell.y) + u16::from(shape.1) <= u16::from(origin.y)
+                    || u16::from(origin.y) + u16::from(other.1) <= u16::from(cell.y)
             })
     }
 
-    fn first_fit(&self, id: ItemId, definition: &ItemDefinition) -> Option<GridCell> {
+    fn first_fit(&self, id: ItemId, shape: (u8, u8)) -> Option<GridCell> {
         (0..6)
             .flat_map(|y| (0..10).map(move |x| GridCell { x, y }))
-            .find(|cell| self.fits(id, definition, *cell))
+            .find(|cell| self.fits(id, shape, *cell))
     }
 
     pub(crate) fn transferred(
@@ -264,6 +281,7 @@ impl Inventory {
             .get(&transfer.item)
             .ok_or(RejectReason::InvalidItem)?;
         let definition = self.definition(item).ok_or(RejectReason::InvalidItem)?;
+        let shape = self.footprint(item).ok_or(RejectReason::InvalidItem)?;
         let source = self
             .containers
             .get(&item.container)
@@ -307,9 +325,9 @@ impl Inventory {
                 }
                 let cell = transfer
                     .cell
-                    .or_else(|| self.first_fit(item.id, definition))
+                    .or_else(|| self.first_fit(item.id, shape))
                     .ok_or(RejectReason::BackpackFull)?;
-                if !self.fits(item.id, definition, cell) {
+                if !self.fits(item.id, shape, cell) {
                     return Err(RejectReason::BackpackFull);
                 }
                 Some(cell)
@@ -333,11 +351,9 @@ impl Inventory {
                             .is_some_and(|definition| definition.kind == ItemKind::Gear(slot))
                 });
                 if let Some(displaced) = displaced {
-                    let old_definition = self
-                        .definition(displaced)
-                        .ok_or(RejectReason::InvalidItem)?;
+                    let old_shape = self.footprint(displaced).ok_or(RejectReason::InvalidItem)?;
                     let cell = next
-                        .first_fit(displaced.id, old_definition)
+                        .first_fit(displaced.id, old_shape)
                         .ok_or(RejectReason::BackpackFull)?;
                     let mut old = displaced.clone();
                     old.container = BACKPACK;
@@ -431,10 +447,10 @@ impl Inventory {
             }
             match self.containers.get(&item.container) {
                 Some(Container::Backpack) => {
-                    if !item
-                        .cell
-                        .is_some_and(|cell| self.fits(*id, definition, cell))
-                    {
+                    if !item.cell.is_some_and(|cell| {
+                        self.footprint(item)
+                            .is_some_and(|shape| self.fits(*id, shape, cell))
+                    }) {
                         return Err(invalid("backpack bounds/overlap invalid"));
                     }
                 }
@@ -646,6 +662,9 @@ impl CoreState {
             crate::Command::Drop(item) => self.plan_drop(item)?,
             crate::Command::Quaff(item) => self.plan_quaff(item)?,
             crate::Command::Identify { scroll, target } => self.plan_identify(scroll, target)?,
+            crate::Command::PlaceItem(_) | crate::Command::Organize => {
+                self.plan_organization(command)?
+            }
             _ => return Err(RejectReason::InvalidItem),
         };
         let crate::state::Action::Items { cost, .. } = action else {
@@ -721,6 +740,7 @@ impl CoreState {
                     inventory.items.insert(
                         item_id,
                         Item {
+                            rotated: false,
                             id: item_id,
                             definition: id.clone(),
                             identified: definition.rarity == Rarity::Normal
@@ -869,7 +889,7 @@ mod tests {
                 let cell = GridCell { x, y };
                 if inventory.fits(
                     ItemId(inventory.next_item),
-                    inventory.definition(&scroll).unwrap(),
+                    inventory.footprint(&scroll).unwrap(),
                     cell,
                 ) {
                     scroll.id = ItemId(inventory.next_item);

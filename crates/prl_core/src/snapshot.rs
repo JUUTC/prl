@@ -164,11 +164,19 @@ impl CoreState {
         {
             snapshot.state.kills = 0;
             snapshot.state.kills_complete = false;
-            snapshot.version = SNAPSHOT_VERSION;
+            snapshot.version = 4;
         }
         if snapshot.version == 3 {
             snapshot.state.kills = 0;
             snapshot.state.kills_complete = false;
+            snapshot.version = 4;
+        }
+        if snapshot.version == 4 {
+            if let Some(inventory) = snapshot.state.inventory.as_mut() {
+                for item in inventory.items.values_mut() {
+                    item.rotated = false;
+                }
+            }
             snapshot.version = SNAPSHOT_VERSION;
         }
         if snapshot.version != SNAPSHOT_VERSION {
@@ -645,7 +653,7 @@ mod tests {
         let hash = arena().snapshot().canonical_hash().unwrap();
         assert_eq!(
             blake3::Hash::from_bytes(hash).to_hex().as_str(),
-            "de928b7f48b5f4e35cf5afd6ffd00b7cfd3267cf7bbbd274d443dcdc5aa3745c"
+            "b582294577ce4e1cfe2697044450274820f71042ba9f06786cf5e4aebede44c2"
         );
     }
 
@@ -701,7 +709,7 @@ mod tests {
         let old = current
             .to_ron()
             .unwrap()
-            .replacen("version:4", "version:2", 1)
+            .replacen("version:5", "version:2", 1)
             .replace(",dungeon:None,inventory:None", "")
             .replace(",kills:0,kills_complete:true", "");
         assert!(!old.contains("inventory:"));
@@ -720,7 +728,7 @@ mod tests {
             .snapshot()
             .to_ron()
             .unwrap()
-            .replacen("version:4", "version:3", 1)
+            .replacen("version:5", "version:3", 1)
             .replace(",kills:0,kills_complete:true", "");
         let mut migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
         assert_eq!(migrated.kills(), 0);
@@ -733,6 +741,27 @@ mod tests {
         let mut corrupt = state.snapshot();
         corrupt.state.kills = u64::MAX;
         assert!(CoreState::restore(corrupt).is_err());
+    }
+
+    #[test]
+    fn version_four_items_migrate_unrotated_without_changing_kill_history() {
+        let state = crate::test_support::dungeon();
+        let old = state
+            .snapshot()
+            .to_ron()
+            .unwrap()
+            .replacen("version:5", "version:4", 1)
+            .replace(",rotated:false", "");
+        assert!(!old.contains("rotated:"));
+        let migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
+        assert_eq!(migrated.snapshot(), state.snapshot());
+        assert!(
+            migrated
+                .inventory()
+                .unwrap()
+                .items()
+                .all(|item| !item.rotated)
+        );
     }
 
     #[test]

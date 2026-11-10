@@ -385,6 +385,87 @@ fn dropping_worn_body_keeps_danger_warning_when_drop_warning_is_disabled() {
     assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
 }
 
+#[test]
+fn organization_in_danger_is_free_and_keeps_inventory_open() {
+    let core = threatened_with_body_equipped();
+    let before = (
+        core.clock(),
+        core.rng_position(),
+        core.actors().cloned().collect::<Vec<_>>(),
+    );
+    let mut app = app(core);
+    open(&mut app);
+    act(&mut app, Intent::Organize);
+    let core = app.world().resource::<CoreState>();
+    assert_eq!(
+        (
+            core.clock(),
+            core.rng_position(),
+            core.actors().cloned().collect()
+        ),
+        before
+    );
+    assert_eq!(app.world().resource::<UiMode>().overlay, Overlay::Inventory);
+}
+
+#[test]
+fn placement_preview_cancel_invalid_and_drag_paths_preserve_time_and_ownership() {
+    let core = carried();
+    let sword = find(&core, |item| {
+        core.inventory()
+            .unwrap()
+            .definition(item)
+            .is_some_and(|definition| definition.kind == ItemKind::Gear(EquipSlot::MainHand))
+    });
+    let before = core.inventory().unwrap().clone();
+    let clock = core.clock();
+    let mut app = app(core);
+    open(&mut app);
+    act(&mut app, Intent::Select(sword));
+    act(&mut app, Intent::List);
+    act(&mut app, Intent::BeginPlacement);
+    act(&mut app, Intent::Rotate);
+    assert_eq!(
+        app.world().resource::<CoreState>().inventory(),
+        Some(&before)
+    );
+    act(
+        &mut app,
+        Intent::PlaceCell(prl_core::GridCell { x: 9, y: 5 }),
+    );
+    assert!(matches!(
+        app.world().resource::<Workspace>().stage,
+        Stage::Placement(_)
+    ));
+    assert_eq!(
+        app.world().resource::<CoreState>().inventory(),
+        Some(&before)
+    );
+    act(&mut app, Intent::Cancel);
+    assert!(app.world().resource::<Workspace>().list);
+    assert_eq!(
+        app.world().resource::<CoreState>().inventory(),
+        Some(&before)
+    );
+    act(
+        &mut app,
+        Intent::DragPlace(prl_core::PlaceItem {
+            item: sword,
+            cell: prl_core::GridCell { x: 7, y: 5 },
+            rotated: true,
+        }),
+    );
+    let core = app.world().resource::<CoreState>();
+    assert_eq!(core.clock(), clock);
+    let bag = core.inventory().unwrap();
+    assert_eq!(bag.items().count(), before.items().count());
+    assert_eq!(bag.carried_weight(), before.carried_weight());
+    assert_eq!(
+        bag.items().find(|item| item.id == sword).unwrap().cell,
+        Some(prl_core::GridCell { x: 7, y: 5 })
+    );
+}
+
 fn threatened_with_body_equipped() -> CoreState {
     use prl_core::Direction;
     use std::collections::{BTreeMap, VecDeque};

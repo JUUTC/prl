@@ -204,27 +204,29 @@ fn bag(
     theme: &PlaceholderTheme,
 ) {
     text(parent, "BACKPACK / 10 x 6", theme);
-    button(
-        parent,
-        if workspace.list {
-            "Show Grid"
-        } else {
-            "Show List"
-        }
-        .into(),
-        Intent::List,
-        workspace,
-        theme,
-        Node::default(),
-        false,
-    );
+    if workspace.stage == Stage::Browse {
+        button(
+            parent,
+            if workspace.list {
+                "Show Grid"
+            } else {
+                "Show List"
+            }
+            .into(),
+            Intent::List,
+            workspace,
+            theme,
+            Node::default(),
+            false,
+        );
+    }
     let bag_items: Vec<_> = items(core)
         .into_iter()
         .filter(|item| item.container == BACKPACK)
         .collect();
     if bag_items.is_empty() {
         text(parent, "Backpack empty", theme);
-    } else if workspace.list {
+    } else if workspace.list && !matches!(workspace.stage, Stage::Placement(_)) {
         for item in bag_items {
             item_button(
                 parent,
@@ -253,9 +255,31 @@ fn bag(
             theme,
         );
     }
+    if workspace.stage == Stage::Browse {
+        parent.spawn(row()).with_children(|buttons| {
+            button(
+                buttons,
+                "Move / rotate [P]".into(),
+                Intent::BeginPlacement,
+                workspace,
+                theme,
+                Node::default(),
+                false,
+            );
+            button(
+                buttons,
+                "Organize [O] / free".into(),
+                Intent::Organize,
+                workspace,
+                theme,
+                Node::default(),
+                false,
+            );
+        });
+    }
     text(
         parent,
-        "Select: inspect only.\nPacking/rotation follows workspace delivery.",
+        "Select: inspect only. Move: click source, then cell.\nDrag: release at top-left destination; R rotates; Esc cancels.\nPickup never rearranges existing items.",
         theme,
     );
 }
@@ -277,11 +301,14 @@ fn grid(
                 ..default()
             },
             BackgroundColor(Color::srgb(0.03, 0.04, 0.05)),
+            super::packing::Grid,
         ))
         .with_children(|grid| {
             for y in 0_u8..6 {
                 for x in 0_u8..10 {
                     grid.spawn((
+                        bevy::ui_widgets::Button,
+                        Control(Intent::PlaceCell(prl_core::GridCell { x, y })),
                         Node {
                             position_type: PositionType::Absolute,
                             left: percent(f32::from(x) * 10.0),
@@ -296,9 +323,9 @@ fn grid(
                 }
             }
             for item in bag_items {
-                if let Some((cell, definition)) = item
+                if let Some((cell, (width, height))) = item
                     .cell
-                    .zip(core.inventory().and_then(|bag| bag.definition(item)))
+                    .zip(core.inventory().and_then(|bag| bag.footprint(item)))
                 {
                     item_button(
                         grid,
@@ -310,14 +337,35 @@ fn grid(
                             position_type: PositionType::Absolute,
                             left: percent(f32::from(cell.x) * 10.0),
                             top: percent(f32::from(cell.y) * 100.0 / 6.0),
-                            width: percent(f32::from(definition.width) * 10.0),
-                            height: percent(f32::from(definition.height) * 100.0 / 6.0),
+                            width: percent(f32::from(width) * 10.0),
+                            height: percent(f32::from(height) * 100.0 / 6.0),
                             overflow: Overflow::clip(),
                             ..default()
                         },
                         true,
                     );
                 }
+            }
+            if let Stage::Placement(placement) = workspace.stage {
+                for y in 0..6 {
+                    for x in 0..10 {
+                        grid.spawn((
+                            bevy::ui_widgets::Button,
+                            Control(Intent::PlaceCell(prl_core::GridCell { x, y })),
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: percent(f32::from(x) * 10.0),
+                                top: percent(f32::from(y) * 100.0 / 6.0),
+                                width: percent(10),
+                                height: percent(100.0 / 6.0),
+                                ..default()
+                            },
+                        ));
+                    }
+                }
+                super::packing::preview(grid, core, placement, theme);
+            } else {
+                super::packing::drag_preview_node(grid, theme);
             }
         });
 }
@@ -355,8 +403,10 @@ fn details(
             } else {
                 "Ground"
             },
-            definition.width,
-            definition.height,
+            bag.footprint(item)
+                .map_or(definition.width, |shape| shape.0),
+            bag.footprint(item)
+                .map_or(definition.height, |shape| shape.1),
             definition.weight
         ),
         theme,
@@ -548,7 +598,7 @@ fn review(
             );
         }
         Stage::Options => warning_options(parent, workspace, warnings, theme),
-        Stage::Browse => {}
+        Stage::Browse | Stage::Placement(_) => {}
     }
     if workspace.stage != Stage::Browse {
         text(parent, warnings.status.clone(), theme);
@@ -703,8 +753,39 @@ pub(super) fn refresh(
                 Pane(3),
             ))
             .with_children(|content| {
-                if workspace.stage == Stage::Browse {
+                if matches!(workspace.stage, Stage::Browse | Stage::Placement(_)) {
                     browse(content, &core, &workspace, &theme, size);
+                    if matches!(workspace.stage, Stage::Placement(_)) {
+                        content.spawn(row()).with_children(|buttons| {
+                            button(
+                                buttons,
+                                "Rotate [R] / free".into(),
+                                Intent::Rotate,
+                                &workspace,
+                                &theme,
+                                Node::default(),
+                                false,
+                            );
+                            button(
+                                buttons,
+                                "Place [Enter] / free".into(),
+                                Intent::Place,
+                                &workspace,
+                                &theme,
+                                Node::default(),
+                                false,
+                            );
+                            button(
+                                buttons,
+                                "Cancel [Esc]".into(),
+                                Intent::Cancel,
+                                &workspace,
+                                &theme,
+                                Node::default(),
+                                false,
+                            );
+                        });
+                    }
                 } else {
                     review(content, &core, &workspace, &warnings, &theme);
                 }
@@ -736,15 +817,17 @@ fn header(
             ),
             theme,
         );
-        button(
-            header,
-            "Options".into(),
-            Intent::Options,
-            workspace,
-            theme,
-            Node::default(),
-            false,
-        );
+        if workspace.stage == Stage::Browse {
+            button(
+                header,
+                "Options".into(),
+                Intent::Options,
+                workspace,
+                theme,
+                Node::default(),
+                false,
+            );
+        }
         button(
             header,
             "Close [Esc]".into(),
@@ -758,9 +841,9 @@ fn header(
     text(
         parent,
         if threatened(core) {
-            "HOSTILE VISIBLE: actions advance enemies and close this view."
+            "HOSTILE VISIBLE: costed actions advance enemies and close this view; packing is free."
         } else {
-            "Safe actions keep this view open. Danger or damage returns to world."
+            "Costed actions close on danger/damage. Browsing and packing remain free."
         },
         theme,
     );

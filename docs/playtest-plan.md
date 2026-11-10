@@ -220,7 +220,7 @@ it does not delay the basic slice:
 | `derive_stats`, containers, atomic transfers, basic compare tooltip | P3 | Loot/equip arrives at P3; retrofitting a second stats path later would let comparisons disagree with combat |
 | Inventory/item interaction design and clickable synthetic study (I-033) | Delivered; review before Bevy UX work | [Inventory UX](inventory-ux.md) defines equipment/backpack/details/ground, known-only comparisons, healing, explicit Identify, costs and failures; this is not the in-game UI |
 | Bevy read-only inventory workspace, then action journeys (I-034/I-035) | Implemented; Windows/4K/human UX acceptance pending | Native equipment/grid/List/details/ground, pointer/keyboard, safe stay-open, danger/damage closure, persistent per-category warnings and explicit known Identify sources (B-010 fixed). No new unknown-scroll reading rules |
-| Free backpack placement/90-degree rotation and explicit Organize (I-036) | After workspace/action flows, as capacity permits | Q-031 accepted: headless atomic commands and orientation migration first; drag/drop, click-place and keyboard parity; best-effort all-or-nothing Organize, never silent pickup repacking |
+| Free backpack placement/90-degree rotation and explicit Organize (I-036) | Implemented after workspace/action flows; human acceptance pending | Headless zero-cost atomic commands, snapshot v5 orientation/v4 migration, drag/drop, click-place and keyboard parity; deterministic best-effort all-or-nothing Organize, never silent pickup repacking |
 | Full comparison view (sets, both weapon loadouts, reference target) | After P5, with more affixes/sets | Needs more item types than the P3 subset |
 | `ItemPredicate` rules and the Default loot-filter preset for ground labels | P3 | Ground loot arrives at P3; one rule language serves filters, auto-sort and optimizer constraints |
 | Custom loot filters, all presets, editor, auto-pickup, import/export | After P5, before or with the first town slice | Needs enough item variety for filtering to matter |
@@ -231,7 +231,7 @@ it does not delay the basic slice:
 Open choices are tracked as Q-022 to Q-027; work items as I-012 to I-018 in
 [backlog.md](backlog.md).
 
-Packing/dragging/rotation/Organize is now approved in Q-031 and tracked in I-036,
+Packing/dragging/rotation/Organize is implemented per Q-031 in I-036,
 but remains distinct from stacks/locks and the other I-028 breadth. The original
 study predates the interview. Inventory work preserves the separate art/Foundry
 effort and its production gates. Unknown-scroll Read, skill gain/risk-reward and
@@ -424,7 +424,7 @@ core validation, stay open when safe and close after visible danger/damage;
 independent warning preferences survive death/new runs/restarts outside snapshots.
 Known Identify sources are chosen explicitly; fresh unknown scrolls are not
 silently decoded. General Read remains deferred; packing/rotation/Organize
-is the next approved increment I-036, not implemented here.
+was not part of this workspace increment (see the later I-036 follow-up).
 
 Linux workspace format, strict all-target clippy, tests (201 passed, one ignored),
 warning-free API docs and native build pass. Nine inventory regressions cover
@@ -446,6 +446,26 @@ headless/workspace tests, strict lint, API docs, executable build, packaging and
 upload. The uploaded artifact is
 `prl-windows-x86_64-9265bb7d5eecc9ff5d838cb75fc9304e46303dd2`.
 No packaged Windows launch was performed by this session.
+
+Free organization follow-up (I-036), 2026-11-10:
+atomic zero-cost same-bag placement, 90-degree rotation and explicit deterministic
+best-effort Organize now work through headless commands. Orientation-aware
+transfers and snapshot v5/v4 migration preserve items and run history.
+Drag/drop uses real picking targets, click-place and keyboard share validation,
+and List context returns after placement. Invalid moves, failed whole-bag
+packing and interrupted drags preserve the original layout. No automatic pickup
+repacking, unknown-scroll rules, stacks/locks or Foundry/art changes were added.
+
+Linux format, strict all-target lint, workspace tests (212 passed, one existing
+ignored probe), warning-free docs and native build pass. Native pointer/keyboard
+checks cover rotation, placement, rejection/cancellation, explicit Organize,
+List restoration, resize interruption, 1280x900/720 and actual 2x UI scale.
+Free operations retained action count seven; normal equip/unequip advanced to
+nine and subsequent packing remained free. Rotated v5 quit/Continue persisted
+and no application errors appeared. See
+[organization evidence](inventory-ux.md#native-organization-verification-2026-11-10).
+Packaged Windows launch, 4K, physical audio, human UX acceptance and separate
+art gates remain open.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

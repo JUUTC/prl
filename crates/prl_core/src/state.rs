@@ -167,7 +167,9 @@ impl CoreState {
         if let Some(player) = self.actors.get_mut(&self.player) {
             player.energy = player.energy.saturating_sub(cost);
         }
-        self.clock.player_actions = self.clock.player_actions.saturating_add(1);
+        if cost != 0 {
+            self.clock.player_actions = self.clock.player_actions.saturating_add(1);
+        }
         let message = match action {
             Action::Attack(_) => None,
             _ => narration::accepted(command),
@@ -178,8 +180,10 @@ impl CoreState {
         self.perform(self.player, action);
         // Only player actions move the viewpoint or open doors, so this keeps the
         // shared FOV current for every AI decision until the player acts again.
-        self.refresh_visibility();
-        self.advance_until_player_ready(player_debt);
+        if cost != 0 {
+            self.refresh_visibility();
+            self.advance_until_player_ready(player_debt);
+        }
         CommandResult::Accepted { sequence }
     }
 
@@ -293,9 +297,18 @@ impl CoreState {
     }
 
     pub(crate) fn reject(&mut self, command: Command, reason: RejectReason) -> CommandResult {
+        let message = match (command, reason) {
+            (Command::PlaceItem(_), RejectReason::OutOfBounds) => {
+                "Placement extends outside the 10x6 backpack. Original layout kept.".into()
+            }
+            (Command::Organize, RejectReason::BackpackFull) => {
+                "Organize could not fit every item. Original layout kept; no time spent.".into()
+            }
+            _ => narration::rejected(reason),
+        };
         let sequence = self.log.record(
             OutcomeKind::CommandRejected { command, reason },
-            Some(narration::rejected(reason)),
+            Some(message),
         );
         CommandResult::Rejected { sequence, reason }
     }
@@ -366,6 +379,7 @@ impl CoreState {
             Command::Quaff(item) => self.plan_quaff(item),
             Command::Drop(item) => self.plan_drop(item),
             Command::Identify { scroll, target } => self.plan_identify(scroll, target),
+            Command::PlaceItem(_) | Command::Organize => self.plan_organization(command),
             Command::OpenDoor(direction) => {
                 let target = player
                     .position

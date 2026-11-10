@@ -23,6 +23,10 @@ pub enum Command {
     Stairs(StairDirection),
     /// Atomically move one item between accessible containers.
     Transfer(crate::TransferItems),
+    /// Reposition/rotate one backpack item atomically, without passing time.
+    PlaceItem(crate::PlaceItem),
+    /// Explicit deterministic best-effort packing, all-or-nothing and free.
+    Organize,
     /// Drink a carried potion.
     Quaff(crate::ItemId),
     /// Put a carried/equipped item on the current cell.
@@ -40,7 +44,7 @@ pub enum Command {
 /// or touch the RNG.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RejectReason {
-    /// Destination is outside the map.
+    /// Destination is outside the map or the backpack placement grid.
     OutOfBounds,
     /// Destination blocks movement.
     BlockedTerrain,

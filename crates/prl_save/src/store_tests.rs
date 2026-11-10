@@ -52,6 +52,51 @@ fn absent_slot_is_distinct_from_corrupt_unreadable_or_oversized_slot() {
 }
 
 #[test]
+fn disk_save_migrates_v4_and_retains_new_rotated_placement() {
+    let (_directory, store) = slot();
+    let mut core = crypt(1);
+    core.issue(core.pickup_command().unwrap());
+    store.write(&core).unwrap();
+    rewrite(&store, |file| {
+        file.snapshot = file
+            .snapshot
+            .replacen("version:5", "version:4", 1)
+            .replace(",rotated:false", "");
+        file.checksum = digest(&file.snapshot);
+    });
+    let mut restored = store.load().unwrap().unwrap();
+    assert_eq!(restored.snapshot(), core.snapshot());
+    let sword = restored
+        .inventory()
+        .unwrap()
+        .items()
+        .find(|item| item.container == prl_core::BACKPACK)
+        .unwrap()
+        .id;
+    let command = Command::PlaceItem(prl_core::PlaceItem {
+        item: sword,
+        cell: prl_core::GridCell { x: 7, y: 5 },
+        rotated: true,
+    });
+    assert!(matches!(
+        restored.issue(command),
+        CommandResult::Accepted { .. }
+    ));
+    store.write(&restored).unwrap();
+    let continued = store.load().unwrap().unwrap();
+    assert_eq!(continued.snapshot(), restored.snapshot());
+    assert!(
+        continued
+            .inventory()
+            .unwrap()
+            .items()
+            .find(|item| item.id == sword)
+            .unwrap()
+            .rotated
+    );
+}
+
+#[test]
 fn disk_round_trip_and_replacement_continue_identical_rules_rng_and_feedback() {
     let (_directory, store) = slot();
     let mut original = crypt(42);
@@ -259,7 +304,7 @@ fn previous_arena_snapshot_migrates_and_unknown_core_version_fails() {
     rewrite(&store, |saved| {
         saved.snapshot = saved
             .snapshot
-            .replacen("version:4", "version:2", 1)
+            .replacen("version:5", "version:2", 1)
             .replace(",dungeon:None,inventory:None", "")
             .replace(",kills:0,kills_complete:true", "");
         saved.checksum = digest(&saved.snapshot);

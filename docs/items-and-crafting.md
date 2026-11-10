@@ -11,8 +11,9 @@ not recovered interview decisions. No random affix rolls, stacks, durability,
 requirements, curses/blessings, auto-identification from wearing gear or crafting
 are claimed.
 
-The 10x6 backpack uses deterministic row-major first-fit placement; equipment has
-slots but no grid coordinates. Picking up, swapping equipment, unequipping and
+The 10x6 backpack uses deterministic row-major first-fit placement in each item's
+current orientation; pickup never rotates or rearranges existing items.
+Equipment has slots but no grid coordinates. Picking up, swapping equipment, unequipping and
 dropping are atomic ownership transfers: failed space/weight/access checks change
 no items, time or RNG. UI browsing is free. Pickup costs 50 energy, equip/unequip
 100 (Body 300), quaff/read 100, drop 100 (removing worn Body 300).
@@ -21,8 +22,15 @@ Failed healing at full HP or identifying a known target consumes nothing.
 The slice temporarily **rejects pickup above 60,000 g** rather than implementing
 the full STR-derived carry/encumbrance model. This reversible limit does not
 change [housing-and-logistics.md](housing-and-logistics.md#inventory).
-Free repacking/rotation/Organize are approved follow-up I-036; stacks, other
-slots and the full weight model remain I-028.
+I-036 implements free same-bag placement/90-degree rotation and explicit
+Organize, including in danger. Neither command changes energy, clocks, player
+action count, AI or RNG. Placement is atomic; Organize sorts descending area,
+descending longest side, then ItemId, trying row-major base orientation before
+rotated orientation per item. It commits only if every item fits; failure
+preserves the complete layout and explains that best effort failed.
+Orientation persists through transfers and snapshot v5 (v4 migrates unrotated).
+See [inventory-ux.md](inventory-ux.md) for native controls. Stacks, other slots
+and the full weight model remain I-028.
 
 Normal gear is known. Unknown Magic gear shows base/rarity (`*`), not affix text;
 comparison omits unknown affix bonuses while actual combat includes them.

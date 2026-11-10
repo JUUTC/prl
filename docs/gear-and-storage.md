@@ -22,7 +22,10 @@ The rest of this document remains target design; see the exact
 The implemented [inventory/item workspace](inventory-ux.md) provides equipment,
 backpack, ground and persistent item-card workspace, including knowledge-safe
 comparison and action flows. Its browser study is mock data, not another stats
-path. I-034/I-035 are delivered; free packing/rotation/Organize is approved I-036.
+path. I-034/I-035 are delivered; I-036 implements free same-bag placement,
+rotation and explicit deterministic, atomic best-effort Organize. Native
+drag/drop, click-place and keyboard use shared core validation; orientation
+persists in snapshot v5, and pickup never silently repacks.
 Optimizer/storage breadth remains after P5; final art and Windows acceptance
 remain separate.
 

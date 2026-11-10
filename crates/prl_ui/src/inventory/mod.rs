@@ -9,6 +9,7 @@ use prl_core::{
 
 use crate::input::{Overlay, UiMode};
 
+mod packing;
 #[cfg(test)]
 mod tests;
 mod view;
@@ -44,6 +45,13 @@ enum Intent {
     Source(ItemId),
     Confirm,
     Cancel,
+    BeginPlacement,
+    PlaceCell(prl_core::GridCell),
+    Rotate,
+    Place,
+    Organize,
+    DragPlace(prl_core::PlaceItem),
+    CancelDrag,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -75,6 +83,7 @@ enum Stage {
         warning: [bool; 3],
     },
     Options,
+    Placement(prl_core::PlaceItem),
 }
 
 #[derive(Clone)]
@@ -107,7 +116,11 @@ fn capture(
     event: On<'_, '_, bevy::ui_widgets::Activate>,
     controls: Query<'_, '_, &view::Control>,
     mut pointer: ResMut<'_, PointerIntent>,
+    drag: Res<'_, packing::Drag>,
 ) {
+    if drag.suppress_activation() {
+        return;
+    }
     if let Ok(control) = controls.get(event.entity) {
         pointer.0.get_or_insert(control.0);
     }
@@ -130,6 +143,7 @@ impl Default for Workspace {
 }
 
 pub(super) fn plugin(app: &mut App) {
+    packing::plugin(app);
     app.init_resource::<Workspace>()
         .init_resource::<PointerIntent>()
         .init_resource::<InventoryWarningSettings>()
@@ -231,8 +245,10 @@ fn rejection(reason: RejectReason, core: &CoreState, target: &Item, command: Com
                 |definition| {
                     format!(
                         "No contiguous {}x{} space for {}. Nothing moved.",
-                        definition.width,
-                        definition.height,
+                        bag.footprint(displaced)
+                            .map_or(definition.width, |shape| shape.0),
+                        bag.footprint(displaced)
+                            .map_or(definition.height, |shape| shape.1),
                         bag.label(displaced)
                     )
                 },
@@ -365,7 +381,13 @@ fn controls(core: &CoreState, workspace: &Workspace) -> Vec<Intent> {
         Stage::Browse => items(core)
             .iter()
             .map(|item| Intent::Select(item.id))
-            .chain([Intent::List, Intent::Options, Intent::Close])
+            .chain([
+                Intent::List,
+                Intent::BeginPlacement,
+                Intent::Organize,
+                Intent::Options,
+                Intent::Close,
+            ])
             .chain(
                 actions(core, workspace)
                     .iter()
@@ -390,6 +412,7 @@ fn controls(core: &CoreState, workspace: &Workspace) -> Vec<Intent> {
             .map(Intent::ToggleWarning)
             .chain([Intent::Cancel])
             .collect(),
+        Stage::Placement(_) => vec![Intent::Rotate, Intent::Place, Intent::Cancel],
     }
 }
 
@@ -401,6 +424,7 @@ fn input(
     mut warnings: ResMut<'_, InventoryWarningSettings>,
     mut queue: ResMut<'_, CoreCommandQueue>,
     mut pointer: ResMut<'_, PointerIntent>,
+    mut drag: ResMut<'_, packing::Drag>,
 ) {
     let clicked = pointer.0.take();
     if mode.overlay != Overlay::Inventory
@@ -408,6 +432,10 @@ fn input(
         || workspace.flight.is_some()
         || !queue.is_empty()
     {
+        drag.cancel();
+        return;
+    }
+    if drag.keyboard(&keys) {
         return;
     }
     let intent = if keys.just_pressed(KeyCode::Escape) {
@@ -459,6 +487,9 @@ fn keyboard_intent(
     if keys.just_pressed(KeyCode::Enter) {
         return workspace.focus;
     }
+    if matches!(workspace.stage, Stage::Placement(_)) {
+        return packing::keyboard(keys, workspace);
+    }
     if workspace.stage != Stage::Browse {
         return None;
     }
@@ -493,6 +524,12 @@ fn keyboard_intent(
         if keys.just_pressed(key) {
             return Some(Intent::Act(verb));
         }
+        if keys.just_pressed(KeyCode::KeyP) {
+            return Some(Intent::BeginPlacement);
+        }
+        if keys.just_pressed(KeyCode::KeyO) {
+            return Some(Intent::Organize);
+        }
     }
     None
 }
@@ -505,6 +542,9 @@ fn activate(
     warnings: &mut InventoryWarningSettings,
     queue: &mut CoreCommandQueue,
 ) {
+    if packing::activate(intent, core, workspace, queue) {
+        return;
+    }
     workspace.focus = Some(intent);
     match intent {
         Intent::Select(id) if workspace.stage == Stage::Browse => {
@@ -672,7 +712,8 @@ fn settle(
                 && matches!(event.kind, OutcomeKind::Attacked { target, .. }
                     if core.player().is_some_and(|player| player.id() == target)))
                 || core.player().is_some_and(|player| player.hp() < flight.hp);
-            if threatened(&core) || damaged { mode.close_inventory(); }
+            if !matches!(flight.command, Command::PlaceItem(_) | Command::Organize)
+                && (threatened(&core) || damaged) { mode.close_inventory(); }
         }
         workspace.focus = workspace.selected.map(Intent::Select);
         workspace.flight = None;

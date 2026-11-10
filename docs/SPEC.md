@@ -187,7 +187,11 @@ General unknown-scroll Read and its discovery/skill/risk rules remain deferred;
 starting unknown scrolls are not silently usable as known Identify sources.
 Backpack rearrangement and 90-degree rotation are free; explicit Organize is
 deterministic best effort and atomic, never silent on pickup. These accepted
-organization rules need core/persistence implementation (I-036); they do not
+organization rules are implemented with headless commands and persisted
+orientation (snapshot v5, migrating v4 items as unrotated) in I-036. Placement
+supports drag/drop, click-place and keyboard; cancellation/rejection preserves
+the original layout. Free organization advances no action counter, clocks,
+energy, AI or RNG and never closes inventory on danger. These commands do not
 add the target belt/bag/storage systems or approve final art. The earlier browser
 study uses synthetic actions and predates these interview decisions.
 

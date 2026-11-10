@@ -37,8 +37,8 @@ pub use error::CoreError;
 pub use geometry::{Direction, Position};
 pub use ids::{ActorId, MapId};
 pub use inventory::{
-    BACKPACK, Container, ContainerId, EQUIPMENT, GridCell, Inventory, Item, ItemId, TransferItems,
-    derive_stats,
+    BACKPACK, Container, ContainerId, EQUIPMENT, GridCell, Inventory, Item, ItemId, PlaceItem,
+    TransferItems, derive_stats,
 };
 pub use map::{CoreMap, RememberedTile, TileState};
 pub use outcome::{CoreMessage, CoreOutcome, OutcomeKind};
@@ -51,7 +51,7 @@ pub const SECONDS_PER_TICK: u64 = 6;
 /// Energy cost of every P2 action: wait, move, open door and melee attack.
 pub const ACTION_ENERGY: u16 = 100;
 /// Version of the headless snapshot DTO.
-pub const SNAPSHOT_VERSION: u32 = 4;
+pub const SNAPSHOT_VERSION: u32 = 5;
 
 /// Registers the headless command resolver and its ordered extension sets.
 pub struct PrlCorePlugin;

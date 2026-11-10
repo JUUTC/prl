@@ -66,7 +66,9 @@ pub(crate) fn accepted(command: Command) -> Option<String> {
         | Command::Transfer(_)
         | Command::Quaff(_)
         | Command::Identify { .. }
-        | Command::Drop(_) => None,
+        | Command::Drop(_)
+        | Command::PlaceItem(_)
+        | Command::Organize => None,
     }
 }
 
