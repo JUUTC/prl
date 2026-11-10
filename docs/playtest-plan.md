@@ -166,6 +166,14 @@ filters do not need a second rules path.
 
 ### P4 - Grow and resume
 
+Current bounded foundation: I-029 adds the headless
+[`SnapshotStore`](architecture.md#current-p4-snapshot-store-i-029) API with
+versioned checksummed files, validated restore and synchronized atomic
+replacement. It is not wired into gameplay: automatic checkpoint/quit-save,
+Continue, installed-content compatibility and death invalidation remain I-030.
+Skill progression remains independently blocked by Q-010; this storage work
+does not choose a challenge model or approve Q-012's proposed interval.
+
 Implement trained versus effective skill values and PL as specified. **Q-010**
 blocks combat gain: the always-hit rule cannot simply supply `p = 1` to the gain
 formula, which would yield zero progress. Settle and test a challenge model rather
@@ -274,7 +282,7 @@ its code compiles.
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
-| P4 | Planned | Progression and persistence not implemented |
+| P4 | Storage foundation implemented; not playable save/resume | I-029 headless atomic snapshot store and disk continuation/failure regressions. Runtime checkpoint/quit/Continue/death/compatibility wiring remains I-030; progression remains blocked by Q-010. Profile/morgue are not implemented |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
 Foundation follow-up, 2026-11-09: B-006 now requires explicit checkout-asset
@@ -318,6 +326,15 @@ under Linux Xvfb/software rendering, stayed responsive through seven pickups,
 inventory, UI scaling to 2x, modal scrolling, retry and help, and logged no
 errors/panics. Screenshots confirmed the inventory at 1x and the scrollable
 2x modal. This verifies neither a real audio device nor Windows/4K acceptance.
+
+P4 storage foundation follow-up (I-029): workspace format, clippy (all targets,
+warnings denied), tests (155 passed; one ignored balance probe) and warning-free
+API docs passed on Linux. Isolated content/core/generation/save tests passed
+(101 tests). Eleven storage regressions cover disk continuation, lower-floor
+restore/return, atomic overwrite, interrupted temporary files, replacement failure,
+corruption/size/version handling and dead-state rejection. The executable's
+save/resume controls remain unavailable until I-030; no live checkpoint/death
+invalidation, power-cut durability or packaged Windows Continue claim is made.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

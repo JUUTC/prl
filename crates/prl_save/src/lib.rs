@@ -1,7 +1,12 @@
 //! Persistence: character saves, crash-safety checkpoints, the meta-progression
-//! profile and morgue files. Writes are atomic and the format is versioned.
+//! profile and morgue files. The headless snapshot store provides versioned,
+//! validated atomic replacement; automatic gameplay save/death wiring is pending.
 
 use bevy::prelude::*;
+
+mod store;
+
+pub use store::{SaveError, SnapshotStore};
 
 /// Registers all `prl_save` systems, resources and sub-plugins.
 pub struct PrlSavePlugin;

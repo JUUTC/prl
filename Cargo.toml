@@ -18,6 +18,7 @@ rand_chacha = { version = "0.10", default-features = false }
 rand_core = { version = "0.10", default-features = false }
 ron = "0.10"
 serde = { version = "1", features = ["derive"] }
+tempfile = "3.27"
 
 prl_audio = { path = "crates/prl_audio" }
 prl_content = { path = "crates/prl_content" }

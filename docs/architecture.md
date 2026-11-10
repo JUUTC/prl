@@ -64,6 +64,53 @@ All races, classes, skills, abilities, synergies, spells, items, affixes, monste
 - Writes are atomic (write temp file, then rename).
 - Versioned format; incompatible versions refuse to load gracefully.
 
+### Current P4 snapshot store (I-029)
+
+`prl_save::SnapshotStore` is a headless single-slot storage API, not yet a playable
+save/resume controller. Callers supply an explicit path with an existing writable
+parent. `write` validates a living committed `CoreState`, encodes it and atomically
+replaces that slot; `load` returns `None` only for an absent slot and reports
+I/O, malformed data, incompatible versions, checksum mismatch, dead state and
+invalid logical state as explicit errors. It never silently starts a new run,
+deletes a corrupt save or promotes abandoned temporary files.
+
+Pre-release file format 1 is compact RON with `format`, exact Cargo package
+`engine` version, `checksum` and `snapshot` (the compact core RON as a string).
+BLAKE3 context `PRL save snapshot bytes v1` hashes those snapshot UTF-8 bytes
+before parsing/migration. This catches accidental corruption, not deliberate
+tampering; normal core/content invariant validation still runs. Reads stop at
+16 MiB plus one overflow-detection byte; oversized input/output is rejected.
+The existing core v2-arena-to-v3 migration applies after checksum validation.
+Engine/file incompatibility fails explicitly; there is no promise that identical
+pre-release package versions imply compatibility across arbitrary code changes.
+The planned bincode/zstd production encoding is not implemented: this narrow
+store deliberately reuses the already tested snapshot encoding without changing
+the core DTO or its canonical hash.
+
+`tempfile` 3.27 (MIT/Apache-2.0) provides unique same-directory temporary files and
+cross-platform atomic overwrite, including Windows; its OS randomness affects
+only temporary names, never gameplay. Bytes are written and `sync_all` completes
+before `persist` replaces the destination. Write/rename failure preserves the
+old slot and drops the temporary file. Unix also synchronizes the parent directory
+after replacement; failure at that stage explicitly means the new save may
+already exist with durability unconfirmed. Windows metadata durability through
+sudden power loss is not guaranteed. This assumes one game writer in a normal
+local writable directory; it is not a multi-process save-slot coordinator.
+
+Storage regressions cover overwrite, lower-floor disk restoration/return with
+loot and open doors preserved, subsequent command/RNG/hash equivalence, abandoned
+temporary writes, failed replacement/cleanup, corrupt/oversized files, version
+rejection/migration and dead-state rejection. These are storage/API tests, not
+power-cut tests or packaged Windows Continue acceptance.
+
+**Still required (I-030):** choose a writable per-character save location, verify
+installed pack/config compatibility, reinstall `RunFactory`, integrate automatic
+checkpoints/quit-save/Continue, and invalidate every continuable save on death
+before allowing another load. Rejecting a dead snapshot alone does **not** prevent
+loading an older living checkpoint. No gameplay system calls the store yet, so
+the runnable build still has no saves and does not claim permadeath persistence.
+Explorer respawn, profile, morgue and skills remain later P4 work.
+
 ### Current snapshot proof (I-008, Q-016)
 
 The version-3 in-memory DTO round-trips through compact RON. It is not a disk

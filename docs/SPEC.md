@@ -227,8 +227,10 @@ comparisons share one stat evaluator; ground labels use the Default loot filter.
 The [P3 subset](items-and-crafting.md#current-p3-subset) documents reversible
 limits: fixed supplies/affixes, no stacks or curses, a hard carry cap before
 STR-derived encumbrance, frozen inactive floors and run-local IDs (Q-015/Q-019).
-These do not replace the full rules above or mark M3/M5 complete. Disk saves,
-skills, campaign victory and general content-pack manifests remain later work.
+These do not replace the full rules above or mark M3/M5 complete. P4 now has a
+headless atomic snapshot storage API (I-029), but playable save/resume and death
+invalidation are not wired (I-030). Skills, campaign victory and general
+content-pack manifests remain later work.
 P2/P3 Windows hands-on/audio acceptance is still pending.
 Actors and terrain draw from the disposable Gravebound placeholder atlas; this
 does not complete art P1. Art P0 is awaiting review.
