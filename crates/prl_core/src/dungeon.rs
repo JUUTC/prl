@@ -62,6 +62,23 @@ pub(crate) struct TravelPlan {
 #[derive(Resource)]
 pub struct RunFactory(Box<dyn Fn(u64) -> Result<CoreState, CoreError> + Send + Sync>);
 
+/// Optional runtime persistence boundary, called after a replacement is built
+/// but before the current run is discarded. Not serialized or used by rules.
+#[derive(Resource)]
+pub struct RunExitGuard(Box<dyn Fn(&CoreState) -> Result<(), String> + Send + Sync>);
+
+impl RunExitGuard {
+    /// Installs a fallible archive boundary. An error preserves the current run
+    /// and is published as an explicit new-run rejection.
+    pub fn new(archive: impl Fn(&CoreState) -> Result<(), String> + Send + Sync + 'static) -> Self {
+        Self(Box::new(archive))
+    }
+
+    pub(crate) fn check(&self, state: &CoreState) -> Result<(), String> {
+        (self.0)(state)
+    }
+}
+
 impl RunFactory {
     /// Installs a deterministic run builder using explicit seed/content inputs.
     pub fn new(
@@ -73,11 +90,25 @@ impl RunFactory {
     /// Resolves an intent, regenerating content for a new run when requested.
     /// Build errors leave the old run intact and publish an explicit rejection.
     pub fn issue(&self, state: &mut CoreState, command: Command) -> CommandResult {
+        self.issue_guarded(state, command, None)
+    }
+
+    pub(crate) fn issue_guarded(
+        &self,
+        state: &mut CoreState,
+        command: Command,
+        guard: Option<&RunExitGuard>,
+    ) -> CommandResult {
         if command != Command::NewRun {
             return state.issue(command);
         }
         match (self.0)(state.seed().wrapping_add(1)) {
             Ok(mut next) => {
+                if let Some(guard) = guard
+                    && let Err(error) = guard.check(state)
+                {
+                    return state.reject_new_run(error);
+                }
                 next.run_number = state.run_number().saturating_add(1);
                 next.log = state.log.clone();
                 let sequence = next.log.record(

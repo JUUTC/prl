@@ -1,4 +1,4 @@
-//! Read-only, deterministic text summaries of dead playtest runs.
+//! Read-only, deterministic text summaries of terminal playtest runs.
 
 use prl_core::{CoreState, EQUIPMENT, OutcomeKind};
 
@@ -16,9 +16,9 @@ pub(super) fn summary(state: &CoreState, fingerprint: &str) -> String {
         }
     });
     let mut report = format!(
-        "PRL morgue - playtest report format 1\n\
+        "PRL morgue - playtest report format 2\n\
          Engine: {}\nSnapshot: {fingerprint}\n\
-         Run: {}\nSeed: {}\nOutcome: Death\n\
+         Run: {}\nSeed: {}\nOutcome: {}\n\
          Cause: {}\n\
          Pack: {}\nMap: {} (logical ID {})\n\
          Floor: {}\n\
@@ -26,12 +26,21 @@ pub(super) fn summary(state: &CoreState, fingerprint: &str) -> String {
          Crypt objective completed before death: {}\n\
          Settings: provisional playtest content; no character/difficulty selection yet\n\
          Skills: not implemented\n\
-         Lifetime kills: not tracked; the recent log below is not a complete history\n\n\
+         Lifetime kills (this run): {}{}\n\n\
          Carried equipment and backpack (known names only):\n",
         env!("CARGO_PKG_VERSION"),
         state.run_number(),
         state.seed(),
-        cause.unwrap_or_else(|| "Unavailable (fatal outcome no longer retained)".into()),
+        if state.is_player_dead() {
+            "Death"
+        } else {
+            "Abandoned"
+        },
+        if state.is_player_dead() {
+            cause.unwrap_or_else(|| "Unavailable (fatal outcome no longer retained)".into())
+        } else {
+            "Confirmed new-run request".into()
+        },
         state.content().id(),
         state.map().definition(),
         state.map().id().get(),
@@ -42,6 +51,12 @@ pub(super) fn summary(state: &CoreState, fingerprint: &str) -> String {
         state.clock().elapsed_seconds(),
         state.clock().player_actions(),
         state.slice_completed(),
+        state.kills(),
+        if state.kills_complete() {
+            ""
+        } else {
+            " (since legacy migration; earlier kills unknown)"
+        },
     );
     if let Some(inventory) = state.inventory() {
         for item in inventory

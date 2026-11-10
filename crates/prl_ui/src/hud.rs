@@ -5,12 +5,12 @@ use prl_core::{ACTION_ENERGY, Actor, CoreSet, CoreState, OutcomeKind, RunStatus}
 
 use crate::cursor::OutcomeCursor;
 use crate::input::{CONFIRM_SECONDS, Overlay};
-use crate::{PlaceholderTheme, SettingsStatus, UiMode};
+use crate::{PlaceholderTheme, RepeatSettings, SettingsStatus, UiMode};
 
 /// Newest core messages kept visible; short so the log never hides the player.
 const LOG_LINES: usize = 5;
 
-const CONTROLS: &str = "Move / attack: arrows, numpad, vi (y k u h l b j n); bump an enemy to attack\nWait: . / numpad 5 / Space | Open door: O, then a direction\nNew run: R twice (or R then Y) while alive; R once after death\nMotion: T (Normal / Fast / Off) | Sound: M mute, 9 / 0 volume\nWorld zoom: + / - | UI scale: [ / ] | Pause/menu: Esc | Help: F1 / ?";
+const CONTROLS: &str = "Move / attack: arrows, numpad, vi (y k u h l b j n); bump an enemy to attack\nWait: . / numpad 5 / Space | Open door: O, then a direction\nHeld input: F2 on/off | F3 delay | F4 interval | F5 remap movement/wait\nNew run: R twice (or R then Y) while alive; R once after death\nMotion: T (Normal / Fast / Off) | Sound: M mute, 9 / 0 volume\nWorld zoom: + / - | UI scale: [ / ] | Pause/menu: Esc | Help: F1 / ?";
 
 const LEGEND: &str = "Legend (placeholder art, not final)\nYou: the figure with shield and coif (greys out when dead)\nEnemies: shambler (slow), skeleton (normal), grave rat (fast); red flash = hit\nRed bar under an actor: HP when hurt\nRaised blocks: walls | Planks: door | Dim: remembered terrain\nIf art fails to load: cyan square = you; green wide = slow, orange tall = normal,\npink diamond = fast; grey = wall; brown + bar = door\nFloating numbers: damage dealt (CRIT = critical, glance = glancing blow)\nThe log explains each hit: raw damage and how much armor removed.";
 
@@ -44,6 +44,7 @@ struct MessageLog {
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<MessageLog>()
+        .init_resource::<RepeatSettings>()
         .add_systems(Startup, setup)
         .add_systems(
             Update,
@@ -460,9 +461,9 @@ fn loot_text(core: &CoreState, show_all: bool) -> String {
 fn overlay_text(mode: &UiMode, core: Option<&CoreState>) -> String {
     let text = match mode.overlay {
         Overlay::Help => format!(
-            "HELP - gameplay paused\n\n{CONTROLS}\nG: pick up one item | I: inventory/equipment | X: examine with arrows\nEnter: descend/finish at > | Comma: ascend at <\n\n{LEGEND}\n\nOne key press, one intent; held keys do not repeat.\nInventory browsing/examine are free; item actions spend turns.\nSaves and final assets are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
+            "HELP - gameplay paused\n\n{CONTROLS}\nG: pick up one item | I: inventory/equipment | X: examine with movement keys\nEnter: descend/finish at > | Comma: ascend at <\n\n{LEGEND}\n\nHeld movement/wait stops at danger, low HP, loot, doors and stairs.\nAttacks never repeat. Release and press again after an interruption.\nInventory browsing/examine are free; item actions spend turns.\nAutomatic Continue/checkpoints and text morgues are available.\nFinal assets and full options are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
         ),
-        Overlay::Menu => "PAUSED - placeholder playtest\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\nT: motion | M: mute | 9 / 0: volume\n\nNo turns pass while browsing.\nClose this menu, then R to start a new run.\nFull options, saving and character creation are unavailable.".to_owned(),
+        Overlay::Menu => "PAUSED - placeholder playtest\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\nT: motion | M: mute | 9 / 0: volume\nF2: held input | F3: delay | F4: interval | F5: remap\n\nNo turns pass while browsing.\nClose this menu, then R to start a new run.\nAutomatic saving is active; full options and character creation are unavailable.".to_owned(),
         Overlay::None => String::new(),
         Overlay::Inventory => core.map_or_else(|| "No inventory available.".into(), |core| inventory_text(core, mode.selection)),
         Overlay::Look => core.map_or_else(|| "No map available.".into(), |core| examine_text(core, mode.look)),
@@ -478,6 +479,7 @@ fn refresh(
     state: Option<Res<'_, CoreState>>,
     mode: Res<'_, UiMode>,
     settings: Res<'_, SettingsStatus>,
+    repeat: Res<'_, RepeatSettings>,
     log: Res<'_, MessageLog>,
     mut texts: ParamSet<
         '_,
@@ -495,6 +497,7 @@ fn refresh(
 ) {
     if !mode.is_changed()
         && !settings.is_changed()
+        && !repeat.is_changed()
         && !state.as_ref().is_some_and(DetectChanges::is_changed)
     {
         return;
@@ -528,7 +531,14 @@ fn refresh(
         }
     }
     for mut text in &mut texts.p3() {
-        **text = overlay_text(&mode, state.as_deref());
+        **text = format!(
+            "{}\n\nHeld input: {} | delay {} ms | interval {} ms\n{}",
+            overlay_text(&mode, state.as_deref()),
+            if repeat.enabled { "On" } else { "Off" },
+            repeat.delay.as_millis(),
+            repeat.interval.as_millis(),
+            mode.binding_prompt(),
+        );
     }
     for mut node in &mut texts.p5() {
         node.display = if mode.is_paused() {

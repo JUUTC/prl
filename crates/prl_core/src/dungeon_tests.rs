@@ -129,3 +129,43 @@ fn failed_factory_reports_error_without_replacing_live_state_or_advancing_rules(
     assert_eq!(state.run_number(), 1);
     assert_eq!(state.floor_number(), Some(1));
 }
+
+#[test]
+fn exit_guard_runs_only_after_build_and_preserves_rules_on_failure() {
+    let failed = RunFactory::new(|_| Err(CoreError::InvalidRun("bad content".into())));
+    let called = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let observed = called.clone();
+    let guard = RunExitGuard::new(move |_| {
+        observed.store(true, std::sync::atomic::Ordering::SeqCst);
+        Err("archive unavailable".into())
+    });
+    let mut state = test_support::dungeon();
+    failed.issue_guarded(&mut state, Command::NewRun, Some(&guard));
+    assert!(!called.load(std::sync::atomic::Ordering::SeqCst));
+    let factory = RunFactory::new(|seed| {
+        CoreState::from_content_with_seed(ContentPack::placeholder().unwrap(), seed)
+    });
+    let clock = state.clock();
+    let rng = state.rng_position();
+    let inventory = state.inventory().cloned();
+    assert!(matches!(
+        factory.issue_guarded(&mut state, Command::NewRun, Some(&guard)),
+        CommandResult::Rejected {
+            reason: RejectReason::RunUnavailable,
+            ..
+        }
+    ));
+    assert!(called.load(std::sync::atomic::Ordering::SeqCst));
+    assert_eq!(state.run_number(), 1);
+    assert_eq!(state.clock(), clock);
+    assert_eq!(state.rng_position(), rng);
+    assert_eq!(state.inventory(), inventory.as_ref());
+    assert!(
+        state
+            .messages()
+            .last()
+            .unwrap()
+            .text
+            .contains("archive unavailable")
+    );
+}

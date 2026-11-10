@@ -36,9 +36,13 @@ but before its barrier is written can still leave the previous checkpoint.
 
 Death also writes a text report under `character.morgues` in the same PRL
 data directory. It records the run/seed, cause of death, floor, elapsed time,
-carried equipment and recent messages, and remains after retry. Skills and
-lifetime kills are explicitly untracked; there is no in-game history browser
-yet. Archive failures appear as save errors. If an existing report conflicts
+carried equipment, lifetime kills within that run and recent messages, and
+remains after retry. Confirming a new run while alive also archives the abandoned
+run; a sibling `.abandoned` barrier blocks Continue of that run until replacement
+is saved. Legacy saves label kills before migration as unknown. Skills and
+profile-wide totals are not implemented; there is no in-game history browser
+yet. Archive failures reject retry visibly rather than discard the old run.
+If an existing report conflicts
 with recovery, preserve that file and the `.dead` barrier and report the error;
 the game will not silently overwrite it or resume the dead character.
 
@@ -82,6 +86,8 @@ The depicted shield is placeholder art, not a working shield/block mechanic.
 |---|---|
 | Arrows, numpad 1-9, vi `ykuhlbjn` | Move; bump an enemy to attack it (numpad and vi keys include diagonals) |
 | `.` / numpad 5 / Space | Wait one turn |
+| F2 / F3 / F4 | Toggle held movement/wait / cycle delay / cycle repeat interval (shown in help/menu) |
+| F5 / F6 | Guided movement/wait remapping / restore default bindings (session only) |
 | `O`, then a direction | Open an adjacent door |
 | `G` | Pick up one item at your feet (50 energy) |
 | `I`; Up/Down | Open inventory/equipment; select an item (free) |
@@ -100,8 +106,14 @@ The depicted shield is placeholder art, not a working shield/block mechanic.
 | `+` / `-` | World zoom, 1-4x in whole steps |
 | `[` / `]` | UI scale, separate from world zoom |
 
-Each key press does at most one thing. Holding a key does not repeat it. Time
-only passes when you act. Help, the pause menu and an unfocused window all stop
+Each key press does at most one thing. Holding movement/wait repeats after
+500 ms, then every 180 ms by default. It stops at danger, HP at or below 25%,
+loot, doors, stairs, rejection, focus loss or any new key. It never repeats
+attacks; release and press again after a stop. F5 asks for eight directions
+clockwise from North, then Wait. Use unique arrows, numpad, Space, period or
+unreserved letters; reserved/duplicate keys show an error. Esc cancels without
+changing the bindings. Timings and remapping reset on relaunch.
+Time only passes when you act. Help, the pause menu and an unfocused window stop
 the clock. After you die, only new run, help, menu, zoom and settings keys work.
 
 ## What you see
@@ -121,8 +133,10 @@ the clock. After you die, only new run, help, menu, zoom and settings keys work.
 - A red bar under an actor shows its HP once it is hurt. When you die, your
   figure (or square) turns grey and a message tells you how to start a new run.
 
-Lunges, flashes and numbers never hold up input. A new key press cuts short any
-effect that is still playing. With motion set to Off, numbers appear briefly
+Walking slides between cells for 150 ms (Fast: 60 ms), with its walk clip,
+camera and HP bar following the same cosmetic base. Floor changes and new runs
+snap. Lunges, flashes, walking and numbers never hold up input; new actions
+replace rather than queue walking. With motion set to Off, numbers appear briefly
 without moving and sprites hold a still frame. Fast, Normal and Off must play out identically; only the visual
 timing differs.
 
@@ -171,7 +185,8 @@ on Q-009. Gear bonuses now derive through one core function; actor base numbers
 remain provisional until P4 stats/skills (Q-019). Sounds are short waveforms
 generated in code at startup; with no audio device the game runs silently.
 Snapshots store logical state, independent of Bevy Entity allocations. Text
-dead-run morgues are implemented; full run totals/history, profile, general
+death/abandonment morgues and per-run kill counters are implemented; skills,
+settings/victory history, the history browser, profile, general
 world/reset identities and NG+ are later work.
 Inactive crypt floors are frozen with no catch-up or respawning. The slice uses
 a temporary 60 kg hard pickup cap, no stacking/repacking, and only Main hand/Body

@@ -62,6 +62,8 @@ impl CoreState {
             log,
             dungeon: None,
             inventory: None,
+            kills: 0,
+            kills_complete: true,
         };
         state.refresh_visibility();
         state.log.record(

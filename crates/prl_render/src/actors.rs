@@ -15,6 +15,26 @@ pub(crate) struct ActorView {
     pub(crate) position: Position,
     pub(crate) base: Vec2,
     pub(crate) color: Color,
+    walk: Walk,
+    elevation: Vec2,
+}
+
+#[derive(Debug)]
+struct Walk {
+    from: Vec2,
+    to: Vec2,
+    since: std::time::Duration,
+}
+
+impl Walk {
+    fn at(&self, now: std::time::Duration, speed: AnimationSpeed) -> Vec2 {
+        let duration = speed.timings().lunge;
+        if duration <= 0.0 {
+            return self.to;
+        }
+        let progress = (now.saturating_sub(self.since).as_secs_f32() / duration).clamp(0.0, 1.0);
+        self.from.lerp(self.to, progress)
+    }
 }
 
 /// Draw order for raised things on row `y`: southern rows cover northern ones,
@@ -29,7 +49,10 @@ pub(crate) fn actor_depth(y: i32) -> f32 {
 }
 
 #[derive(Component)]
-pub(crate) struct HpBar;
+pub(crate) struct HpBar {
+    actor: ActorId,
+    offset: Vec2,
+}
 
 /// Scheduler speed relative to one action per tick; shared shape/threat hint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -93,6 +116,7 @@ pub(super) fn plugin(app: &mut App) {
             animate_frames
                 .run_if(resource_exists::<CoreState>)
                 .run_if(resource_exists::<PlaceholderArt>),
+            animate_walks.run_if(resource_exists::<CoreState>),
         )
             .chain()
             .in_set(CoreSet::Presentation),
@@ -119,10 +143,17 @@ fn atlas_frame(
             now.as_millis(),
         )
     };
-    Some((
-        sprites.frame(motion.facing, action, since, now_ms),
-        sprites.offset_y,
-    ))
+    let frame = if action == Action::Walk {
+        sprites.walk_frame(
+            motion.facing,
+            since,
+            std::time::Duration::from_secs_f32(speed.timings().lunge).as_millis(),
+            now_ms,
+        )
+    } else {
+        sprites.frame(motion.facing, action, since, now_ms)
+    };
+    Some((frame, sprites.offset_y))
 }
 
 /// The player's dead tint for the atlas; living actors keep their atlas colours.
@@ -145,7 +176,11 @@ pub(crate) fn sync_actor_views(
     time: Res<'_, Time>,
     mut views: Query<'_, '_, (Entity, &mut ActorView, &mut Transform, &mut Sprite)>,
     bars: Query<'_, '_, Entity, With<HpBar>>,
+    mut location: Local<'_, Option<(u32, prl_core::MapId)>>,
 ) {
+    let current_location = (state.run_number(), state.map().id());
+    let reset = *location != Some(current_location);
+    *location = Some(current_location);
     for entity in &bars {
         commands.entity(entity).despawn();
     }
@@ -182,11 +217,17 @@ pub(crate) fn sync_actor_views(
                 look.rotation,
             )
         };
-        let view = ActorView {
+        let mut view = ActorView {
             id,
             position,
             base,
             color,
+            walk: Walk {
+                from: base,
+                to: base,
+                since: now,
+            },
+            elevation: base - centre,
         };
         let transform = Transform::from_translation(base.extend(actor_depth(position.y)))
             .with_rotation(Quat::from_rotation_z(rotation));
@@ -195,6 +236,12 @@ pub(crate) fn sync_actor_views(
             .and_then(|entity| views.get_mut(entity).ok())
         {
             Some((_, mut old_view, mut old_transform, mut old_sprite)) => {
+                if !reset && old_view.position != position {
+                    view.walk.from = old_view.base;
+                    view.base = view.walk.at(now, speed);
+                }
+                let mut transform = transform;
+                transform.translation = view.base.extend(actor_depth(position.y));
                 *old_view = view;
                 *old_transform = transform;
                 *old_sprite = new_sprite;
@@ -209,11 +256,50 @@ pub(crate) fn sync_actor_views(
             }
         }
         if let Some(fraction) = damaged_fraction(actor) {
-            spawn_hp_bar(&mut commands, centre, fraction);
+            spawn_hp_bar(&mut commands, centre, fraction, id, base - centre);
         }
     }
     for entity in existing.into_values() {
         commands.entity(entity).despawn();
+    }
+}
+
+/// One cosmetic base shared by atlas sprites, lunges, HP bars and camera follow.
+pub(crate) fn animate_walks(
+    time: Res<'_, Time>,
+    speed: Res<'_, AnimationSpeed>,
+    state: Res<'_, CoreState>,
+    mut views: Query<'_, '_, (&mut ActorView, &mut Transform), Without<HpBar>>,
+    mut bars: Query<'_, '_, (&HpBar, &mut Transform), Without<ActorView>>,
+    mut cameras: Query<
+        '_,
+        '_,
+        &mut Transform,
+        (
+            With<crate::camera::WorldCamera>,
+            Without<ActorView>,
+            Without<HpBar>,
+        ),
+    >,
+) {
+    for (mut view, mut transform) in &mut views {
+        view.base = view.walk.at(time.elapsed(), *speed);
+        if view.base == view.walk.to {
+            view.walk.from = view.walk.to;
+        }
+        transform.translation = view.base.extend(transform.translation.z);
+        if view.id == state.player_id() {
+            for mut camera in &mut cameras {
+                let centre = view.base - view.elevation;
+                camera.translation.x = centre.x;
+                camera.translation.y = centre.y;
+            }
+        }
+    }
+    for (bar, mut transform) in &mut bars {
+        if let Some((view, _)) = views.iter().find(|(view, _)| view.id == bar.actor) {
+            transform.translation = (view.base + bar.offset).extend(transform.translation.z);
+        }
     }
 }
 
@@ -228,9 +314,13 @@ fn animate_frames(
 ) {
     let now = time.elapsed();
     for (view, mut sprite) in &mut views {
+        let mut current = motion.get(view.id);
+        if current.action == Action::Walk && view.walk.from == view.walk.to {
+            current.action = Action::Idle;
+        }
         let Some((index, _)) = state
             .actor(view.id)
-            .and_then(|actor| atlas_frame(&art, actor, motion.get(view.id), now, *speed))
+            .and_then(|actor| atlas_frame(&art, actor, current, now, *speed))
         else {
             continue;
         };
@@ -251,14 +341,23 @@ pub(crate) fn damaged_fraction(actor: &Actor) -> Option<f32> {
     (max > 0 && actor.hp() < max).then(|| f32::from(actor.hp()) / f32::from(max))
 }
 
-fn spawn_hp_bar(commands: &mut Commands<'_, '_>, base: Vec2, fraction: f32) {
+fn spawn_hp_bar(
+    commands: &mut Commands<'_, '_>,
+    base: Vec2,
+    fraction: f32,
+    actor: ActorId,
+    elevation: Vec2,
+) {
     const WIDTH: f32 = 48.0;
     let y = base.y - 27.0;
     commands.spawn((
         Name::new("P2 HP bar background"),
         Sprite::from_color(Color::srgb(0.1, 0.02, 0.02), Vec2::new(WIDTH + 2.0, 7.0)),
         Transform::from_xyz(base.x, y, 1.5),
-        HpBar,
+        HpBar {
+            actor,
+            offset: Vec2::new(0.0, -27.0) - elevation,
+        },
     ));
     let fill = WIDTH * fraction.clamp(0.0, 1.0);
     commands.spawn((
@@ -266,13 +365,122 @@ fn spawn_hp_bar(commands: &mut Commands<'_, '_>, base: Vec2, fraction: f32) {
         Sprite::from_color(Color::srgb(0.85, 0.15, 0.15), Vec2::new(fill, 5.0)),
         // Left-align the fill inside the background.
         Transform::from_xyz(base.x - (WIDTH - fill) / 2.0, y, 1.6),
-        HpBar,
+        HpBar {
+            actor,
+            offset: Vec2::new(-(WIDTH - fill) / 2.0, -27.0) - elevation,
+        },
     ));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn interrupted_walks_bars_camera_and_resets_never_mutate_rules() {
+        use prl_core::{Command, Direction};
+        use std::time::Duration;
+        let mut app = App::new();
+        app.add_plugins((
+            MinimalPlugins,
+            prl_core::PrlCorePlugin,
+            crate::motion::plugin,
+            plugin,
+        ))
+        .insert_resource(CoreState::demo().unwrap())
+        .insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
+            Duration::from_millis(25),
+        ));
+        app.world_mut()
+            .spawn((crate::camera::WorldCamera, Transform::default()));
+        app.update();
+        let player = app.world().resource::<CoreState>().player_id();
+        let base = |app: &mut App| {
+            let world = app.world_mut();
+            world
+                .query::<&ActorView>()
+                .iter(world)
+                .find(|view| view.id == player)
+                .unwrap()
+                .base
+        };
+        let start = base(&mut app);
+        app.world_mut()
+            .resource_mut::<CoreState>()
+            .issue(Command::Move(Direction::East));
+        app.update();
+        assert_eq!(base(&mut app), start);
+        let committed = app.world().resource::<CoreState>().snapshot();
+        let offset = Vec2::new(0.0, -27.0);
+        let bar = app
+            .world_mut()
+            .spawn((
+                HpBar {
+                    actor: player,
+                    offset,
+                },
+                Transform::default(),
+            ))
+            .id();
+        for _ in 0..3 {
+            app.update();
+        }
+        let midpoint = base(&mut app);
+        assert!(midpoint.abs_diff_eq(start + Vec2::new(32.0, 0.0), 0.001));
+        assert!(
+            app.world()
+                .get::<Transform>(bar)
+                .unwrap()
+                .translation
+                .truncate()
+                .abs_diff_eq(midpoint + offset, 0.001)
+        );
+        {
+            let world = app.world_mut();
+            let camera = world
+                .query_filtered::<&Transform, With<crate::camera::WorldCamera>>()
+                .single(world)
+                .unwrap();
+            assert!(camera.translation.truncate().abs_diff_eq(midpoint, 0.001));
+        }
+        assert_eq!(app.world().resource::<CoreState>().snapshot(), committed);
+        app.world_mut()
+            .resource_mut::<CoreState>()
+            .issue(Command::Move(Direction::East));
+        app.update();
+        assert!(
+            base(&mut app).abs_diff_eq(midpoint, 0.001),
+            "new input replaces the tween without a jump or delay"
+        );
+        *app.world_mut().resource_mut::<AnimationSpeed>() = AnimationSpeed::Off;
+        app.update();
+        assert_eq!(base(&mut app), start + Vec2::new(128.0, 0.0));
+        app.world_mut()
+            .resource_mut::<CoreState>()
+            .issue(Command::NewRun);
+        *app.world_mut().resource_mut::<AnimationSpeed>() = AnimationSpeed::Normal;
+        app.update();
+        assert_eq!(
+            base(&mut app),
+            start,
+            "new run must snap despite reused actor IDs"
+        );
+    }
+
+    #[test]
+    fn walking_interpolates_at_start_midpoint_end_and_respects_motion_modes() {
+        let walk = Walk {
+            from: Vec2::new(64.0, 128.0),
+            to: Vec2::new(128.0, 64.0),
+            since: std::time::Duration::from_secs(1),
+        };
+        let at = |ms, speed| walk.at(std::time::Duration::from_millis(ms), speed);
+        assert_eq!(at(1000, AnimationSpeed::Normal), walk.from);
+        assert!(at(1075, AnimationSpeed::Normal).abs_diff_eq(Vec2::splat(96.0), 0.001));
+        assert_eq!(at(1150, AnimationSpeed::Normal), walk.to);
+        assert_eq!(at(1060, AnimationSpeed::Fast), walk.to);
+        assert_eq!(at(1000, AnimationSpeed::Off), walk.to);
+    }
 
     #[test]
     fn hostiles_get_distinct_shapes_by_speed_class_and_player_stays_cyan()

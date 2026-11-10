@@ -24,8 +24,10 @@ combat RNG stream; I-026 adds a separate headless crypt-generation stream and
 rooms/corridors proof. I-027 now adds a persistent two-floor playtest registry;
 I-012/I-017 add logical item/container ownership and shared stats/predicates.
 P4 now adds provisional local checkpoint, quit-save, death-barrier recovery and
-dead-run text morgues around the snapshot seam; this does not close the profile,
-full run accounting/history or Windows
+death/abandonment text morgues and durable per-run kill counters around the
+snapshot seam. Held movement/wait and cosmetic walking now exercise the input/
+presentation boundary; no presentation timer drives gameplay. These do not close
+the profile, future skill/settings/victory history or Windows
 launch acceptance gates. Production pack manifests and general world/reset
 ownership remain later work or open contracts.
 

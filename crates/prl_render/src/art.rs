@@ -125,6 +125,28 @@ pub(crate) struct ActorSprites {
 }
 
 impl ActorSprites {
+    /// Fit a walk clip to the cosmetic tile traversal, then return to idle.
+    pub(crate) fn walk_frame(
+        &self,
+        facing: Facing,
+        elapsed_ms: u128,
+        duration_ms: u128,
+        now_ms: u128,
+    ) -> usize {
+        if duration_ms > 0
+            && elapsed_ms < duration_ms
+            && let Some(walk) = &self.walk
+            && let Some(index) = walk.frame_at(
+                facing,
+                elapsed_ms.saturating_mul(walk.duration_ms()) / duration_ms,
+                false,
+            )
+        {
+            return index;
+        }
+        self.frame(facing, Action::Idle, 0, now_ms)
+    }
+
     /// Atlas index for a cosmetic action started `since_ms` ago at `now_ms`.
     ///
     /// Walk/attack play once and then fall back to the looping idle clip.
@@ -431,6 +453,10 @@ mod tests {
             attack: None,
         };
         assert_eq!(sprites.frame(Facing::Right, Action::Walk, 0, 5_000), 10);
+        assert_eq!(sprites.walk_frame(Facing::Right, 0, 150, 5_000), 10);
+        assert_eq!(sprites.walk_frame(Facing::Right, 75, 150, 5_000), 11);
+        assert_eq!(sprites.walk_frame(Facing::Right, 150, 150, 5_000), 0);
+        assert_eq!(sprites.walk_frame(Facing::Right, 0, 0, 5_000), 0);
         assert_eq!(sprites.frame(Facing::Left, Action::Walk, 150, 5_000), 13);
         // Walk lasts 200ms, then idle resumes from its first frame.
         assert_eq!(sprites.frame(Facing::Left, Action::Walk, 200, 5_000), 2);

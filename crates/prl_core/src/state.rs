@@ -88,9 +88,23 @@ pub struct CoreState {
     pub(crate) log: OutcomeLog,
     pub(crate) dungeon: Option<crate::dungeon::Dungeon>,
     pub(crate) inventory: Option<crate::Inventory>,
+    pub(crate) kills: u64,
+    pub(crate) kills_complete: bool,
 }
 
 impl CoreState {
+    /// Player-attributed kills in this run, independent of the bounded feedback log.
+    #[must_use]
+    pub const fn kills(&self) -> u64 {
+        self.kills
+    }
+
+    /// Whether kills have been counted since this run began (false for legacy saves).
+    #[must_use]
+    pub const fn kills_complete(&self) -> bool {
+        self.kills_complete
+    }
+
     /// Constructs run 1 (seed 1) from the embedded base pack.
     ///
     /// # Errors
@@ -286,7 +300,26 @@ impl CoreState {
         CommandResult::Rejected { sequence, reason }
     }
 
+    pub(crate) fn reject_new_run(&mut self, error: String) -> CommandResult {
+        let reason = RejectReason::RunUnavailable;
+        let sequence = self.log.record(
+            OutcomeKind::CommandRejected {
+                command: Command::NewRun,
+                reason,
+            },
+            Some(format!("New run failed: {error}")),
+        );
+        CommandResult::Rejected { sequence, reason }
+    }
+
     fn start_new_run(&mut self) -> CommandResult {
+        self.start_new_run_guarded(None)
+    }
+
+    pub(crate) fn start_new_run_guarded(
+        &mut self,
+        guard: Option<&crate::RunExitGuard>,
+    ) -> CommandResult {
         if self.dungeon.is_some() {
             return self.reject(Command::NewRun, RejectReason::RunUnavailable);
         }
@@ -294,6 +327,11 @@ impl CoreState {
         let run = self.run_number.saturating_add(1);
         match Self::build_run(self.pack.clone(), seed, run, self.log.clone()) {
             Ok(next) => {
+                if let Some(guard) = guard
+                    && let Err(error) = guard.check(self)
+                {
+                    return self.reject_new_run(error);
+                }
                 *self = next;
                 let sequence = self.log.next_sequence.saturating_sub(1);
                 CommandResult::Accepted { sequence }
@@ -465,6 +503,9 @@ impl CoreState {
             if target_is_player {
                 self.status = RunStatus::Dead;
             } else {
+                if attacker_id == self.player {
+                    self.kills = self.kills.saturating_add(1);
+                }
                 self.actors.remove(&target_id);
             }
         }
@@ -828,5 +869,44 @@ mod tests {
             state.messages().last().unwrap().text,
             "Run 2 begins (seed 2)."
         );
+    }
+    #[test]
+    fn kill_totals_survive_feedback_eviction_restore_and_reset_on_new_run() {
+        let mut state = arena();
+        let target = ActorId::new(2);
+        state.actors.get_mut(&target).unwrap().hp = 1;
+        place(&mut state, target, Position::new(3, 5));
+        state.issue(Command::Move(Direction::East));
+        assert_eq!(state.kills(), 1);
+        assert!(state.kills_complete());
+        assert!(state.actor(target).is_none());
+        for _ in 0..600 {
+            state.issue(Command::Wait);
+        }
+        assert!(
+            !state
+                .outcomes()
+                .iter()
+                .any(|outcome| matches!(outcome.kind, OutcomeKind::ActorDied { .. }))
+        );
+        assert_eq!(state.kills(), 1);
+        let mut restored = CoreState::restore(state.snapshot()).unwrap();
+        assert_eq!(restored.kills(), 1);
+        state.issue(Command::Wait);
+        restored.issue(Command::Wait);
+        assert_eq!(state.snapshot(), restored.snapshot());
+        restored.issue(Command::NewRun);
+        assert_eq!(restored.kills(), 0);
+        assert!(restored.kills_complete());
+    }
+
+    #[test]
+    fn kills_by_other_actors_do_not_inflate_player_totals() {
+        let mut state = arena();
+        let target = ActorId::new(3);
+        state.actors.get_mut(&target).unwrap().hp = 1;
+        state.attack(ActorId::new(2), target);
+        assert!(state.actor(target).is_none());
+        assert_eq!(state.kills(), 0);
     }
 }

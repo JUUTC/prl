@@ -259,11 +259,16 @@ fn previous_arena_snapshot_migrates_and_unknown_core_version_fails() {
     rewrite(&store, |saved| {
         saved.snapshot = saved
             .snapshot
-            .replacen("version:3", "version:2", 1)
-            .replace(",dungeon:None,inventory:None", "");
+            .replacen("version:4", "version:2", 1)
+            .replace(",dungeon:None,inventory:None", "")
+            .replace(",kills:0,kills_complete:true", "");
         saved.checksum = digest(&saved.snapshot);
     });
-    assert_eq!(store.load().unwrap().unwrap().snapshot(), state.snapshot());
+    let restored = store.load().unwrap().unwrap();
+    assert_eq!(restored.clock(), state.clock());
+    assert_eq!(restored.rng_position(), state.rng_position());
+    assert_eq!(restored.kills(), 0);
+    assert!(!restored.kills_complete());
     rewrite(&store, |saved| {
         saved.snapshot = saved.snapshot.replacen("version:2", "version:999", 1);
         saved.checksum = digest(&saved.snapshot);
@@ -428,6 +433,85 @@ fn morgues(store: &SnapshotStore) -> Vec<PathBuf> {
 }
 
 #[test]
+fn abandonment_blocks_old_continue_and_recovers_exactly_one_next_run() {
+    let (_directory, store) = slot();
+    let mut state = crypt(51);
+    state.issue(state.pickup_command().unwrap());
+    store.write(&state).unwrap();
+    let before = state.snapshot();
+    store.record_abandonment(&state).unwrap();
+    store.record_abandonment(&state).unwrap();
+    assert_eq!(state.snapshot(), before);
+    assert_eq!(morgues(&store).len(), 1);
+    let report = fs::read_to_string(&morgues(&store)[0]).unwrap();
+    assert!(report.contains("Outcome: Abandoned"));
+    assert!(report.contains("Cause: Confirmed new-run request"));
+    assert!(report.contains("Lifetime kills (this run): 0\n"));
+    assert!(
+        store
+            .load()
+            .unwrap_err()
+            .to_string()
+            .contains("abandonment barrier")
+    );
+    let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+        "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+    ))
+    .unwrap();
+    let factory = config.factory(prl_content::ContentPack::placeholder().unwrap());
+    let next = store.recover_death(&factory).unwrap().unwrap();
+    assert_eq!(next.run_number(), state.run_number() + 1);
+    assert_eq!(next.seed(), 52);
+    assert_eq!(next.kills(), 0);
+    assert!(next.kills_complete());
+    assert_eq!(store.load().unwrap().unwrap().snapshot(), next.snapshot());
+    assert!(!store.abandonment_path().exists());
+    assert!(store.recover_death(&factory).unwrap().is_none());
+    assert_eq!(fs::read_to_string(&morgues(&store)[0]).unwrap(), report);
+}
+
+#[test]
+fn failed_abandonment_archive_preserves_old_slot_without_committing_a_barrier() {
+    let (_directory, store) = slot();
+    let state = crypt(1);
+    store.write(&state).unwrap();
+    fs::write(store.morgue_directory(), "not a directory").unwrap();
+    assert!(store.record_abandonment(&state).is_err());
+    assert!(!store.abandonment_path().exists());
+    assert_eq!(store.load().unwrap().unwrap().snapshot(), state.snapshot());
+}
+
+#[test]
+fn death_after_unsaved_new_run_preserves_both_terminal_reports_on_recovery() {
+    let (_directory, store) = slot();
+    let living = CoreState::demo().unwrap();
+    store.write(&living).unwrap();
+    store.record_abandonment(&living).unwrap();
+    let mut dead = dead_arena();
+    dead.issue(Command::NewRun);
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::OpenDoor(Direction::East));
+    for _ in 0..2000 {
+        if dead.is_player_dead() {
+            break;
+        }
+        dead.issue(Command::Wait);
+    }
+    assert_eq!(dead.run_number(), 2);
+    assert!(dead.is_player_dead());
+    store.record_death(&dead).unwrap();
+    let factory = RunFactory::new(|seed| {
+        CoreState::from_content_with_seed(prl_content::ContentPack::placeholder().unwrap(), seed)
+    });
+    let next = store.recover_death(&factory).unwrap().unwrap();
+    assert_eq!(next.run_number(), 3);
+    assert_eq!(morgues(&store).len(), 2);
+    assert!(!store.death_path().exists());
+    assert!(!store.abandonment_path().exists());
+}
+
+#[test]
 fn morgue_preserves_dead_run_details_once_without_mutating_rules() {
     let (_directory, store) = slot();
     let dead = dead_arena();
@@ -446,7 +530,7 @@ fn morgue_preserves_dead_run_details_once_without_mutating_rules() {
             _ => None,
         })
         .unwrap();
-    assert!(report.contains("PRL morgue - playtest report format 1"));
+    assert!(report.contains("PRL morgue - playtest report format 2"));
     assert!(report.contains(&format!("Seed: {}\n", dead.seed())));
     assert!(report.contains(&format!("Run: {}\n", dead.run_number())));
     assert!(report.contains(&format!("Ticks: {}\n", dead.clock().ticks())));
@@ -455,7 +539,7 @@ fn morgue_preserves_dead_run_details_once_without_mutating_rules() {
         dead.clock().player_actions()
     )));
     assert!(report.contains(dead.actor(killer).unwrap().name()));
-    assert!(report.contains("Lifetime kills: not tracked"));
+    assert!(report.contains(&format!("Lifetime kills (this run): {}", dead.kills())));
     assert!(report.contains("Skills: not implemented"));
     assert_eq!(dead.snapshot(), before);
     store.record_death(&dead).unwrap();

@@ -116,7 +116,25 @@ impl SnapshotStore {
         if state.is_player_dead() {
             return Err(self.invalid("dead runs cannot be saved as continuable state"));
         }
-        self.write_snapshot(state, false)
+        self.write_snapshot(state, false)?;
+        self.clear_if_recovered(state)
+    }
+
+    /// Preserves a confirmed living-run abandonment before replacement.
+    ///
+    /// The report precedes the durable barrier. Once published, the barrier
+    /// prevents Continue of the old slot until a newer run is saved.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SaveError`] if state is dead, archiving fails, or the barrier
+    /// cannot be published. Existing reports and the living slot are preserved.
+    pub fn record_abandonment(&self, state: &CoreState) -> Result<(), SaveError> {
+        if state.is_player_dead() {
+            return Err(self.invalid("abandonment requires a living run"));
+        }
+        self.archive_morgue(state)?;
+        Self::new(self.abandonment_path()).write_snapshot(state, false)
     }
 
     /// Records a durable death barrier and morgue before removing the living slot.
@@ -151,10 +169,13 @@ impl SnapshotStore {
         Ok(())
     }
 
-    /// Rebuilds and commits the next run when a durable death barrier exists.
+    /// Rebuilds and commits the next run after death or confirmed abandonment.
     ///
     /// A valid previous living slot is never returned while the barrier exists.
-    /// On success the new run is saved before the barrier is removed.
+    /// On success the new run is saved before the barriers are removed.
+    /// If both exist, all reports are preserved and the newest terminal run
+    /// determines the next seed/run number. The method retains its original name
+    /// for the startup recovery API.
     ///
     /// # Errors
     ///
@@ -162,13 +183,18 @@ impl SnapshotStore {
     /// incompatible state or I/O. The barrier remains if the new save fails.
     pub fn recover_death(&self, factory: &RunFactory) -> Result<Option<CoreState>, SaveError> {
         let marker = Self::new(self.death_path());
-        let Some(mut dead) = marker.load_state(true)? else {
+        let death = marker.load_state(true)?;
+        let abandoned = Self::new(self.abandonment_path()).load_state(false)?;
+        for state in death.iter().chain(abandoned.iter()) {
+            self.archive_morgue(state)?;
+        }
+        let Some(mut dead) = death
+            .into_iter()
+            .chain(abandoned)
+            .max_by_key(CoreState::run_number)
+        else {
             return Ok(None);
         };
-        if !dead.is_player_dead() {
-            return Err(marker.invalid("death barrier contains a living run"));
-        }
-        self.archive_morgue(&dead)?;
         match factory.issue(&mut dead, Command::NewRun) {
             CommandResult::Accepted { .. } => {}
             CommandResult::Rejected { .. } => {
@@ -216,9 +242,6 @@ impl SnapshotStore {
         }
         let temp = self.prepare(encoded.as_bytes())?;
         self.publish(temp)?;
-        if !allow_dead {
-            self.clear_if_recovered(state)?;
-        }
         Ok(())
     }
 
@@ -239,6 +262,11 @@ impl SnapshotStore {
             .map_err(|error| Self::io("check death barrier", &self.death_path(), error))?
         {
             return Err(self.invalid("a death barrier exists; recover it before continuing"));
+        }
+        if self.abandonment_path().try_exists().map_err(|error| {
+            Self::io("check abandonment barrier", &self.abandonment_path(), error)
+        })? {
+            return Err(self.invalid("an abandonment barrier exists; recover it before continuing"));
         }
         self.load_state(false)
     }
@@ -307,19 +335,32 @@ impl SnapshotStore {
         self.path.with_extension("dead")
     }
 
+    fn abandonment_path(&self) -> PathBuf {
+        self.path.with_extension("abandoned")
+    }
+
     fn clear_if_recovered(&self, state: &CoreState) -> Result<(), SaveError> {
-        let marker = Self::new(self.death_path());
-        let Some(dead) = marker.load_state(true)? else {
-            return Ok(());
-        };
-        if state.is_player_dead()
-            || state.seed() == dead.seed()
-            || state.run_number() <= dead.run_number()
-        {
-            return Err(self.invalid("refusing to clear death barrier for a non-new run"));
+        for (path, dead) in [(self.death_path(), true), (self.abandonment_path(), false)] {
+            let marker = Self::new(&path);
+            let Some(terminal) = marker.load_state(dead)? else {
+                continue;
+            };
+            if state.is_player_dead()
+                || state.seed() == terminal.seed()
+                || state.run_number() <= terminal.run_number()
+            {
+                return Err(self.invalid("refusing to clear terminal barrier for a non-new run"));
+            }
+            self.archive_morgue(&terminal)?;
+            if dead {
+                self.clear_death_barrier()?;
+            } else {
+                std::fs::remove_file(&path)
+                    .map_err(|error| Self::io("remove abandonment barrier", &path, error))?;
+                Self::sync_directory(self.parent())?;
+            }
         }
-        self.archive_morgue(&dead)?;
-        self.clear_death_barrier()
+        Ok(())
     }
 
     fn archive_morgue(&self, dead: &CoreState) -> Result<(), SaveError> {

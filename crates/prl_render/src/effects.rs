@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use bevy::{prelude::*, text::FontSize};
 use prl_core::{ActorId, CoreSet, CoreState, OutcomeKind, Position};
 
-use crate::actors::{ActorView, actor_depth, sync_actor_views};
+use crate::actors::{ActorView, actor_depth, animate_walks, sync_actor_views};
 use crate::camera::{TILE_SIZE, tile_to_world};
 use crate::cursor::OutcomeCursor;
 use crate::motion::{AnimationSpeed, EffectTimings};
@@ -73,6 +73,7 @@ pub(super) fn plugin(app: &mut App) {
                 .run_if(resource_changed::<CoreState>),
             animate
                 .after(sync_actor_views)
+                .after(animate_walks)
                 .after(consume_outcomes)
                 .run_if(effects_active),
         )

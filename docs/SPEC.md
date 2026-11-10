@@ -232,8 +232,12 @@ the headless atomic snapshot storage API (I-029) into automatic
 Continue, quit-save, provisional 20-action/floor checkpoints and death-barrier
 recovery (I-030). I-031 adds text morgues for dead runs: seed, run, elapsed
 time/actions, floor, cause, carried gear and recent messages survive retry and
-startup recovery. Lifetime kill totals, skills, selectable settings, abandoned
-run records and the history UI are not yet implemented (I-032).
+startup recovery. I-032 now persists player-attributed lifetime kills **within
+each run** (not profile totals), including across floor travel and log eviction,
+and archives confirmed abandoned runs before replacement. Snapshot v4 migrates
+v2/v3 with earlier kill totals explicitly unknown, never inferred from feedback.
+Skills, character/difficulty settings, campaign victory records and the history
+UI remain open portions of I-032.
 The interval remains provisional under Q-012; hard crashes
 can lose actions since the last checkpoint, and a crash between death resolution
 and the barrier write can still expose the previous checkpoint. This is not a
@@ -242,6 +246,11 @@ has built and packaged the executable, while user launch acceptance remains
 pending. Skills, campaign victory and general content-pack manifests remain
 later work.
 P2/P3 Windows hands-on/audio acceptance is still pending.
+I-023 adds conservative held movement/wait with adjustable session timings and
+guided key remapping; it never repeats attacks or queues a command backlog.
+B-009 adds cosmetic walking interpolation, with matching camera/HP-bar follow
+and Fast/Off modes. Defaults and interruption policy remain provisional under
+Q-007; neither feature changes core time, occupancy or RNG.
 Actors and terrain draw from the disposable Gravebound placeholder atlas; this
 does not complete art P1. Art P0 is awaiting review.
 Track open work and defects in [backlog.md](backlog.md).

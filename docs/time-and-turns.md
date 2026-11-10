@@ -68,6 +68,24 @@ Multi-turn actions (rest, auto-explore, travel, gather, craft, pick lock) are in
 - the player takes damage,
 - a significant message occurs (status change, hunger stage change, item breaks).
 
+### Current held movement/wait (I-023)
+
+Held input resubmits ordinary commands; it is not rest, travel or auto-explore.
+The first press acts immediately. Reversible Q-007 defaults are a 500 ms delay
+then one action per 180 ms, enabled initially. F2 toggles repetition, F3 cycles
+300/500/800 ms delays, and F4 cycles 100/180/300 ms intervals. Settings and
+F5 guided movement/wait remapping are session-only; F6 restores default bindings.
+
+Release, any fresh key, focus changes and modal transitions cancel the hold.
+Repetition also stops on a visible hostile, damage/attack against the player,
+HP at or below 25%, items/doors/stairs underfoot, a blocked or occupied next
+cell, rejection, floor/new-run changes, endpoint completion or lost outcome
+history. It never repeats a bump attack. After an interruption a fresh press
+is required; manual single actions remain available even in danger. Slow frames
+produce at most one command, never catch-up bursts or a queue backlog.
+Future status/hunger/item-break systems must extend the interruption check when
+their outcomes exist.
+
 ## Light
 
 - **Dungeons are dark.** Visibility = light radius, except races with darkvision see unlit tiles within 6 (desaturated). Races with **low-light vision** (Elves) see +2 tiles beyond any light radius but nothing in total darkness.

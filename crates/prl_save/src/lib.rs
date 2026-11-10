@@ -1,7 +1,7 @@
 //! Persistence: character saves, crash-safety checkpoints, the meta-progression
 //! profile and morgue files. The headless snapshot store provides versioned,
 //! validated atomic replacement, provisional checkpoints, quit-save and
-//! death-barrier recovery and text morgues. Profiles remain future work.
+//! death/abandonment recovery and text morgues. Profiles remain future work.
 
 use bevy::app::OnAppExitSystems;
 use bevy::prelude::*;
@@ -247,6 +247,9 @@ mod tests {
         assert!(store.load().is_err());
 
         std::fs::remove_file(store.morgue_directory()).unwrap();
+        app.world_mut()
+            .resource_mut::<CoreCommandQueue>()
+            .push(Command::NewRun);
         app.update();
         assert!(app.world().resource::<PersistenceStatus>().error.is_none());
         assert_eq!(
@@ -271,6 +274,53 @@ mod tests {
         app.update();
         let state = app.world().resource::<CoreState>();
         assert_eq!(store.load().unwrap().unwrap().snapshot(), state.snapshot());
+    }
+
+    #[test]
+    fn new_run_archives_live_state_before_replacement_and_rejects_archive_failures() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = SnapshotStore::new(directory.path().join("slot.ron"));
+        let state = CoreState::demo().unwrap();
+        store.write(&state).unwrap();
+        let mut app = app_with_state(state, store.clone());
+        std::fs::write(store.morgue_directory(), "blocked").unwrap();
+        app.world_mut()
+            .resource_mut::<CoreCommandQueue>()
+            .push(Command::NewRun);
+        app.update();
+        assert_eq!(app.world().resource::<CoreState>().run_number(), 1);
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            0
+        );
+        assert!(
+            app.world()
+                .resource::<CoreState>()
+                .messages()
+                .last()
+                .unwrap()
+                .text
+                .contains("New run failed:")
+        );
+        assert_eq!(store.load().unwrap().unwrap().run_number(), 1);
+        std::fs::remove_file(store.morgue_directory()).unwrap();
+        app.world_mut()
+            .resource_mut::<CoreCommandQueue>()
+            .push(Command::NewRun);
+        app.update();
+        assert_eq!(app.world().resource::<CoreState>().run_number(), 2);
+        assert_eq!(store.load().unwrap().unwrap().run_number(), 2);
+        let report = std::fs::read_dir(store.morgue_directory())
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        assert!(
+            std::fs::read_to_string(report)
+                .unwrap()
+                .contains("Outcome: Abandoned")
+        );
     }
 }
 
@@ -316,6 +366,10 @@ impl Plugin for PrlSavePlugin {
         app.add_message::<AppExit>()
             .init_resource::<PersistenceStatus>()
             .add_systems(
+                Startup,
+                install_exit_guard.run_if(resource_exists::<SaveController>),
+            )
+            .add_systems(
                 Update,
                 persist_state
                     .after(CoreSet::Commands)
@@ -331,6 +385,21 @@ impl Plugin for PrlSavePlugin {
                     .run_if(resource_exists::<SaveController>),
             );
     }
+}
+
+fn install_exit_guard(mut commands: Commands<'_, '_>, controller: Res<'_, SaveController>) {
+    let store = controller.store.clone();
+    commands.insert_resource(prl_core::RunExitGuard::new(move |state| {
+        let result = if state.is_player_dead() {
+            store.record_death(state)
+        } else {
+            store.record_abandonment(state)
+        };
+        result.map_err(|error| {
+            bevy::log::error!("Could not archive the previous run: {error}");
+            error.to_string()
+        })
+    }));
 }
 
 fn persist_state(

@@ -193,11 +193,13 @@ checkpoint boundaries and on quit. Test interruption during writing,
 incompatible/corrupt saves, resume equivalence and death-barrier recovery.
 Resolve checkpoint frequency via **Q-012**; profile, morgue, skills and general
 content-pack compatibility are not part of the save-lifecycle increment.
-I-031 now adds dead-run text reports before barrier cleanup, with seed,
-clock/actions, location, cause, carried gear and recent messages. Full lifetime
-kill accounting, skills/settings records, abandoned-run records and the history
-screen remain I-032; the bounded recent log must not be presented as complete
-run history. These reports do not close P4's progression gate.
+I-031 adds dead-run text reports before barrier cleanup, with seed,
+clock/actions, location, cause, carried gear and recent messages. I-032 now
+adds durable lifetime player kills within each run and confirmed abandonment
+reports/recovery barriers. Legacy saves label pre-migration kills unknown.
+Skills/settings/victory records and the history screen remain I-032; the bounded
+recent log must not be presented as complete run history. These reports do not
+close P4's progression gate.
 
 ### P5 - Package and evaluate
 
@@ -288,10 +290,10 @@ its code compiles.
 | Stage | Status | Evidence / remaining work |
 |---|---|---|
 | P0 | Implementation present | Packaging workflow and boot errors added; extracted-package Linux software-rendering smoke passed; Windows launch acceptance pending |
-| P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
+| P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; B-009 now adds cosmetic walking, camera/bar follow and Fast/Off modes. Windows/4K acceptance pending |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
-| P4 | Playable persistence and dead-run reports implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery. I-031 adds persistent text morgues. Q-012 remains provisional; crash window, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and full run accounting/history (I-032) remain open |
+| P4 | Playable persistence and terminal-run accounting implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery. I-031/I-032 add text morgues, per-run lifetime kills and abandonment recovery. Q-012 remains provisional; crash windows, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and future skill/settings/victory history/UI remain open |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
 Foundation follow-up, 2026-11-09: B-006 now requires explicit checkout-asset
@@ -324,8 +326,9 @@ Browsing/examine/filter toggles are free; rejected actions leave rules and
 ownership unchanged. The fixed 60 kg cap, item numbers and appearances are
 provisional slice data, not accepted interview balance decisions.
 Hands-on Windows runs/audio and feedback remain I-001/I-004/I-005/I-007;
-4K/UI-scale checks remain I-002. Held-key repeat I-023 and walk tween B-009 are
-still deferred as requested. The local Foundry/art effort is unchanged.
+4K/UI-scale checks remain I-002. Held-key repeat I-023 and walk tween B-009 were
+deferred at this delivery; the later autonomous increment below implements them.
+The local Foundry/art effort is unchanged.
 
 Verification for the playable increment: workspace format, clippy (all targets,
 warnings denied), tests (144 passed; one ignored balance probe) and warning-free
@@ -367,6 +370,25 @@ the isolated save suite passes all 27 tests. Windows workflow 42769587931
 passed headless/workspace tests, lint, docs, executable build and package upload.
 Windows hands-on acceptance, full run history/accounting (I-032) and combat
 skill progression (Q-010) remain open. No art or combat-balance change is included.
+
+Autonomous input/accounting follow-up: I-023 adds held movement/wait with
+conservative interrupts, configurable session timings and guided key remapping.
+B-009 adds cosmetic walking, matching camera/HP-bar follow and Normal/Fast/Off
+handling; no action waits for animation. I-032's clear current scope adds per-run
+lifetime player kills, snapshot v4/v2-v3 migrations with past totals unknown,
+and text abandonment reports/barriers before replacement. Future skills,
+character/difficulty settings, campaign victory and history UI are not claimed.
+The art/Foundry effort, combat balance and hardware-dependent acceptance are
+unchanged. Q-007/Q-012 remain provisional.
+
+Linux workspace format, strict all-target Clippy, tests (190 passed, one ignored)
+and warning-free API docs pass. The isolated save suite passes all 31 tests.
+Timing tests measure initial delay/interval/no-burst behavior and the 25% HP
+cutoff; render tests measure source/midpoint/destination, interruption, mode
+changes, camera/bar alignment and unchanged core state. Recovery tests cover
+abandonment, failed archives, mixed terminal barriers, legacy kill-count
+migration and counters surviving feedback eviction. These are not Windows
+interactive/4K/audio acceptance.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

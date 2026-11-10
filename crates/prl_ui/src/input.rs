@@ -1,3 +1,4 @@
+use crate::repeat::{HeldAction, RepeatSettings};
 use bevy::{prelude::*, window::PrimaryWindow};
 use prl_core::{
     Command, CoreCommandQueue, CoreSet, CoreState, Direction, RunStatus, StairDirection,
@@ -17,6 +18,9 @@ pub struct UiMode {
     pub(super) selection: usize,
     pub(super) look: Option<prl_core::Position>,
     pub(super) show_all_loot: bool,
+    held: HeldAction,
+    remapping: Option<Vec<KeyCode>>,
+    binding_error: Option<&'static str>,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -35,18 +39,122 @@ impl UiMode {
     pub const fn is_paused(&self) -> bool {
         !matches!(self.overlay, Overlay::None)
     }
+
+    fn look_input(
+        &mut self,
+        keys: &ButtonInput<KeyCode>,
+        bindings: &MovementBindings,
+        state: Option<&CoreState>,
+    ) {
+        if let Some(direction) = bindings.direction(keys)
+            && let Some(next) = self.look.and_then(|position| position.offset(direction))
+            && state.is_some_and(|core| {
+                next.x >= 0
+                    && next.y >= 0
+                    && next.x < i32::from(core.map().width())
+                    && next.y < i32::from(core.map().height())
+            })
+        {
+            self.look = Some(next);
+        }
+    }
+
+    pub(super) fn binding_prompt(&self) -> String {
+        const PROMPTS: [&str; 9] = [
+            "Remap: press North",
+            "Remap: press North-East",
+            "Remap: press East",
+            "Remap: press South-East",
+            "Remap: press South",
+            "Remap: press South-West",
+            "Remap: press West",
+            "Remap: press North-West",
+            "Remap: press Wait",
+        ];
+        let prompt = self.remapping.as_ref().map_or(
+            "F5: remap movement/wait | F6: restore default bindings (session only)",
+            |keys| PROMPTS.get(keys.len()).copied().unwrap_or("Remap complete"),
+        );
+        format!(
+            "{prompt}\n{}",
+            self.binding_error.unwrap_or(
+                "Use unique arrows, numpad, Space, period or unreserved letters; Esc cancels."
+            )
+        )
+    }
+
+    fn remap_input(
+        &mut self,
+        keys: &ButtonInput<KeyCode>,
+        bindings: &mut MovementBindings,
+    ) -> bool {
+        if self.remapping.is_none() {
+            if keys.just_pressed(KeyCode::F5) {
+                self.remapping = Some(Vec::new());
+                self.binding_error = None;
+                self.overlay = Overlay::Help;
+                self.door = false;
+                self.confirm_new_run = None;
+                return true;
+            }
+            if keys.just_pressed(KeyCode::F6) {
+                *bindings = MovementBindings::default();
+                return true;
+            }
+        }
+        let Some(selected) = self.remapping.as_mut() else {
+            return false;
+        };
+        if keys.just_pressed(KeyCode::Escape) {
+            self.remapping = None;
+            self.binding_error = None;
+            return true;
+        }
+        let mut fresh = keys.get_just_pressed();
+        if let Some(key) = fresh.next().copied() {
+            if fresh.next().is_some() || !remappable(key) || selected.contains(&key) {
+                self.binding_error =
+                    Some("Not assigned: use one unique key; gameplay/settings keys are reserved.");
+                return true;
+            }
+            self.binding_error = None;
+            selected.push(key);
+            if selected.len() == 9 {
+                bindings.directions = selected
+                    .iter()
+                    .copied()
+                    .zip([
+                        Direction::North,
+                        Direction::NorthEast,
+                        Direction::East,
+                        Direction::SouthEast,
+                        Direction::South,
+                        Direction::SouthWest,
+                        Direction::West,
+                        Direction::NorthWest,
+                    ])
+                    .collect();
+                bindings.wait = selected.get(8).copied().into_iter().collect();
+                self.remapping = None;
+            }
+        }
+        true
+    }
 }
 
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<UiMode>().add_systems(
-        Update,
-        handle_input
-            .in_set(CoreSet::Input)
-            .run_if(resource_exists::<ButtonInput<KeyCode>>)
-            .run_if(resource_exists::<CoreCommandQueue>)
-            .run_if(resource_exists::<UiScale>)
-            .run_if(resource_exists::<Time>),
-    );
+    app.init_resource::<UiMode>()
+        .init_resource::<MovementBindings>()
+        .init_resource::<RepeatSettings>()
+        .add_systems(
+            Update,
+            handle_input
+                .in_set(CoreSet::Input)
+                .run_if(resource_exists::<ButtonInput<KeyCode>>)
+                .run_if(resource_exists::<CoreCommandQueue>)
+                .run_if(resource_exists::<UiScale>)
+                .run_if(resource_exists::<Time>),
+        );
 }
 
 fn handle_input(
@@ -57,22 +165,34 @@ fn handle_input(
     mut scale: ResMut<'_, UiScale>,
     state: Option<Res<'_, CoreState>>,
     time: Res<'_, Time>,
+    mut bindings: ResMut<'_, MovementBindings>,
+    mut repeat: ResMut<'_, RepeatSettings>,
 ) {
     let now = time.elapsed_secs();
+    if mode.is_paused() || keys.get_just_pressed().next().is_some() {
+        mode.held.cancel();
+    }
     if mode
         .confirm_new_run
         .is_some_and(|armed| now - armed > CONFIRM_SECONDS)
     {
         mode.confirm_new_run = None;
+        mode.held.cancel();
     }
     let focused = windows.iter().any(|window| window.focused);
     if focused != mode.focused {
+        mode.held.cancel();
         mode.focused = focused;
         mode.door = false;
         mode.confirm_new_run = None;
         return;
     }
     if !focused {
+        mode.held.cancel();
+        return;
+    }
+    repeat.configure(&keys);
+    if mode.remap_input(&keys, &mut bindings) {
         return;
     }
     if keys.just_pressed(KeyCode::F1)
@@ -109,23 +229,74 @@ fn handle_input(
         return;
     }
     if mode.overlay == Overlay::Look {
-        if let Some(direction) = pressed_direction(&keys)
-            && let Some(next) = mode.look.and_then(|position| position.offset(direction))
-            && state.as_ref().is_some_and(|core| {
-                next.x >= 0
-                    && next.y >= 0
-                    && next.x < i32::from(core.map().width())
-                    && next.y < i32::from(core.map().height())
-            })
-        {
-            mode.look = Some(next);
-        }
+        mode.look_input(&keys, &bindings, state.as_deref());
         return;
     }
     if mode.is_paused() {
         return;
     }
-    gameplay_input(&keys, &mut mode, &mut queue, state.as_deref(), now);
+    let arm = queue.is_empty() && !mode.door && mode.confirm_new_run.is_none();
+    gameplay_input(
+        &keys,
+        &mut mode,
+        &mut queue,
+        state.as_deref(),
+        now,
+        &bindings,
+    );
+    if mode.is_paused() || mode.door || mode.confirm_new_run.is_some() {
+        mode.held.cancel();
+        return;
+    }
+    if let Some(state) = state.as_deref() {
+        if arm
+            && queue.len() == 1
+            && let Some((key, command)) = bindings.pressed_action(&keys)
+        {
+            mode.held.arm(key, command, state, time.elapsed(), &repeat);
+        } else {
+            mode.held
+                .tick(&keys, state, time.elapsed(), &repeat, &mut queue);
+        }
+    }
+}
+
+fn remappable(key: KeyCode) -> bool {
+    matches!(
+        key,
+        KeyCode::ArrowUp
+            | KeyCode::ArrowDown
+            | KeyCode::ArrowLeft
+            | KeyCode::ArrowRight
+            | KeyCode::Numpad0
+            | KeyCode::Numpad1
+            | KeyCode::Numpad2
+            | KeyCode::Numpad3
+            | KeyCode::Numpad4
+            | KeyCode::Numpad5
+            | KeyCode::Numpad6
+            | KeyCode::Numpad7
+            | KeyCode::Numpad8
+            | KeyCode::Numpad9
+            | KeyCode::Space
+            | KeyCode::Period
+            | KeyCode::KeyA
+            | KeyCode::KeyB
+            | KeyCode::KeyC
+            | KeyCode::KeyD
+            | KeyCode::KeyF
+            | KeyCode::KeyH
+            | KeyCode::KeyJ
+            | KeyCode::KeyK
+            | KeyCode::KeyL
+            | KeyCode::KeyN
+            | KeyCode::KeyP
+            | KeyCode::KeyS
+            | KeyCode::KeyU
+            | KeyCode::KeyW
+            | KeyCode::KeyY
+            | KeyCode::KeyZ
+    )
 }
 
 fn gameplay_input(
@@ -134,6 +305,7 @@ fn gameplay_input(
     queue: &mut CoreCommandQueue,
     state: Option<&CoreState>,
     now: f32,
+    bindings: &MovementBindings,
 ) {
     if !queue.is_empty() {
         return;
@@ -223,7 +395,7 @@ fn gameplay_input(
         queue.push(Command::Stairs(StairDirection::Down));
         return;
     }
-    if let Some(direction) = pressed_direction(keys) {
+    if let Some(direction) = bindings.direction(keys) {
         let command = if mode.door {
             Command::OpenDoor(direction)
         } else {
@@ -231,7 +403,7 @@ fn gameplay_input(
         };
         mode.door = false;
         queue.push(command);
-    } else if !mode.door && is_wait(keys) {
+    } else if !mode.door && bindings.wait.iter().any(|key| keys.just_pressed(*key)) {
         queue.push(Command::Wait);
     }
 }
@@ -299,14 +471,64 @@ fn inventory_input(
     }
 }
 
-fn is_wait(keys: &ButtonInput<KeyCode>) -> bool {
-    keys.just_pressed(KeyCode::Period)
-        || keys.just_pressed(KeyCode::Numpad5)
-        || keys.just_pressed(KeyCode::Space)
+/// Movement/wait key mapping shared by single presses and held input.
+///
+/// Replace this resource to remap the actions; ordered bindings decide
+/// precedence when several keys are pressed simultaneously.
+#[derive(Resource)]
+pub struct MovementBindings {
+    /// Ordered movement key/direction pairs.
+    pub directions: Vec<(KeyCode, Direction)>,
+    /// Ordered wait keys.
+    pub wait: Vec<KeyCode>,
 }
 
+impl Default for MovementBindings {
+    fn default() -> Self {
+        Self {
+            directions: direction_keys()
+                .into_iter()
+                .filter_map(|key| direction_for_key(key).map(|direction| (key, direction)))
+                .collect(),
+            wait: vec![KeyCode::Period, KeyCode::Numpad5, KeyCode::Space],
+        }
+    }
+}
+
+impl MovementBindings {
+    fn direction(&self, keys: &ButtonInput<KeyCode>) -> Option<Direction> {
+        self.directions
+            .iter()
+            .find(|(key, _)| keys.just_pressed(*key))
+            .map(|(_, direction)| *direction)
+    }
+
+    fn pressed_action(&self, keys: &ButtonInput<KeyCode>) -> Option<(KeyCode, Command)> {
+        // Unrelated simultaneous keys must not arm a background held action.
+        if keys.get_just_pressed().any(|key| {
+            !self.directions.iter().any(|(binding, _)| binding == key) && !self.wait.contains(key)
+        }) {
+            return None;
+        }
+        self.directions
+            .iter()
+            .find(|(key, _)| keys.just_pressed(*key))
+            .map(|(key, direction)| (*key, Command::Move(*direction)))
+            .or_else(|| {
+                self.wait
+                    .iter()
+                    .find(|key| keys.just_pressed(**key))
+                    .map(|key| (*key, Command::Wait))
+            })
+    }
+}
+
+#[cfg(test)]
 fn pressed_direction(keys: &ButtonInput<KeyCode>) -> Option<Direction> {
-    // Stable precedence accepts at most one edge per frame; no repeat or backlog.
+    MovementBindings::default().direction(keys)
+}
+
+fn direction_keys() -> [KeyCode; 20] {
     [
         KeyCode::ArrowUp,
         KeyCode::ArrowRight,
@@ -329,9 +551,6 @@ fn pressed_direction(keys: &ButtonInput<KeyCode>) -> Option<Direction> {
         KeyCode::KeyH,
         KeyCode::KeyY,
     ]
-    .into_iter()
-    .find(|key| keys.just_pressed(*key))
-    .and_then(direction_for_key)
 }
 
 fn direction_for_key(key: KeyCode) -> Option<Direction> {
@@ -351,6 +570,111 @@ fn direction_for_key(key: KeyCode) -> Option<Direction> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn remapping_is_modal_atomic_cancellable_and_shared_with_manual_input() {
+        let mut app = fixture_app().unwrap();
+        let before = app.world().resource::<CoreState>().snapshot();
+        press(&mut app, KeyCode::F5);
+        for key in [
+            KeyCode::KeyW,
+            KeyCode::KeyP,
+            KeyCode::KeyD,
+            KeyCode::KeyC,
+            KeyCode::KeyS,
+            KeyCode::KeyZ,
+            KeyCode::KeyA,
+            KeyCode::KeyF,
+            KeyCode::Space,
+        ] {
+            press(&mut app, key);
+        }
+        assert!(app.world().resource::<UiMode>().remapping.is_none());
+        assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
+        press(&mut app, KeyCode::Escape);
+        press(&mut app, KeyCode::KeyW);
+        assert_eq!(
+            app.world()
+                .resource::<CoreState>()
+                .player()
+                .unwrap()
+                .position(),
+            prl_core::Position::new(2, 4)
+        );
+        press(&mut app, KeyCode::F5);
+        press(&mut app, KeyCode::KeyA);
+        press(&mut app, KeyCode::Escape);
+        assert_eq!(
+            app.world().resource::<MovementBindings>().directions[0].0,
+            KeyCode::KeyW
+        );
+        press(&mut app, KeyCode::F6);
+        assert_eq!(
+            app.world().resource::<MovementBindings>().directions[0].0,
+            KeyCode::ArrowUp
+        );
+    }
+
+    #[test]
+    fn held_wait_repeats_after_delay_but_focus_and_help_cancel_it() {
+        let mut app = fixture_app().unwrap();
+        app.insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
+            std::time::Duration::from_millis(100),
+        ));
+        press(&mut app, KeyCode::Space);
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .clear();
+        for _ in 0..4 {
+            app.update();
+        }
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            1
+        );
+        app.update();
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            2
+        );
+        press(&mut app, KeyCode::F1);
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            2
+        );
+        press(&mut app, KeyCode::Escape);
+        press(&mut app, KeyCode::Space);
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .clear();
+        {
+            let world = app.world_mut();
+            world
+                .query::<&mut Window>()
+                .single_mut(world)
+                .unwrap()
+                .focused = false;
+        }
+        app.update();
+        {
+            let world = app.world_mut();
+            world
+                .query::<&mut Window>()
+                .single_mut(world)
+                .unwrap()
+                .focused = true;
+        }
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(
+            app.world().resource::<CoreState>().clock().player_actions(),
+            3
+        );
+    }
 
     #[test]
     fn arrow_numpad_and_vi_keys_share_directions() {

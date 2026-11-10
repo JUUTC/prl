@@ -130,21 +130,24 @@ durability. A save failure is shown while the application remains open and
 reported in logs; a failed death-barrier write cannot establish the normal
 no-resurrection guarantee.
 
-### Current dead-run morgues (I-031)
+### Current terminal-run morgues (I-031/I-032)
 
 Each save slot owns a sibling directory, for example
-`PRL/character.morgues/`. Reports are UTF-8 text with a format-1 heading and
-`run-<number>-seed-<seed>-<canonical-dead-snapshot-hash>.txt` filenames.
+`PRL/character.morgues/`. Reports are UTF-8 text with a format-2 heading and
+`run-<number>-seed-<seed>-<canonical-terminal-snapshot-hash>.txt` filenames.
 This keeps separate slots and different terminal snapshots from overwriting
 one another. The report includes engine version and snapshot fingerprint, seed,
 run, pack/map/floor, clock/actions, crypt objective status, fatal attacker when
 retained, equipped/backpack items using known-only labels, and recent messages.
 It does not expose ground loot or unknown affixes.
 
-The bounded outcome/message log is not a full replay or a lifetime kill counter.
-Reports explicitly label unavailable cause information and unimplemented
-skills/settings/kill totals rather than inventing values. Full terminal-run
-accounting (including abandonment) and an in-game history screen remain I-032.
+The bounded outcome/message log is not a full replay. Snapshot v4 stores the
+player's lifetime kill count within each run separately; only player-attributed
+deaths increment it, and new runs reset it. Legacy v2/v3 migrations start counting
+at migration and explicitly label earlier kills unknown. These are not
+profile-wide counters. Reports label unavailable cause information and
+unimplemented skills/settings rather than inventing values. Future skill/
+settings/victory records and an in-game history screen remain I-032.
 
 The death barrier is committed **first**. The report then uses the existing
 bounded temporary-write/file-sync mechanism with a no-clobber publication;
@@ -154,26 +157,63 @@ A conflicting/corrupt report is preserved and produces an explicit error.
 On startup, a barrier left before archiving recreates the report before building
 the new run; a living new-run save cannot clear the barrier until the dead run's
 report is preserved. Archive failures surface through the existing save
-error/HUD path and leave the barrier in place for recovery. No new gameplay
-snapshot shape, RNG input or game-time cost is introduced. The existing Q-012
+error/HUD path and leave the barrier in place for recovery. No RNG input or
+game-time cost is introduced. The existing Q-012
 hard-crash and Windows power-loss limitations still apply.
+
+For confirmed abandonment, an optional runtime `RunExitGuard` is installed by
+`prl_save`, keeping filesystem dependencies out of core. The core dispatcher
+builds the proposed replacement **first**, then invokes the archive boundary
+before discarding the old run. Build/archive failures reject explicitly without
+changing rules state; the message log explains the failure. Headless direct
+commands remain deterministic without a persistence guard.
+
+A living terminal report is followed by a checksummed `.abandoned` snapshot
+barrier. Until a newer run is saved, Continue refuses the old checkpoint.
+`recover_death` now handles both terminal barrier kinds; if both exist, all
+reports are preserved and the newest terminal run determines recovery. The
+new run is committed before barriers are cleared. Archive failures leave the
+old living slot intact. A crash/failed publication before the abandonment
+barrier can leave a report of the confirmed request while the old checkpoint
+remains continuable; this is not atomic history or a write-ahead protocol.
+Existing format-1 reports remain untouched. Snapshot migration can change
+fingerprints and produce an additional report for a migrated terminal snapshot.
+
+### Current held input and walking (I-023/B-009)
+
+`prl_ui` owns held-action timing, interruption checks and shared remappable
+movement/wait bindings. It submits at most one ordinary intent when the queue
+is empty. It never writes gameplay positions, time or RNG. Exact provisional
+timings and stops are in [time-and-turns.md](time-and-turns.md#current-held-movementwait-i-023).
+Input settings/remapping are session-only, not character save state.
+
+`ActorView` keeps logical destination separate from a wall-clock cosmetic base.
+Walking updates that base before combat effects compose lunges; HP bars and the
+camera follow its unlunged centre. Walk clips fit the traversal duration and
+return to idle when it ends. New actions replace rather than queue tweens;
+floor/run transitions snap, including reused logical IDs. Normal/Fast/Off
+change only presentation, never occupancy, FOV, scheduling or outcomes.
 
 ### Current snapshot proof (I-008, Q-016)
 
-The version-3 in-memory DTO round-trips through compact RON. It is not a disk
+The version-4 in-memory DTO round-trips through compact RON. It is not a disk
 save implementation. A mid-combat snapshot is restored into a fresh headless
 Bevy app with different entity allocation for logical-ID stand-ins; queued
 commands produce identical RNG positions, ordered outcomes/messages and snapshots,
 including continuation through new run. No authoritative actor entity remapping
 is needed because rules state contains no `Entity` references.
 
-Version 3 adds the active/inactive floor registry, guardian objective,
+Version 3 added the active/inactive floor registry, guardian objective,
 item/container ownership, catalog/filter and seeded consumable appearance map.
 Version-2 arena snapshots migrate with both new optional fields absent; a v2
 snapshot claiming either field is rejected. Registry, dimensions, cross-floor
 actor IDs, placement, item bounds/overlap/slots, knowledge and allocators are
 validated on restore. Command-only crypt tests compare multi-floor continuations
 against RON-restored state, including kills, loot, consumables and endpoint.
+Version 4 adds kill counts and a completeness flag; v2/v3 migrate with zero
+newly tracked kills and incomplete historical totals. Restore validates the
+counter against allocated non-player IDs. Counter continuation and reset are
+tested independently of retained feedback.
 
 `prl_gen::CryptPlaytest` constructs a `RunFactory` runtime resource; the core
 dispatcher uses it to rebuild geometry/content for retry at seed + 1 without a
@@ -192,8 +232,8 @@ are canonical; presentation settings, handles and ECS IDs are absent. A base-are
 golden digest detects encoding/content drift, and mutation tests cover future
 rule inputs. BLAKE3 is MIT/Apache-2.0/CC0 licensed and already in the dependency
 graph; core now uses it directly.
-The v3 base-arena golden is
-`dda1e1cd1c802a3e0dda99db7c510ece414a53c03d3099d8da4d3b6626c6faf6`.
+The v4 base-arena golden is
+`de928b7f48b5f4e35cf5afd6ffd00b7cfd3267cf7bbbd274d443dcdc5aa3745c`.
 The former v2 DTO used hash context v1; hashes are not compared across migrations.
 
 This digest is for pre-release regression/replay comparisons, not a permanent

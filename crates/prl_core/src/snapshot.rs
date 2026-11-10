@@ -40,6 +40,10 @@ struct CoreStateData {
     dungeon: Option<crate::dungeon::Dungeon>,
     #[serde(default)]
     inventory: Option<crate::Inventory>,
+    #[serde(default)]
+    kills: u64,
+    #[serde(default)]
+    kills_complete: bool,
 }
 
 impl CoreSnapshot {
@@ -139,6 +143,8 @@ impl CoreState {
                 log: self.log.clone(),
                 dungeon: self.dungeon.clone(),
                 inventory: self.inventory.clone(),
+                kills: self.kills,
+                kills_complete: self.kills_complete,
             },
         }
     }
@@ -156,6 +162,13 @@ impl CoreState {
             && snapshot.state.dungeon.is_none()
             && snapshot.state.inventory.is_none()
         {
+            snapshot.state.kills = 0;
+            snapshot.state.kills_complete = false;
+            snapshot.version = SNAPSHOT_VERSION;
+        }
+        if snapshot.version == 3 {
+            snapshot.state.kills = 0;
+            snapshot.state.kills_complete = false;
             snapshot.version = SNAPSHOT_VERSION;
         }
         if snapshot.version != SNAPSHOT_VERSION {
@@ -177,6 +190,8 @@ impl CoreState {
             log: data.log,
             dungeon: data.dungeon,
             inventory: data.inventory,
+            kills: data.kills,
+            kills_complete: data.kills_complete,
         })
     }
 }
@@ -208,6 +223,9 @@ fn validate(data: &CoreStateData) -> Result<(), CoreError> {
     }
     if data.run_number == 0 {
         return Err(invalid("run number must start at 1"));
+    }
+    if data.kills > data.next_actor_id.saturating_sub(2) {
+        return Err(invalid("kill count exceeds allocated non-player actors"));
     }
     if data.rng.seed != data.seed || data.rng.stream != COMBAT_STREAM {
         return Err(invalid("combat RNG does not match the run seed and stream"));
@@ -627,7 +645,7 @@ mod tests {
         let hash = arena().snapshot().canonical_hash().unwrap();
         assert_eq!(
             blake3::Hash::from_bytes(hash).to_hex().as_str(),
-            "dda1e1cd1c802a3e0dda99db7c510ece414a53c03d3099d8da4d3b6626c6faf6"
+            "de928b7f48b5f4e35cf5afd6ffd00b7cfd3267cf7bbbd274d443dcdc5aa3745c"
         );
     }
 
@@ -679,18 +697,42 @@ mod tests {
 
     #[test]
     fn version_two_arena_migrates_but_cannot_claim_new_world_fields() {
-        let current = arena().snapshot();
+        let mut current = arena().snapshot();
         let old = current
             .to_ron()
             .unwrap()
-            .replacen("version:3", "version:2", 1)
-            .replace(",dungeon:None,inventory:None", "");
+            .replacen("version:4", "version:2", 1)
+            .replace(",dungeon:None,inventory:None", "")
+            .replace(",kills:0,kills_complete:true", "");
         assert!(!old.contains("inventory:"));
         let restored = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
+        current.state.kills_complete = false;
         assert_eq!(restored.snapshot(), current);
         let mut wrong_version = crate::test_support::dungeon().snapshot();
         wrong_version.version = 2;
         assert!(CoreState::restore(wrong_version).is_err());
+    }
+
+    #[test]
+    fn version_three_migrates_with_unknown_past_kills_and_rejects_impossible_totals() {
+        let state = crate::test_support::dungeon();
+        let old = state
+            .snapshot()
+            .to_ron()
+            .unwrap()
+            .replacen("version:4", "version:3", 1)
+            .replace(",kills:0,kills_complete:true", "");
+        let mut migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
+        assert_eq!(migrated.kills(), 0);
+        assert!(!migrated.kills_complete());
+        assert_eq!(migrated.map().id(), state.map().id());
+        assert_eq!(migrated.inventory(), state.inventory());
+        let mut restored = CoreState::restore(migrated.snapshot()).unwrap();
+        assert_eq!(migrated.issue(Command::Wait), restored.issue(Command::Wait));
+        assert_eq!(migrated.snapshot(), restored.snapshot());
+        let mut corrupt = state.snapshot();
+        corrupt.state.kills = u64::MAX;
+        assert!(CoreState::restore(corrupt).is_err());
     }
 
     #[test]

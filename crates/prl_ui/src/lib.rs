@@ -8,9 +8,11 @@ use bevy::prelude::*;
 mod cursor;
 mod hud;
 mod input;
+mod repeat;
 mod theme;
 
-pub use input::UiMode;
+pub use input::{MovementBindings, UiMode};
+pub use repeat::RepeatSettings;
 pub use theme::{PlaceholderFontSource, PlaceholderTheme};
 
 /// Display text for presentation settings owned by sibling crates.

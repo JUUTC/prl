@@ -3,7 +3,7 @@ use prl_core::{CoreSet, CoreState, Position};
 
 use crate::actors::depth;
 use crate::art::PlaceholderArt;
-use crate::camera::{TILE_SIZE, WorldCamera, tile_to_world};
+use crate::camera::{TILE_SIZE, tile_to_world};
 
 #[derive(Component)]
 struct Placeholder;
@@ -37,7 +37,6 @@ fn refresh(
     state: Res<'_, CoreState>,
     art: Option<Res<'_, PlaceholderArt>>,
     placeholders: Query<'_, '_, Entity, With<Placeholder>>,
-    mut cameras: Query<'_, '_, &mut Transform, With<WorldCamera>>,
 ) {
     for entity in &placeholders {
         commands.entity(entity).despawn();
@@ -62,14 +61,6 @@ fn refresh(
                 Transform::from_xyz(centre.x, centre.y, 0.1),
                 Placeholder,
             ));
-        }
-    }
-    if let Some(player) = state.player() {
-        let position = player.position();
-        let centre = tile_to_world(position.x, position.y);
-        for mut camera in &mut cameras {
-            camera.translation.x = centre.x;
-            camera.translation.y = centre.y;
         }
     }
 }
