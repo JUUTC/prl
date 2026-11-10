@@ -330,7 +330,7 @@ impl CoreState {
                 if let Some(guard) = guard
                     && let Err(error) = guard.check(self)
                 {
-                    return self.reject_new_run(error);
+                    return self.reject_new_run(error.to_string());
                 }
                 *self = next;
                 let sequence = self.log.next_sequence.saturating_sub(1);

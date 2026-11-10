@@ -65,16 +65,18 @@ pub struct RunFactory(Box<dyn Fn(u64) -> Result<CoreState, CoreError> + Send + S
 /// Optional runtime persistence boundary, called after a replacement is built
 /// but before the current run is discarded. Not serialized or used by rules.
 #[derive(Resource)]
-pub struct RunExitGuard(Box<dyn Fn(&CoreState) -> Result<(), String> + Send + Sync>);
+pub struct RunExitGuard(Box<dyn Fn(&CoreState) -> Result<(), CoreError> + Send + Sync>);
 
 impl RunExitGuard {
     /// Installs a fallible archive boundary. An error preserves the current run
     /// and is published as an explicit new-run rejection.
-    pub fn new(archive: impl Fn(&CoreState) -> Result<(), String> + Send + Sync + 'static) -> Self {
+    pub fn new(
+        archive: impl Fn(&CoreState) -> Result<(), CoreError> + Send + Sync + 'static,
+    ) -> Self {
         Self(Box::new(archive))
     }
 
-    pub(crate) fn check(&self, state: &CoreState) -> Result<(), String> {
+    pub(crate) fn check(&self, state: &CoreState) -> Result<(), CoreError> {
         (self.0)(state)
     }
 }
@@ -107,7 +109,7 @@ impl RunFactory {
                 if let Some(guard) = guard
                     && let Err(error) = guard.check(state)
                 {
-                    return state.reject_new_run(error);
+                    return state.reject_new_run(error.to_string());
                 }
                 next.run_number = state.run_number().saturating_add(1);
                 next.log = state.log.clone();

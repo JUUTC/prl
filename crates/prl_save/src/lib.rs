@@ -397,7 +397,7 @@ fn install_exit_guard(mut commands: Commands<'_, '_>, controller: Res<'_, SaveCo
         };
         result.map_err(|error| {
             bevy::log::error!("Could not archive the previous run: {error}");
-            error.to_string()
+            prl_core::CoreError::InvalidRun(error.to_string())
         })
     }));
 }

@@ -137,7 +137,7 @@ fn exit_guard_runs_only_after_build_and_preserves_rules_on_failure() {
     let observed = called.clone();
     let guard = RunExitGuard::new(move |_| {
         observed.store(true, std::sync::atomic::Ordering::SeqCst);
-        Err("archive unavailable".into())
+        Err(CoreError::InvalidRun("archive unavailable".into()))
     });
     let mut state = test_support::dungeon();
     failed.issue_guarded(&mut state, Command::NewRun, Some(&guard));
