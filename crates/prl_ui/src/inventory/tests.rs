@@ -443,6 +443,16 @@ fn placement_preview_cancel_invalid_and_drag_paths_preserve_time_and_ownership()
     );
     act(&mut app, Intent::Cancel);
     assert!(app.world().resource::<Workspace>().list);
+    assert!(matches!(
+        app.world().resource::<Workspace>().stage,
+        Stage::Browse
+    ));
+    assert!(
+        app.world()
+            .resource::<Workspace>()
+            .feedback
+            .contains("Placement cancelled.")
+    );
     assert_eq!(
         app.world().resource::<CoreState>().inventory(),
         Some(&before)

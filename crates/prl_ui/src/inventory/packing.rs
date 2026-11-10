@@ -246,6 +246,11 @@ pub(super) fn activate(
             workspace.selected = Some(placement.item);
             commit(placement, core, workspace, queue);
         }
+        Intent::Cancel if matches!(workspace.stage, Stage::Placement(_)) => {
+            workspace.stage = Stage::Browse;
+            workspace.focus = workspace.selected.map(Intent::Select);
+            workspace.feedback = "Placement cancelled. Original layout kept; no time spent.".into();
+        }
         Intent::CancelDrag => {
             workspace.feedback = "Placement cancelled. Original layout kept; no time spent.".into();
         }
