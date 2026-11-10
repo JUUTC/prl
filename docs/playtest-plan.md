@@ -390,6 +390,23 @@ abandonment, failed archives, mixed terminal barriers, legacy kill-count
 migration and counters surviving feedback eviction. These are not Windows
 interactive/4K/audio acceptance.
 
+Delivery commits: baf2ac8, with typed archive-boundary errors in 4342f5d.
+Native Windows workflow 42773843131 at 4342f5d passed format, headless and
+workspace tests, strict lint, API docs, executable build, packaging and upload.
+The downloadable artifact is `prl-windows-x86_64-4342f5d49398be7886d7110aa26cfdb1a837ec98`.
+The earlier implementation run 42773301274 also passed.
+
+A Linux Xvfb/software-rendered smoke exercised help, timing controls, guided
+remapping/default reset, held waiting and two live retries; the resulting text
+reports preserved committed action counts and marked the runs Abandoned.
+With the delay/interval changed to 800/300 ms, stepping off entrance supplies
+then holding Wait for 1.5 s recorded five actions (move + initial wait + three
+repeats), without a command backlog. A separate clean Continue/movement/
+`WM_DELETE_WINDOW` run exited normally, logged no application errors and saved
+its one committed movement action. Direct X-window destruction is not a normal
+close request and was excluded from quit-save acceptance. No physical audio
+device, interactive Windows launch or 4K display was verified.
+
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.
 Housing, crafting, companions and NG+ remain later spec milestones. P0-P5 cover
