@@ -4319,8 +4319,13 @@ name = "prl_gen"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "blake3",
  "prl_content",
  "prl_core",
+ "rand_chacha",
+ "rand_core",
+ "ron 0.10.1",
+ "serde",
 ]
 
 [[package]]

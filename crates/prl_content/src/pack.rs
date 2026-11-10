@@ -123,6 +123,28 @@ impl ContentPack {
         Self::from_ron(BASE_PACK_SOURCE)
     }
 
+    /// Returns a revalidated copy with a generated map selected as the start.
+    ///
+    /// A matching map ID is replaced only in the returned copy. Definition,
+    /// spawn and player-identity validation is identical to loading a pack.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ContentError`] if the resulting pack fails validation.
+    pub fn with_start_map(&self, map: MapDefinition) -> Result<Self, ContentError> {
+        let mut maps = self.maps.clone();
+        let start_map = map.id.clone();
+        maps.insert(start_map.clone(), map);
+        Self::from_parts(Parts {
+            id: self.id.clone(),
+            schema_version: self.schema_version,
+            tiles: self.tiles.clone(),
+            actors: self.actors.clone(),
+            maps,
+            start_map,
+        })
+    }
+
     /// Stable content identity of this pack.
     #[must_use]
     pub fn id(&self) -> &ContentId {
@@ -616,6 +638,25 @@ mod tests {
             ContentPack::from_ron(&source),
             Err(ContentError::MissingStartMap { .. })
         ));
+    }
+
+    #[test]
+    fn generated_start_map_is_revalidated_without_mutating_the_source_pack() {
+        let pack = ContentPack::placeholder().unwrap();
+        let original = pack.clone();
+        let mut map = pack.start_map().unwrap().clone();
+        map.id = ContentId::new("prl", "generated").unwrap();
+        let generated = pack.with_start_map(map.clone()).unwrap();
+        assert_eq!(generated.start_map_id(), &map.id);
+        assert_eq!(generated.start_map(), Some(&map));
+        assert_eq!(pack, original);
+
+        map.spawns[0].x = u16::MAX;
+        assert!(matches!(
+            pack.with_start_map(map),
+            Err(ContentError::InvalidMap { .. })
+        ));
+        assert_eq!(pack, original);
     }
 
     #[test]

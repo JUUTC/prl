@@ -16,8 +16,10 @@ arena, validated tile/actor fixture content, command/energy scheduling, recursiv
 shadowcasting and memory, deterministic melee/AI, death/new run, placeholder
 rendering/audio and HUD/input. The versioned RON snapshot proof now includes
 fresh-headless-ECS continuation and canonical hashes (I-008). A Windows packaging
-workflow is included. There is no generation, inventory, production pack manifest
-or disk save yet; Windows hands-on acceptance remains pending.
+workflow is included. P3 now has a headless seeded crypt-floor generator (I-026),
+but the playable build still uses the P2 arena. Two-floor persistence, stairs,
+inventory, production pack manifests and disk saves are not implemented;
+Windows hands-on acceptance remains pending.
 See [playtest-guide.md](playtest-guide.md).
 
 The recorded UX decisions are 64x64 world tiles, integer zoom, independent UI
@@ -122,6 +124,15 @@ Record playtest findings about targeting, input, camera, readability and perceiv
 waiting before adding polish.
 
 ### P3 - Explore and loot
+
+Current foundation: `prl_gen::generate_crypt_floor` creates a single validated
+rooms/corridors floor from the versioned content settings in
+`assets/packs/prl/data/dungeons/playtest_crypt.ron`. It reserves distinct
+entrance/exit cells and validates all walkable cells using the same terrain/corner
+rules as gameplay. Headless tests repeat 100 seeds and walk to the exit and back
+via real commands with matching hashes. This is I-026, not the playable P3 gate:
+I-027 still owns stairs, multiple persistent floors, encounters and guardian;
+I-012/I-017 own the loot/equipment foundations. No new UI or art is implied.
 
 Start with one rooms-and-corridors generator. Validate spawn, stairs, doors and
 guardian reachability using the same movement rules as gameplay, not a looser
@@ -255,7 +266,7 @@ its code compiles.
 | P0 | Implementation present | Packaging workflow and boot errors added; extracted-package Linux software-rendering smoke passed; Windows launch acceptance pending |
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
-| P3 | Planned | Generation, pack loading and inventory not implemented |
+| P3 | Foundation in progress; not playable | I-026 headless seeded rooms/corridors proof implemented; shared gameplay-rule connectivity and command-replayed return routes across 100 seeds. Persistent two-floor integration (I-027), production pack loading and inventory (I-012/I-017) remain open |
 | P4 | Planned | Progression and persistence not implemented |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
@@ -270,6 +281,15 @@ The isolated core/content test run also passed (66 tests), without presentation
 feature unification.
 The separate local session owns Foundry preflight (I-025); no cloud/art pipeline
 work is part of this follow-up.
+
+P3 foundation follow-up, 2026-11-10: I-026 adds the headless crypt-floor proof
+without changing the runnable arena. Workspace format, clippy (all targets,
+warnings denied), tests (125 passed; one ignored balance probe) and warning-free
+API docs passed on Linux. Isolated core/content/generation tests passed
+(75 tests) without presentation features. Across 100 seeds, generated layouts
+repeat exactly and gameplay commands traverse the reserved exit and return;
+additional boundary-dimension and corner-shortcut tests pass. I-027 remains the
+next playable integration task. No Windows hands-on acceptance is claimed.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

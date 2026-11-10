@@ -72,6 +72,11 @@ are adjacent to the executable. Without it, missing packaged assets fail at boot
 even on a machine that has the source checkout. An adjacent `assets` directory
 always takes priority; incomplete or malformed package content never falls back.
 
+P3 has a headless seeded rooms/corridors foundation, exercised with
+`cargo test -p prl_gen`. This is not yet the playable two-floor dungeon:
+`cargo run` still starts the P2 arena. See
+[world generation](docs/world-generation.md#current-p3-generation-proof-i-026).
+
 Linux needs: `pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev`.
 
 Windows needs the MSVC Rust toolchain (`x86_64-pc-windows-msvc`) and, in the

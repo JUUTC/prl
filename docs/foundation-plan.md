@@ -19,9 +19,11 @@ system or a universal rules engine before the first playable room.
 Current foundation now includes the initial P1 code, agent instruction entry
 points and a Windows packaging workflow. The fixed room demonstrates logical IDs,
 validated fixture definitions, command scheduling, recursive shadowcasting,
-placeholder presentation and versioned RON snapshot/restore. Production pack
-manifests, RNG streams, disk persistence and multiple map/world ownership remain
-later work or open contracts. Windows launch acceptance is still pending.
+placeholder presentation and versioned RON snapshot/restore. P2 added a portable
+combat RNG stream; I-026 adds a separate headless crypt-generation stream and
+rooms/corridors proof. Production pack manifests, disk persistence and multiple
+map/world ownership remain later work or open contracts. Windows launch
+acceptance is still pending.
 
 ## Contracts to establish before gameplay grows
 

@@ -10,6 +10,40 @@
   - Levels are generated **lazily** on first visit, yet deterministically.
 - Combat/loot rolls use a separate gameplay stream saved with the game (prevents save-scum rerolling by design; still deterministic given same inputs → enables replays and tests).
 
+### Current P3 generation proof (I-026)
+
+`prl_gen::generate_crypt_floor` implements a single headless rooms/corridors
+floor, not the full world or a playable multi-floor instance. Version-1 settings
+in `assets/packs/prl/data/dungeons/playtest_crypt.ron` supply the map, wall,
+floor and player IDs plus dimensions (16-128 per axis; provisional resource
+bounds). They are explicitly parsed by callers, not automatically discovered
+by the current pack loader. Invalid formats, dimensions or definition roles
+return typed errors; the result also passes normal pack/spawn validation.
+
+The reversible seed encoding (Q-016) uses BLAKE3 derive-key context
+`PRL crypt layout seed v1` over, in order: seed as little-endian `u64`, floor
+index as little-endian `u32`, UTF-8 namespaced map ID, then one NUL byte. Content
+IDs prohibit NUL. The resulting 32 bytes seed a fresh `ChaCha8Rng`; no combat
+stream is read or advanced. This is not yet a general world/dungeon/reset
+descriptor (Q-015); adding that ownership will require its own version review.
+
+BSP splits leave at least seven cells per partition, recurse to at most depth
+four, then carve rooms at least 3x3 with a wall margin. Adjacent rooms in stable
+leaf order connect through orthogonal L-shaped corridors. Integer multiply-high
+range selection consumes one 32-bit RNG word per choice. These algorithm defaults
+are pre-release implementation details, not accepted balance/interview answers.
+Golden seed and layout digests guard accidental changes.
+
+The first/last room centers reserve distinct arrival/departure cells. The output
+is a revalidated copy of the input pack with its generated start map; the source
+pack is unchanged. The generator instantiates headless core state and checks
+**every walkable cell** with `CoreMap::can_step`, including Q-008's blocked-corner
+rule. It never silently retries or substitutes a fallback floor.
+The connectivity proof covers 100 seeds plus boundary dimensions, and actual
+move commands walk the endpoint route and return with equal replay hashes.
+Doors, functional stairs, guardian/loot placement and persistent floor
+transitions are not implemented here (I-027). The playable P2 arena is unchanged.
+
 ## Overworld
 
 1. **Heightmap + moisture + temperature** via layered noise (`noise` crate / fBm).

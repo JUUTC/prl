@@ -9,8 +9,15 @@ repository.workspace = true
 
 [dependencies]
 bevy.workspace = true
+blake3.workspace = true
 prl_content.workspace = true
 prl_core.workspace = true
+rand_chacha.workspace = true
+rand_core.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+ron.workspace = true
 
 [lints]
 workspace = true

@@ -116,6 +116,20 @@ impl CoreMap {
             .filter_map(|(index, visible)| visible.then(|| self.position(index)).flatten())
     }
 
+    /// Whether terrain permits an adjacent step, ignoring actor occupancy.
+    ///
+    /// Shares the gameplay corner rule (Q-008) with AI and generator validation.
+    /// Walls, closed doors, out-of-bounds cells and either blocked orthogonal
+    /// neighbour on a diagonal prevent passage. This never opens doors.
+    #[must_use]
+    pub fn can_step(&self, pack: &ContentPack, from: Position, direction: Direction) -> bool {
+        !self.blocks_movement(pack, from)
+            && from
+                .offset(direction)
+                .is_some_and(|to| !self.blocks_movement(pack, to))
+            && !self.corner_blocked(pack, from, direction)
+    }
+
     pub(crate) fn len(&self) -> usize {
         self.tiles.len()
     }
@@ -193,5 +207,51 @@ impl CoreMap {
         {
             tile.door_open = true;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Command, CoreState};
+
+    use super::*;
+
+    #[test]
+    fn shared_terrain_steps_respect_bounds_closed_doors_and_gameplay_corner_rules() {
+        let mut state = CoreState::demo().unwrap();
+        let stance = Position::new(4, 5);
+        assert!(
+            !state
+                .map()
+                .can_step(state.content(), stance, Direction::East)
+        );
+        assert!(
+            !state
+                .map()
+                .can_step(state.content(), Position::new(-1, 5), Direction::East)
+        );
+        assert!(
+            !state
+                .map()
+                .can_step(state.content(), Position::new(0, 0), Direction::SouthEast)
+        );
+        assert!(
+            state
+                .map()
+                .can_step(state.content(), Position::new(2, 5), Direction::East)
+        );
+        state.issue(Command::Move(Direction::East));
+        state.issue(Command::Move(Direction::East));
+        state.issue(Command::OpenDoor(Direction::East));
+        assert!(
+            state
+                .map()
+                .can_step(state.content(), stance, Direction::East)
+        );
+        assert!(
+            !state
+                .map()
+                .can_step(state.content(), stance, Direction::NorthEast)
+        );
     }
 }

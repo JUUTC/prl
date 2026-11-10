@@ -3,7 +3,12 @@
 //! All randomness comes from streams derived from the world seed; never use
 //! thread-local or OS randomness here.
 
+mod crypt;
+mod seed;
+
 use bevy::prelude::*;
+
+pub use crypt::{CryptFloor, CryptSettings, GenerationError, generate_crypt_floor};
 
 /// Registers all `prl_gen` systems, resources and sub-plugins.
 pub struct PrlGenPlugin;

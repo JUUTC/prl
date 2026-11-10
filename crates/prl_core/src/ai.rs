@@ -112,10 +112,7 @@ impl CoreState {
                     index != target && occupied.get(index).copied().unwrap_or(true);
                 if seen
                     || blocked_by_actor
-                    || self.map.blocks_movement(&self.pack, next)
-                    || self
-                        .map
-                        .corner_blocked(&self.pack, current_position, direction)
+                    || !self.map.can_step(&self.pack, current_position, direction)
                 {
                     continue;
                 }
