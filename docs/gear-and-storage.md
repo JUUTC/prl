@@ -19,10 +19,12 @@ Main hand/Body and selected-item comparisons are implemented, as are the shared
 The rest of this document remains target design; see the exact
 [slice limits](items-and-crafting.md#current-p3-subset).
 
-The [inventory/item UX proposal](inventory-ux.md) describes the equipment,
+The implemented [inventory/item workspace](inventory-ux.md) provides equipment,
 backpack, ground and persistent item-card workspace, including knowledge-safe
 comparison and action flows. Its browser study is mock data, not another stats
-path. Bevy delivery is I-034/I-035; optimizer/storage breadth remains after P5.
+path. I-034/I-035 are delivered; free packing/rotation/Organize is approved I-036.
+Optimizer/storage breadth remains after P5; final art and Windows acceptance
+remain separate.
 
 ## Principles
 

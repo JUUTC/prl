@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 mod assets;
+mod preferences;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pack_path = assets::content_path()?;
@@ -24,6 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let boot_error = match state {
         Ok((state, factory, store, continued)) => {
+            preferences::install(&mut app, store.clone());
             if let Some(pack) = pack_path.parent() {
                 app.insert_resource(prl_render::PlaceholderArtSource(pack.to_path_buf()));
                 // `assets/packs/prl` -> `assets`, which holds the OFL fonts.

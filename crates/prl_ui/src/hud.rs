@@ -308,71 +308,6 @@ fn sight_text(core: &CoreState) -> String {
     }
 }
 
-fn inventory_text(core: &CoreState, selection: usize) -> String {
-    let Some(inventory) = core.inventory() else {
-        return "No inventory in this fixture. Esc: close.".into();
-    };
-    let items: Vec<_> = inventory
-        .items()
-        .filter(|item| matches!(item.container, prl_core::BACKPACK | prl_core::EQUIPMENT))
-        .collect();
-    let mut grid = [['.'; 10]; 6];
-    for (index, item) in items.iter().enumerate() {
-        if let (Some(cell), Some(definition)) = (item.cell, inventory.definition(item)) {
-            for row in grid
-                .iter_mut()
-                .skip(usize::from(cell.y))
-                .take(usize::from(definition.height))
-            {
-                for value in row
-                    .iter_mut()
-                    .skip(usize::from(cell.x))
-                    .take(usize::from(definition.width))
-                {
-                    *value = char::from(b'A' + u8::try_from(index % 26).unwrap_or(0));
-                }
-            }
-        }
-    }
-    let grid = grid
-        .iter()
-        .map(|row| row.iter().collect::<String>())
-        .collect::<Vec<_>>()
-        .join("\n");
-    let page_start = selection / 8 * 8;
-    let lines = items
-        .iter()
-        .enumerate()
-        .skip(page_start)
-        .take(8)
-        .map(|(index, item)| {
-            format!(
-                "{} {} [{}] {}",
-                if index == selection { ">" } else { " " },
-                char::from(b'A' + u8::try_from(index % 26).unwrap_or(0)),
-                if item.container == prl_core::EQUIPMENT {
-                    "worn"
-                } else {
-                    "bag"
-                },
-                inventory.label(item)
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-    let comparison = items.get(selection).and_then(|item| {
-        inventory.compare(core.player()?, item.id).map(|(before, after)|
-            format!("\nKnown comparison: damage {} -> {}, armor {} -> {}\nAccuracy {} -> {}, evasion {} -> {}. Unknown affixes excluded.",
-                before.damage, after.damage, before.armor, after.armor,
-                before.accuracy, after.accuracy, before.evasion, after.evasion))
-    }).unwrap_or_default();
-    format!(
-        "INVENTORY - browsing is free | Carry {}/{} g\n{grid}\n{lines}{comparison}\nUp/Down: select | E: equip/unequip | D: drop | Q: drink selected\nC: identify selected with a carried scroll | Esc: close\nEach item action closes this view and spends time; failed actions cost nothing.",
-        inventory.carried_weight(),
-        inventory.carry_capacity()
-    )
-}
-
 fn examine_text(core: &CoreState, position: Option<prl_core::Position>) -> String {
     let Some(position) = position else {
         return "No selected cell.".into();
@@ -461,11 +396,10 @@ fn loot_text(core: &CoreState, show_all: bool) -> String {
 fn overlay_text(mode: &UiMode, core: Option<&CoreState>) -> String {
     let text = match mode.overlay {
         Overlay::Help => format!(
-            "HELP - gameplay paused\n\n{CONTROLS}\nG: pick up one item | I: inventory/equipment | X: examine with movement keys\nEnter: descend/finish at > | Comma: ascend at <\n\n{LEGEND}\n\nHeld movement/wait stops at danger, low HP, loot, doors and stairs.\nAttacks never repeat. Release and press again after an interruption.\nInventory browsing/examine are free; item actions spend turns.\nAutomatic Continue/checkpoints and text morgues are available.\nFinal assets and full options are unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
+            "HELP - gameplay paused\n\n{CONTROLS}\nG: pick up one item | I: inventory/equipment | X: examine with movement keys\nEnter: descend/finish at > | Comma: ascend at <\n\n{LEGEND}\n\nHeld movement/wait stops at danger, low HP, loot, doors and stairs.\nAttacks never repeat. Release and press again after an interruption.\nInventory: click or arrows select; Tab/Enter focus/activate; Esc cancels.\nE equip, Q drink, D drop, C choose known Identify source, G pick up.\nBrowsing is free; safe actions stay open; danger/damage closes inventory.\nInventory Options persist separate drop/unknown/slow-Body warnings.\nAutomatic Continue/checkpoints and text morgues are available.\nPacking/rotation, unknown-scroll Read, final assets and full options remain unavailable.\n\nF1 / ? / Esc to close; no buffered movement."
         ),
         Overlay::Menu => "PAUSED - placeholder playtest\n\nEsc: resume | F1: controls/help\n[ / ]: independent UI scale | +/-: integer world zoom\nT: motion | M: mute | 9 / 0: volume\nF2: held input | F3: delay | F4: interval | F5: remap\n\nNo turns pass while browsing.\nClose this menu, then R to start a new run.\nAutomatic saving is active; full options and character creation are unavailable.".to_owned(),
-        Overlay::None => String::new(),
-        Overlay::Inventory => core.map_or_else(|| "No inventory available.".into(), |core| inventory_text(core, mode.selection)),
+        Overlay::None | Overlay::Inventory => String::new(),
         Overlay::Look => core.map_or_else(|| "No map available.".into(), |core| examine_text(core, mode.look)),
     };
     if mode.is_paused() {
@@ -541,7 +475,7 @@ fn refresh(
         );
     }
     for mut node in &mut texts.p5() {
-        node.display = if mode.is_paused() {
+        node.display = if mode.is_paused() && mode.overlay != Overlay::Inventory {
             Display::Flex
         } else {
             Display::None
@@ -578,7 +512,6 @@ mod tests {
         let header = header_text(&core, &UiMode::default(), &SettingsStatus::default());
         assert!(header.contains("P3 PLACEHOLDER"));
         assert!(header.contains("Crypt floor 1/2"));
-        assert!(inventory_text(&core, 0).contains("browsing is free"));
         let entrance = core.floor_plan().unwrap().entrance;
         let exit = core.floor_plan().unwrap().exit;
         assert!(!core.is_visible(exit));

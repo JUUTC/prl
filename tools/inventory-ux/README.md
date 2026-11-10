@@ -5,6 +5,12 @@ Synthetic items, known-only fixture comparisons and simulated action costs;
 **not** the Bevy game, a gameplay evaluator or a production UI/art dependency.
 No assets, accounts, remote services, saves or packages are needed.
 
+**Interview update, 2026-11-10:** this original study predates the accepted
+safe-stay-open/danger-close policy, persistent configurable warnings and free
+packing/rotation/Organize. It still demonstrates the earlier return-to-world
+proposal and fixed placement. The current [UX contract](../../docs/inventory-ux.md)
+and Q-030/Q-031 govern implementation, not those older study behaviors.
+
 From the repository root:
 
 ```sh

@@ -1,16 +1,18 @@
 # Inventory and item UX
 
-**Status: interaction proposal and executable study, 2026-11-10.**
+**Status: native workspace/action increment delivered, 2026-11-10.**
 Requested focus: make inventory and item decisions understandable and comfortable
-with placeholder art. This is not a new art direction or an implemented game UI.
-The current Bevy inventory remains the text overlay until I-034/I-035 ship.
-The study is in [`tools/inventory-ux/`](../tools/inventory-ux/README.md).
+with placeholder art. I-034/I-035 replace the text overlay with a working Bevy
+workspace and accepted action flows; B-010 is fixed. Free packing, rotation and
+Organize remain approved follow-up I-036. This does not approve final art or
+close Windows/4K/human usability acceptance. The earlier, superseded browser
+study is in [`tools/inventory-ux/`](../tools/inventory-ux/README.md).
 
 Rules authority remains [items-and-crafting.md](items-and-crafting.md),
 [time-and-turns.md](time-and-turns.md) and
 [gear-and-storage.md](gear-and-storage.md). This document specifies how those
 rules are communicated, not new inventory capacity, stacking, healing or costs.
-Q-030/Q-031 track unapproved interaction defaults. Preserve the separate
+Q-030/Q-031 record the 2026-11-10 interview decisions and remaining scope. Preserve the separate
 [art/UX gates](art-production.md); placeholder icons and styling are disposable.
 
 ## 1. Player jobs and priorities
@@ -33,7 +35,9 @@ healing or changing starting supplies.
 
 Use a near-full-window modal with an opaque reading surface and a small visible
 world margin. Keep the header and action footer fixed; scroll content panes,
-not the entire modal. World zoom must not change its geometry.
+not the entire modal. At short/large-scale viewports the footer has its own
+bounded scroll area so it cannot hide all content; keyboard focus reveals its
+controls. World zoom must not change its geometry.
 
 ```text
 + INVENTORY   Browsing: no time passes  HP 16/40  Carry 18.4/60 kg  [Close] +
@@ -78,11 +82,18 @@ not the entire modal. World zoom must not change its geometry.
   Switching view is free and retains selection. Keyboard/list access is not a
   second-class alternative to dragging.
 - MVP grid is read-only placement plus selection. No drag-to-repack illusion:
-  current core disallows same-container transfers. See I-028/Q-031.
+  current core disallows same-container transfers. The user approved free
+  rearrangement and 90-degree rotation, even in danger, with drag/drop,
+  click-to-pick-up/place and keyboard equivalents. Implement the headless
+  commands first (I-036/Q-031); Escape cancels and invalid placement is atomic.
 - Label both capacity measures. In the current game: `18.4 / 60.0 kg -
   playtest pickup limit`; do not call it STR-derived capacity or invent
   encumbrance tiers. Empty-cell count does not guarantee an item fits.
 - Do not auto-sort/repack the grid on pickup, inspection or list sorting.
+  An explicit **Organize** action may rearrange/rotate all backpack items at no
+  time cost. Use deterministic best-effort packing, commit only if every item
+  fits, and otherwise preserve the complete layout with an explanation. It need
+  not find every mathematically possible arrangement. Never organize silently.
   Future list filters dim nonmatching grid items instead of collapsing their
   occupied cells. An item-list filter is not a ground loot filter.
 
@@ -161,13 +172,16 @@ Do not reveal hidden bonuses by subtracting actual current character stats.
 
 ## 4. Interaction and commitment
 
-**Proposed default (Q-030): one explicit action, one ordinary command, then
-return to the world.** Opening inventory, changing selection/view, comparing
-and reading the review step never advances time.
+**Accepted in the user interview, 2026-11-10 (Q-030): keep inventory open after
+actions when safe. After resolving an action, close if any hostile is visible
+or the player took damage.** Opening inventory, changing selection/view,
+comparing and reading the review step never advances time. Opening/browsing
+while enemies are already visible is allowed; acting then closes the inventory
+after resolution, even if those enemies were visible before opening.
 
-This intentionally preserves the current safe action boundary: item actions can
-let enemies act. Improve reopening by retaining region, view, scroll and selection
-by `ItemId`, not by leaving gameplay hidden behind the inventory.
+Item actions still let enemies act through the normal scheduler; never queue
+another action until the first resolves. Death takes precedence over every
+inventory state. Retain region, view, scroll and selection by `ItemId` on reopen.
 
 | Intent | UX | Existing slice cost |
 |---|---|---|
@@ -187,16 +201,22 @@ energy determine actual elapsed ticks. Do not show a countdown for free browsing
 
 - Equip/pickup/known consumption normally commit from their labelled action
   button; no universal confirmation spam.
-- A review step is required for Drop, unknown consumption, and a 300-energy
-  Body change while hostiles are visible (provisional Q-030).
+- Reviews default on for Drop, unknown consumption, and a 300-energy Body
+  change while hostiles are visible. Each category has its own persistent
+  setting, remembered across runs/restarts and re-enabled in Options.
+  Every review starts with a checked **Warn me next time** box; unchecking
+  disables subsequent warnings for that category. It is not a one-time warning.
+  Overlapping risks remain independent: dropping worn Body gear in danger can
+  show both categories; disabling Drop never disables the Body warning.
 - The review includes item(s), source/destination, known result, energy cost,
   unknown risks and threat warning. No prechecked destructive defaults.
 - Keyboard opening a review cannot also confirm it. Ignore key-repeat for
   item actions. Escape cancels the topmost mode first. Moving focus never acts.
-- Only one command may be pending. Disable action controls until it resolves;
+- Only one command may be pending. Ignore further action input until it resolves;
   revalidate the selected ID, location and target at commitment.
-- Success: return to world, show a terse result in the message log, and clear
-  held-input state. If the player dies, show death instead of reopening inventory.
+- Success: refresh the inventory and show a terse result in the message log.
+  Return to world on visible hostile or damage after resolution; clear held
+  input. If the player dies, show death instead of reopening inventory.
 - Failure: remain/reopen in inventory with the exact core reason and a useful
   next step. Do not silently auto-drop the displaced item or consume a fallback.
 - Persistence errors remain visible in world/save status; do not describe an
@@ -207,18 +227,23 @@ energy determine actual elapsed ticks. Do not show a countdown for free browsing
 1. Select the unknown target. `Identify...` opens a source chooser.
 2. List carried scrolls by **known appearance/name**, not internal ItemKind.
    Never highlight which unknown scroll is secretly Identify.
-3. MVP may offer known Identify scrolls; if none are known, explain how to
-   select an unknown scroll and attempt Read with a target. That broader Read
-   contract needs Q-030, since the current core only exposes `Identify`.
+3. Offer known Identify scrolls only for this increment. General unknown-scroll
+   Read is deferred for brainstorming, not silently mapped to Identify.
 4. For the first implementation without general Read, do not silently select
    the true unknown Identify scroll. Show `No known Identify scroll` and keep
    target selection. Current healing/loot remains available without identifying.
 5. A successful Identify changes target knowledge and scroll-type knowledge
    through the normal outcome; a gear preview then refreshes from known state.
 
-This is a deliberate correction to current UI code, which discovers a scroll
-by its hidden definition kind. It needs a focused regression before Bevy UX
-delivery (B-010), not a new rendering-only workaround.
+This deliberately corrects the former UI's hidden-definition source lookup
+(B-010). Unknown-scroll reading remains unavailable rather than guessing which
+scroll is Identify.
+
+The interview's starting direction for a future unknown-scroll Read is to pick
+the target first, destroy the scroll on use and describe what happened in the
+message; that effect does not necessarily reveal the type. Skill gain,
+risk/reward, discovery and failure semantics remain undecided. Current core
+type-discovery behavior is unchanged by this UX contract.
 
 ## 5. Pointer, keyboard and focus
 
@@ -233,9 +258,11 @@ delivery (B-010), not a new rendering-only workaround.
 | C | Identify target/source flow; never hidden automatic source selection |
 | D | Drop review |
 | Escape | Cancel chooser/review, then close inventory; never commit |
-| I | Open; optionally close only from top-level inventory (Q-030) |
+| G | Pick up the selected ground item |
+| I | Open; use Escape or Close to leave |
+| PgUp / PgDn | Scroll details; Shift scrolls backpack; narrow layout scrolls stacked content |
 
-No double-click action, mandatory precision dragging or timed input gesture.
+No double-click gameplay action, mandatory precision dragging or timed input gesture.
 Right-click context menus and modifier quick-move are later conveniences,
 not the only action path. Game movement bindings do not move the character while
 inventory is open. Rebinding should eventually include inventory actions, not
@@ -314,8 +341,8 @@ are indistinguishable regardless of hidden affixes/effects.
 
 ### UX-2 - Action journeys and recovery (I-035; depends on UX-1)
 
-Wire costed action strip, source chooser, targeted review, result-driven world
-return and rejection focus; fix B-010 with explicit knowledge-safe sources.
+Wire costed action strip, source chooser, targeted review, danger-driven closure
+and rejection focus; fix B-010 with explicit knowledge-safe sources.
 Reuse/extend core's planning boundary for typed
 availability and costs; do not duplicate transfer/weight/space validation in UI.
 Preview and command must share rule inputs; the command revalidates.
@@ -325,12 +352,21 @@ mouse **or** keyboard, without guessing keys; manual movement never leaks
 through; repeated input produces at most one command. Reopening retains context.
 Current game regression tests and save/restore conservation continue passing.
 
+### UX-3 - Free backpack organization (I-036; after UX-1/UX-2)
+
+Implement accepted same-bag placement, 90-degree rotation and explicit Organize
+through deterministic headless commands. Preserve item IDs, weight, ownership,
+stats, clock and RNG; persist orientation with a versioned migration. Share
+atomic placement validation across drag/drop, click-place and keyboard controls.
+No gameplay transfer becomes free merely because internal organization is free.
+This follows the workspace/actions in the approved implementation order.
+
 ### Later - Packing and full-game surfaces (I-028, I-013 through I-018)
 
 Do not add dummy live tabs for bags/belt/storage/optimizer now.
 Explicit `TransferItems.cell` already supports desired bag pickup/unequip
-placement, but same-bag repacking, rotation, stack splitting, locks and sorting
-need core command semantics, costs and migration where applicable (Q-031).
+placement. Accepted same-bag packing/rotation/Organize is UX-3; stack splitting
+and locks still need separate command semantics and migration where applicable.
 Prove item conservation and interrupted operations before drag/drop delivery.
 Then extend the same item details/actions to:
 
@@ -362,6 +398,12 @@ in these tasks; do not declare a timed usability benchmark without testers.
 
 ### Study verification, 2026-11-10
 
+**Interview supersedes study:** the original browser study still demonstrates
+one-action/world-return, fixed item orientation and nonconfigurable reviews.
+It is a historical interaction aid, not the accepted action/packing contract
+above. Update it or rely on the Bevy implementation before testing those new
+decisions; do not mistake its original behavior for approval.
+
 The dependency-free model's 11 regression tests pass, covering knowledge,
 capacity, atomic ownership, cost, explicit identification and stale offers.
 Chromium browser checks exercised healing/world return, pickup/equip,
@@ -378,4 +420,36 @@ document overflow, reachable actions and a scrolling review dialog. This was
 not actual browser-zoom, human usability, 4K, packaged Windows or Bevy testing.
 Those acceptance checks remain open.
 Browser/model evidence proves the study, not game integration or Windows/4K
-acceptance. Confirm Q-030 after hands-on review before treating this as final UX.
+acceptance. Q-030's later interview decisions supersede its interaction policy.
+
+### Native workspace verification, 2026-11-10
+
+The actual Bevy implementation now has equipment, true 10x6 grid/List, persistent
+known-only details/comparison, current-cell ground, costed actions, explicit
+known Identify sources, review/cancel and independently persisted warning flags.
+The UI submits normal core commands; snapshot orientation/packing rules are
+unchanged. Initial scrolls are unknown, so a fresh run intentionally has no known
+Identify source until general Read is designed; this limitation is explicit.
+
+All required workspace gates pass: format, strict all-target clippy, 201 tests
+(one existing ignored balance probe), warning-free API docs and native build.
+Nine inventory controller/view regressions cover free browsing, hidden-affix
+invariance, explicit source consumption, safe stay-open, danger closure,
+unknown-potion rejection, independent/overlapping warnings and stable widget
+entities through idle frames with one-shot Activate delivery. Save regressions
+cover independent preferences, atomic storage, corruption/version/size limits
+and explicit write failure. The browser study's 11 model tests still pass.
+
+Linux Xvfb/software-rendered native checks exercised real pointer selection,
+pickup, equip, Grid/List and Options; keyboard selection, review, checkbox,
+cancel and focus reveal; full-HP unknown-use rejection; 1280x900 and 1280x720,
+including actual 2x UI scale, stacked content and wheel scrolling. A disabled
+Drop warning survived clean quit/restart and was re-enabled in Options.
+Malformed preferences produced a visible error, enabled warnings conservatively,
+preserved the corrupt file until a deliberate toggle, and recovered on saving.
+Clean quit/Continue retained the living inventory. The smoke caught and fixed
+idle-frame widget replacement and a high-scale footer hiding the workspace.
+
+This is developer interaction evidence, not human usability sign-off, real audio,
+4K or a packaged Windows launch. I-001/I-002/I-005 and the separate art gates
+remain open. I-036 and unknown-scroll/skill-risk brainstorming are not delivered.

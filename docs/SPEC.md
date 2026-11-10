@@ -176,10 +176,20 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 - Movement tweening is cosmetic only and never affects game time.
 - Key rebinding; colour-blind-friendly rarity markers (shape + colour).
 
-Inventory interaction proposal and staged delivery: [inventory-ux.md](inventory-ux.md)
-(I-033/I-034/I-035, Q-030/Q-031). The executable browser study uses synthetic
-items/actions; the playable Bevy inventory is still a text overlay. The proposal
-does not approve final art or add the target belt/bag/storage systems.
+Inventory interaction contract and staged delivery: [inventory-ux.md](inventory-ux.md)
+(I-033 through I-036, Q-030/Q-031). User interview 2026-11-10: keep inventory
+open after safe actions, close after resolution on any visible hostile or player
+damage, and allow free browsing in danger. Drop, unknown-consumable and threatened
+Body-change warnings are individually configurable across runs/restarts.
+The native equipment/grid/List/ground/details workspace and action flows are
+implemented in I-034/I-035, with explicit known Identify sources (B-010 fixed).
+General unknown-scroll Read and its discovery/skill/risk rules remain deferred;
+starting unknown scrolls are not silently usable as known Identify sources.
+Backpack rearrangement and 90-degree rotation are free; explicit Organize is
+deterministic best effort and atomic, never silent on pickup. These accepted
+organization rules need core/persistence implementation (I-036); they do not
+add the target belt/bag/storage systems or approve final art. The earlier browser
+study uses synthetic actions and predates these interview decisions.
 
 ## 14. Art & Audio Direction
 

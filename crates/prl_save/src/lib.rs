@@ -10,7 +10,7 @@ use prl_core::{CoreSet, CoreState, OutcomeKind};
 mod morgue;
 mod store;
 
-pub use store::{SaveError, SnapshotStore};
+pub use store::{InventoryWarnings, SaveError, SnapshotStore};
 
 #[cfg(test)]
 mod tests {

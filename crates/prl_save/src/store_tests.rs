@@ -634,3 +634,46 @@ fn morgues_are_scoped_to_the_slot_and_distinct_dead_snapshots_do_not_collide() {
     assert_eq!(morgues(&first).len(), 2);
     assert_eq!(fs::read(original).unwrap(), report);
 }
+#[test]
+fn inventory_warning_preferences_are_separate_atomic_and_survive_new_store() {
+    let directory = tempfile::tempdir().unwrap();
+    let store = SnapshotStore::new(directory.path().join("character.ron"));
+    assert_eq!(
+        store.load_inventory_warnings().unwrap(),
+        InventoryWarnings::default()
+    );
+    let warnings = InventoryWarnings {
+        dropping: false,
+        unknown: true,
+        threatened_body: false,
+    };
+    store.save_inventory_warnings(warnings).unwrap();
+    assert_eq!(
+        SnapshotStore::new(store.path())
+            .load_inventory_warnings()
+            .unwrap(),
+        warnings
+    );
+    assert!(
+        !store.path().exists(),
+        "options must never create a continuable character"
+    );
+    let path = store.path().with_extension("warnings.ron");
+    let previous = fs::read(&path).unwrap();
+    let missing_parent = SnapshotStore::new(directory.path().join("missing/character.ron"));
+    assert!(missing_parent.save_inventory_warnings(warnings).is_err());
+    assert_eq!(fs::read(&path).unwrap(), previous);
+    fs::write(&path, "broken preferences").unwrap();
+    assert!(
+        store.load_inventory_warnings().is_err(),
+        "corruption is not absence"
+    );
+    fs::write(
+        &path,
+        "(format:2,warnings:(dropping:true,unknown:true,threatened_body:true))",
+    )
+    .unwrap();
+    assert!(store.load_inventory_warnings().is_err());
+    fs::write(&path, "x".repeat(4097)).unwrap();
+    assert!(store.load_inventory_warnings().is_err());
+}

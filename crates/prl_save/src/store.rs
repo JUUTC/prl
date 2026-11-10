@@ -13,6 +13,35 @@ const FORMAT: u32 = 1;
 const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const ENGINE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Per-user inventory warnings, independent of character death and new runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InventoryWarnings {
+    /// Ask before dropping an item.
+    pub dropping: bool,
+    /// Ask before using an unknown consumable.
+    pub unknown: bool,
+    /// Ask before a slow Body change with a visible hostile.
+    pub threatened_body: bool,
+}
+
+impl Default for InventoryWarnings {
+    fn default() -> Self {
+        Self {
+            dropping: true,
+            unknown: true,
+            threatened_body: true,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WarningFile {
+    format: u32,
+    warnings: InventoryWarnings,
+}
+
 /// A pre-release single-slot snapshot store, independent of UI and scheduling.
 ///
 /// The caller supplies an existing, writable parent directory and owns slot
@@ -92,6 +121,50 @@ impl SnapshotStore {
     #[must_use]
     pub fn path(&self) -> &Path {
         &self.path
+    }
+
+    /// Loads separate warning preferences; only an absent file uses defaults.
+    ///
+    /// # Errors
+    ///
+    /// Reports malformed, oversized, incompatible or unreadable preferences.
+    pub fn load_inventory_warnings(&self) -> Result<InventoryWarnings, SaveError> {
+        let store = Self::new(self.path.with_extension("warnings.ron"));
+        let file = match File::open(store.path()) {
+            Ok(file) => file,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                return Ok(InventoryWarnings::default());
+            }
+            Err(error) => return Err(Self::io("read inventory warnings", store.path(), error)),
+        };
+        let mut source = String::new();
+        file.take(4097)
+            .read_to_string(&mut source)
+            .map_err(|error| Self::io("read inventory warnings", store.path(), error))?;
+        if source.len() > 4096 {
+            return Err(store.invalid("inventory warnings exceed 4 KiB"));
+        }
+        let data: WarningFile = ron::from_str(&source)
+            .map_err(|error| store.invalid(format!("inventory warnings: {error}")))?;
+        if data.format != 1 {
+            return Err(store.invalid("unsupported inventory warning format"));
+        }
+        Ok(data.warnings)
+    }
+
+    /// Atomically writes warnings without altering the living save or barriers.
+    ///
+    /// # Errors
+    ///
+    /// Reports encoding, write, replacement or directory synchronization errors.
+    pub fn save_inventory_warnings(&self, warnings: InventoryWarnings) -> Result<(), SaveError> {
+        let store = Self::new(self.path.with_extension("warnings.ron"));
+        let source = ron::to_string(&WarningFile {
+            format: 1,
+            warnings,
+        })
+        .map_err(|error| store.invalid(format!("inventory warnings: {error}")))?;
+        store.publish(store.prepare(source.as_bytes())?)
     }
 
     /// Directory holding text morgues for this slot, alongside its save file.

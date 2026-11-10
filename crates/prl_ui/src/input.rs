@@ -15,7 +15,6 @@ pub struct UiMode {
     /// App time when `R` was pressed during a live run, awaiting confirmation.
     pub(super) confirm_new_run: Option<f32>,
     focused: bool,
-    pub(super) selection: usize,
     pub(super) look: Option<prl_core::Position>,
     pub(super) show_all_loot: bool,
     held: HeldAction,
@@ -23,7 +22,7 @@ pub struct UiMode {
     binding_error: Option<&'static str>,
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Overlay {
     #[default]
     None,
@@ -34,6 +33,15 @@ pub(super) enum Overlay {
 }
 
 impl UiMode {
+    pub(super) const fn window_focused(&self) -> bool {
+        self.focused
+    }
+
+    pub(super) fn close_inventory(&mut self) {
+        self.overlay = Overlay::None;
+        self.held.cancel();
+    }
+
     /// Whether gameplay input is paused by a help/menu overlay.
     #[must_use]
     pub const fn is_paused(&self) -> bool {
@@ -157,7 +165,7 @@ pub(super) fn plugin(app: &mut App) {
         );
 }
 
-fn handle_input(
+pub(super) fn handle_input(
     keys: Res<'_, ButtonInput<KeyCode>>,
     windows: Query<'_, '_, &Window, With<PrimaryWindow>>,
     mut mode: ResMut<'_, UiMode>,
@@ -189,6 +197,14 @@ fn handle_input(
     }
     if !focused {
         mode.held.cancel();
+        return;
+    }
+    if mode.overlay == Overlay::Inventory {
+        if keys.just_pressed(KeyCode::BracketRight) {
+            scale.0 = (scale.0 + 0.25).min(2.0);
+        } else if keys.just_pressed(KeyCode::BracketLeft) {
+            scale.0 = (scale.0 - 0.25).max(0.75);
+        }
         return;
     }
     repeat.configure(&keys);
@@ -223,10 +239,6 @@ fn handle_input(
         scale.0 = (scale.0 + 0.25).min(2.0);
     } else if keys.just_pressed(KeyCode::BracketLeft) {
         scale.0 = (scale.0 - 0.25).max(0.75);
-    }
-    if mode.overlay == Overlay::Inventory {
-        inventory_input(&keys, &mut mode, &mut queue, state.as_deref());
-        return;
     }
     if mode.overlay == Overlay::Look {
         mode.look_input(&keys, &bindings, state.as_deref());
@@ -354,7 +366,6 @@ fn gameplay_input(
     }
     if keys.just_pressed(KeyCode::KeyI) {
         mode.overlay = Overlay::Inventory;
-        mode.selection = 0;
         mode.door = false;
         return;
     }
@@ -405,69 +416,6 @@ fn gameplay_input(
         queue.push(command);
     } else if !mode.door && bindings.wait.iter().any(|key| keys.just_pressed(*key)) {
         queue.push(Command::Wait);
-    }
-}
-
-fn inventory_input(
-    keys: &ButtonInput<KeyCode>,
-    mode: &mut UiMode,
-    queue: &mut CoreCommandQueue,
-    state: Option<&CoreState>,
-) {
-    let Some(core) = state else { return };
-    let Some(inventory) = core.inventory() else {
-        return;
-    };
-    let items: Vec<_> = inventory
-        .items()
-        .filter(|item| matches!(item.container, prl_core::BACKPACK | prl_core::EQUIPMENT))
-        .collect();
-    mode.selection = mode.selection.min(items.len().saturating_sub(1));
-    if keys.just_pressed(KeyCode::ArrowDown) {
-        mode.selection = (mode.selection + 1).min(items.len().saturating_sub(1));
-    }
-    if keys.just_pressed(KeyCode::ArrowUp) {
-        mode.selection = mode.selection.saturating_sub(1);
-    }
-    let Some(item) = items.get(mode.selection) else {
-        return;
-    };
-    let command = if keys.just_pressed(KeyCode::KeyE) {
-        Some(Command::Transfer(prl_core::TransferItems {
-            item: item.id,
-            destination: if item.container == prl_core::BACKPACK {
-                prl_core::EQUIPMENT
-            } else {
-                prl_core::BACKPACK
-            },
-            cell: None,
-        }))
-    } else if keys.just_pressed(KeyCode::KeyD) {
-        Some(Command::Drop(item.id))
-    } else if keys.just_pressed(KeyCode::KeyQ) {
-        Some(Command::Quaff(item.id))
-    } else if keys.just_pressed(KeyCode::KeyC) {
-        let scroll = inventory
-            .items()
-            .find(|candidate| {
-                candidate.container == prl_core::BACKPACK
-                    && inventory.definition(candidate).is_some_and(|definition| {
-                        definition.kind == prl_content::ItemKind::Identify
-                    })
-            })
-            .map_or(prl_core::ItemId(0), |scroll| scroll.id);
-        Some(Command::Identify {
-            scroll,
-            target: item.id,
-        })
-    } else {
-        None
-    };
-    if let Some(command) = command {
-        if queue.is_empty() {
-            queue.push(command);
-        }
-        mode.overlay = Overlay::None;
     }
 }
 
@@ -754,25 +702,14 @@ mod tests {
             1
         );
         press(&mut app, KeyCode::KeyI);
+        press(&mut app, KeyCode::ArrowUp); // Retained ground selection -> carried sword.
         press(&mut app, KeyCode::KeyQ); // Selected sword is not a potion.
-        assert!(!app.world().resource::<UiMode>().is_paused());
+        assert!(app.world().resource::<UiMode>().is_paused());
         assert_eq!(
             app.world().resource::<CoreState>().clock().player_actions(),
             1
         );
-        assert!(matches!(
-            app.world()
-                .resource::<CoreState>()
-                .outcomes()
-                .last()
-                .unwrap()
-                .kind,
-            prl_core::OutcomeKind::CommandRejected {
-                reason: prl_core::RejectReason::InvalidItem,
-                ..
-            }
-        ));
-        press(&mut app, KeyCode::KeyI);
+        // An unavailable shortcut is explained without submitting an invalid command.
         press(&mut app, KeyCode::KeyE);
         let core = app.world().resource::<CoreState>();
         assert_eq!(core.clock().player_actions(), 2);
@@ -815,10 +752,17 @@ mod tests {
 
     fn app_with(state: CoreState) -> App {
         let mut app = App::new();
-        app.add_plugins((MinimalPlugins, prl_core::PrlCorePlugin, plugin))
-            .insert_resource(state)
-            .insert_resource(ButtonInput::<KeyCode>::default())
-            .insert_resource(UiScale::default());
+        app.add_plugins((
+            MinimalPlugins,
+            prl_core::PrlCorePlugin,
+            plugin,
+            crate::inventory::plugin,
+        ))
+        .insert_resource(state)
+        .init_resource::<crate::PlaceholderTheme>()
+        .init_resource::<crate::SettingsStatus>()
+        .insert_resource(ButtonInput::<KeyCode>::default())
+        .insert_resource(UiScale::default());
         app.world_mut().spawn((
             Window {
                 focused: true,

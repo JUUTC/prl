@@ -58,8 +58,10 @@ fallback.
 ## Goal
 
 You start at `<` on the upper floor with supplies at your feet. Press `G`
-seven times to pick them up, then `I` to select and equip sword/mail with `E`
-(reopen inventory for each action). Supplies include three healing potions and
+seven times to pick them up, or open `I` and use the ground panel's Pick up.
+Select and equip sword/mail with `E` or the labelled action button. Inventory
+stays open after safe actions; it closes after an action if a hostile is visible
+or you take damage. Supplies include three healing potions and
 two Identify scrolls; their descriptions are unknown until used.
 The crypt has enemies with different speeds:
 
@@ -72,8 +74,11 @@ from the horizontal part of each move or attack; straight up or down keeps the
 last facing. Creatures have independent left/right idle, walk and attack clips.
 
 Explore toward `>`; some corridors have closed doors (`O`, then direction).
-Both exits contain Magic gear; `I`, select an unknown item, then `C` uses a
-carried Identify scroll. Enter at the upper `>` descends; comma at the lower
+Both exits contain Magic gear. In inventory, `C` offers an explicit known
+Identify source, followed by review. Starting scrolls are unknown; the UI
+deliberately does not guess their hidden type. General unknown-scroll Read is
+not yet available, so fresh runs currently have no usable known source.
+Enter at the upper `>` descends; comma at the lower
 `<` returns, preserving kills, loot and doors. Floor one's `<` has no outside
 destination. Defeat the lower-floor skeleton guardian, reach its `>` and press
 Enter to clear the crypt. This is a playtest endpoint, not campaign victory.
@@ -90,9 +95,12 @@ The depicted shield is placeholder art, not a working shield/block mechanic.
 | F5 / F6 | Guided movement/wait remapping / restore default bindings (session only) |
 | `O`, then a direction | Open an adjacent door |
 | `G` | Pick up one item at your feet (50 energy) |
-| `I`; Up/Down | Open inventory/equipment; select an item (free) |
-| `E` / `D` in inventory | Equip/unequip / drop selected item; closes the view |
-| `Q` / `C` in inventory | Drink selected potion / identify selected item with a carried scroll |
+| `I`; arrows or click | Open inventory workspace; select an item to inspect (free) |
+| Tab / Shift+Tab; Enter | Focus previous/next inventory control; activate it |
+| `E` / `D` in inventory | Equip/unequip / drop selected item; normal energy costs |
+| `Q` / `C` in inventory | Drink selected potion / choose a known Identify source |
+| `G` in inventory | Pick up the selected ground item; does not equip |
+| Grid/List; Options | Free view switch; persistent inventory warning controls |
 | `X`; arrows/vi | Examine a selected cell without taking a turn; Esc closes |
 | Enter at `>` / comma at `<` | Descend or finish / ascend (100 energy) |
 | `V` | Show all ground labels, bypassing the Default filter (free) |
@@ -101,8 +109,10 @@ The depicted shield is placeholder art, not a working shield/block mechanic.
 | `T` | Motion speed: Normal, Fast or Off (visual only) |
 | `M` / `9` / `0` | Mute sound, or turn the volume down/up in 10% steps |
 | F1 / `?` | Help, including the art legend |
-| Esc | Pause menu, or close an overlay |
-| PgUp / PgDn in an overlay | Scroll long inventory/help/examine text (free) |
+| Esc | Cancel the inventory review/chooser first, then close; otherwise pause/close overlay |
+| PgUp / PgDn in inventory | Scroll details (Shift: backpack); narrow layouts scroll stacked content |
+| Mouse wheel | Scroll the inventory pane under the pointer |
+| PgUp / PgDn in help/examine | Scroll long text (free) |
 | `+` / `-` | World zoom, 1-4x in whole steps |
 | `[` / `]` | UI scale, separate from world zoom |
 
@@ -116,15 +126,24 @@ changing the bindings. Timings and remapping reset on relaunch.
 Time only passes when you act. Help, the pause menu and an unfocused window stop
 the clock. After you die, only new run, help, menu, zoom and settings keys work.
 
+Inventory reviews default on for dropping, unknown consumables and slow Body
+changes in danger. Uncheck **Warn me next time** to disable just that category;
+Inventory **Options** can re-enable it. These flags survive runs/restarts in
+`character.warnings.ron`, separate from the character save. A visible **NOT
+SAVED** or options error means persistence failed; keep the file and report it.
+Backpack placement is currently read-only: free repacking, rotation and explicit
+Organize are approved follow-up work, not functional controls yet.
+
 ## What you see
 
 - The top-left panel shows the run number, seed, HP, turns, the clock, and the
   current motion/sound settings, floor and carried weight.
 - The top-right panel lists the enemies you can see, with their HP and speed
   (slow, normal or fast), followed by up to six visible ground labels.
-- `<`/`>` mark stairs; `*` marks visible loot cells. Equipment letters correspond
-  to the 10x6 bag occupancy view. Normal items use `o`, Magic items `*`;
-  unknown affixes remain hidden in names and comparisons.
+- `<`/`>` mark stairs; `*` marks visible loot cells. Inventory shows real 10x6
+  footprints, a List alternative, equipment, current-cell ground and persistent
+  details/comparison. Placeholder glyphs are SW/AR/P/S; `?` means unidentified.
+  Unknown affixes remain hidden in names and comparisons.
 - The bottom-left log keeps the last five messages. Each hit lists its raw
   damage and how much armor removed, so you can see why HP changed.
 - Attackers lunge toward their target, and the target flashes (red on sprites). A number floats
@@ -142,7 +161,7 @@ timing differs.
 
 ## What to try
 
-1. Equip entrance supplies, explore both floors, loot/identify Magic gear and
+1. Equip entrance supplies, explore both floors, loot/compare Magic gear and
    return upstairs. Are kills, doors and looted cells still as you left them?
    Can you find the guardian and understand the endpoint message?
 2. Fight each speed of enemy. Can you tell them apart at a glance? Does the

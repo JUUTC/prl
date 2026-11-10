@@ -621,6 +621,39 @@ impl CoreState {
 }
 
 impl CoreState {
+    /// Validates an item action through the ordinary planner without committing.
+    ///
+    /// Presentation must only preview effects the player knows. In particular,
+    /// calling this for an unknown potion can reveal its full-health rejection;
+    /// submit an explicit attempt instead of exposing that hidden availability.
+    ///
+    /// # Errors
+    ///
+    /// Returns the ordinary rejection for invalid/inaccessible item actions,
+    /// or [`RejectReason::InvalidItem`] for non-item commands.
+    pub fn item_action_cost(&self, command: crate::Command) -> Result<u16, RejectReason> {
+        if self.is_player_dead() {
+            return Err(RejectReason::PlayerDead);
+        }
+        let action = match command {
+            crate::Command::Transfer(transfer) => {
+                let player = self.player().ok_or(RejectReason::InvalidItem)?;
+                let inventory = self.inventory.as_ref().ok_or(RejectReason::InvalidItem)?;
+                let (_, cost) =
+                    inventory.transferred(transfer, self.map.id(), player.position())?;
+                return Ok(cost);
+            }
+            crate::Command::Drop(item) => self.plan_drop(item)?,
+            crate::Command::Quaff(item) => self.plan_quaff(item)?,
+            crate::Command::Identify { scroll, target } => self.plan_identify(scroll, target)?,
+            _ => return Err(RejectReason::InvalidItem),
+        };
+        let crate::state::Action::Items { cost, .. } = action else {
+            return Err(RejectReason::InvalidItem);
+        };
+        Ok(cost)
+    }
+
     /// Read-only item ownership; absent in the P2 arena fixture.
     #[must_use]
     pub const fn inventory(&self) -> Option<&Inventory> {
@@ -748,6 +781,31 @@ impl CoreState {
 mod tests {
     use super::*;
     use crate::{Command, CommandResult};
+
+    #[test]
+    fn item_previews_share_command_costs_and_never_mutate_state() {
+        let mut state = crate::test_support::dungeon();
+        let command = state.pickup_command().unwrap();
+        let before = state.snapshot();
+        assert_eq!(state.item_action_cost(command), Ok(50));
+        assert_eq!(state.snapshot(), before);
+        assert!(matches!(
+            state.issue(command),
+            CommandResult::Accepted { .. }
+        ));
+        let item = match command {
+            Command::Transfer(transfer) => transfer.item,
+            _ => unreachable!(),
+        };
+        let drop = Command::Drop(item);
+        let before = state.snapshot();
+        assert_eq!(state.item_action_cost(drop), Ok(100));
+        assert_eq!(state.snapshot(), before);
+        assert_eq!(
+            state.item_action_cost(Command::Wait),
+            Err(RejectReason::InvalidItem)
+        );
+    }
 
     fn pickup_all(state: &mut CoreState) {
         while let Some(command) = state.pickup_command() {

@@ -21,8 +21,8 @@ Failed healing at full HP or identifying a known target consumes nothing.
 The slice temporarily **rejects pickup above 60,000 g** rather than implementing
 the full STR-derived carry/encumbrance model. This reversible limit does not
 change [housing-and-logistics.md](housing-and-logistics.md#inventory).
-Repacking/rotation, stacks, other slots and the full weight model remain later
-work (I-028).
+Free repacking/rotation/Organize are approved follow-up I-036; stacks, other
+slots and the full weight model remain I-028.
 
 Normal gear is known. Unknown Magic gear shows base/rarity (`*`), not affix text;
 comparison omits unknown affix bonuses while actual combat includes them.
@@ -38,11 +38,15 @@ all items shown). `V` bypasses label hiding; examine and manual pickup always
 bypass filtering, but never visibility/access rules. No auto-pickup, custom rule
 editor, optimizer or storage UI is implied (I-013 through I-018).
 
-Interaction design for this existing subset is proposed in
-[inventory-ux.md](inventory-ux.md), with an isolated clickable study. The game
-still uses text inventory; I-034/I-035 track Bevy delivery, and B-010 tracks the
-current hidden-type Identify-source lookup. No item rule/cost changes are made
-by the study.
+The native [inventory workspace](inventory-ux.md) implements I-034/I-035:
+equipment/grid/List/ground/details, known-only comparison, costed actions and
+independent persistent warning options. Safe actions stay open; visible
+hostiles/damage after resolution close it. B-010's hidden-type source lookup is
+removed: Identify requires an explicit known source. Starting scrolls are unknown
+and general unknown-scroll Read is deliberately deferred, so fresh runs currently
+have no usable known source. Core consumption/discovery rules and item costs
+remain unchanged. The earlier isolated browser study uses synthetic rules and
+predates the accepted interview behavior.
 
 ## Rarity (Diablo-style)
 

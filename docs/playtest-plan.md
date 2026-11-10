@@ -18,7 +18,9 @@ rendering/audio and HUD/input. The versioned RON snapshot proof now includes
 fresh-headless-ECS continuation and canonical hashes (I-008). A Windows packaging
 workflow is included. P3 now boots a seeded two-floor crypt with persistent
 stairs/return travel, loot/equipment, consumables, examine and a guardian endpoint
-(I-012/I-017/I-026/I-027). P4 now adds playable single-slot Continue,
+(I-012/I-017/I-026/I-027). I-034/I-035 add the native inventory workspace and
+accepted action/review flows with independent persistent warning options.
+P4 now adds playable single-slot Continue,
 checkpoint/quit-save and death-barrier recovery (I-030), plus persistent text
 dead-run morgues (I-031); skills and production
 pack manifests remain deferred. Windows hands-on acceptance remains pending.
@@ -217,7 +219,8 @@ it does not delay the basic slice:
 |---|---|---|
 | `derive_stats`, containers, atomic transfers, basic compare tooltip | P3 | Loot/equip arrives at P3; retrofitting a second stats path later would let comparisons disagree with combat |
 | Inventory/item interaction design and clickable synthetic study (I-033) | Delivered; review before Bevy UX work | [Inventory UX](inventory-ux.md) defines equipment/backpack/details/ground, known-only comparisons, healing, explicit Identify, costs and failures; this is not the in-game UI |
-| Bevy read-only inventory workspace, then action journeys (I-034/I-035) | Bounded P3/P4 UX follow-up before P5 | Improve the existing two-slot/10x6 slice without importing post-P5 item breadth; Q-030 reviews commitment policy, B-010 tracks hidden Identify-source selection |
+| Bevy read-only inventory workspace, then action journeys (I-034/I-035) | Implemented; Windows/4K/human UX acceptance pending | Native equipment/grid/List/details/ground, pointer/keyboard, safe stay-open, danger/damage closure, persistent per-category warnings and explicit known Identify sources (B-010 fixed). No new unknown-scroll reading rules |
+| Free backpack placement/90-degree rotation and explicit Organize (I-036) | After workspace/action flows, as capacity permits | Q-031 accepted: headless atomic commands and orientation migration first; drag/drop, click-place and keyboard parity; best-effort all-or-nothing Organize, never silent pickup repacking |
 | Full comparison view (sets, both weapon loadouts, reference target) | After P5, with more affixes/sets | Needs more item types than the P3 subset |
 | `ItemPredicate` rules and the Default loot-filter preset for ground labels | P3 | Ground loot arrives at P3; one rule language serves filters, auto-sort and optimizer constraints |
 | Custom loot filters, all presets, editor, auto-pickup, import/export | After P5, before or with the first town slice | Needs enough item variety for filtering to matter |
@@ -228,9 +231,11 @@ it does not delay the basic slice:
 Open choices are tracked as Q-022 to Q-027; work items as I-012 to I-018 in
 [backlog.md](backlog.md).
 
-Packing/dragging, rotations and stack splits remain I-028/Q-031; the study does
-not approve their command semantics. Inventory layout work preserves the separate
-art/Foundry effort and its production gates.
+Packing/dragging/rotation/Organize is now approved in Q-031 and tracked in I-036,
+but remains distinct from stacks/locks and the other I-028 breadth. The original
+study predates the interview. Inventory work preserves the separate art/Foundry
+effort and its production gates. Unknown-scroll Read, skill gain/risk-reward and
+discovery semantics are deferred for brainstorming, not inferred from that study.
 
 ## Animation and UX contract
 
@@ -298,7 +303,7 @@ its code compiles.
 | P0 | Implementation present | Packaging workflow and boot errors added; extracted-package Linux software-rendering smoke passed; Windows launch acceptance pending |
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; B-009 now adds cosmetic walking, camera/bar follow and Fast/Off modes. Windows/4K acceptance pending |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
-| P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
+| P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint; native inventory workspace/actions now delivered. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. Fresh unknown scrolls require the deferred Read design, not hidden automatic source lookup. This is not Windows launch/audio/4K acceptance or full pack management |
 | P4 | Playable persistence and terminal-run accounting implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery. I-031/I-032 add text morgues, per-run lifetime kills and abandonment recovery. Q-012 remains provisional; crash windows, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and future skill/settings/victory history/UI remain open |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
@@ -412,6 +417,28 @@ repeats), without a command backlog. A separate clean Continue/movement/
 its one committed movement action. Direct X-window destruction is not a normal
 close request and was excluded from quit-save acceptance. No physical audio
 device, interactive Windows launch or 4K display was verified.
+
+Native inventory follow-up (I-034/I-035; B-010 fixed), 2026-11-10:
+equipment/grid/List/details/ground replace the text overlay. Actions use shared
+core validation, stay open when safe and close after visible danger/damage;
+independent warning preferences survive death/new runs/restarts outside snapshots.
+Known Identify sources are chosen explicitly; fresh unknown scrolls are not
+silently decoded. General Read remains deferred; packing/rotation/Organize
+is the next approved increment I-036, not implemented here.
+
+Linux workspace format, strict all-target clippy, tests (201 passed, one ignored),
+warning-free API docs and native build pass. Nine inventory regressions cover
+knowledge safety, free browsing, source consumption, safe/danger action recovery,
+one-shot widget activation and independent overlapping warnings. The earlier
+browser model still passes 11 tests. Native Xvfb/software rendering checks cover
+pointer pickup/equip/Grid/List/Options, keyboard selection/review/checkbox/cancel,
+1280x900/720 with actual 2x UI scale, scrolling and off-screen focus reveal.
+Clean quit/Continue and warning disable/restart/re-enable pass. An intentionally
+corrupt preference file remained untouched, visibly reported the error and was
+replaced only after a deliberate option change. Idle widget replacement and
+high-scale footer overflow found in this smoke were fixed before delivery.
+See [inventory-ux.md](inventory-ux.md#native-workspace-verification-2026-11-10)
+for limits. Windows/4K/human UX/audio acceptance and separate art gates stay open.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

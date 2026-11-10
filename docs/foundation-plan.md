@@ -31,6 +31,12 @@ the profile, future skill/settings/victory history or Windows
 launch acceptance gates. Production pack manifests and general world/reset
 ownership remain later work or open contracts.
 
+I-034/I-035 now provide the native inventory workspace and action journeys:
+stable item IDs, shared read-only core cost validation, explicit known Identify
+sources and normal costed commands. Separate versioned warning preferences
+survive character death/restart without changing snapshots. Free organization
+and orientation migration remain I-036; see [inventory-ux.md](inventory-ux.md).
+
 ## Contracts to establish before gameplay grows
 
 These are architecture proposals consistent with the existing standards, not

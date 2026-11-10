@@ -49,10 +49,41 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-027 | Loot filter presets, protections, scope and auto-pickup defaults? | Provisional | `ItemPredicate` + Default preset at P3; custom filters after P5 | Built-in read-only presets (Default, Strict, Very strict, Crafter, Show all, Manual) as content data; custom filters copied from presets, stored in the profile, chosen per character, plain-text import/export; Unique/Set/quest/wanted items cannot be hidden; auto-pickup uses normal pickup commands and time, stops when a hostile is in view or before over-encumbrance; gold auto-pickup on by default. Confirm preset list and default auto-pickup set |
 | Q-028 | Is a 64×64 source cell enough fidelity for recognisable sprites? | Open | Art P0/P1 gate; distinguish logical tile size from sprite texture resolution | Keep 64×64 logical tiles (SPEC). Current procedural placeholders do not establish the quality ceiling. With no dedicated artist, compare rigged-3D bakes at 64/128 source pixels at identical in-game size (I-024), including crisp versus selectively softened edges. Higher-resolution art need not change the grid. Oversized monster/action bounds remain available; no resolution or filtering change accepted yet |
 | Q-029 | Which no-dedicated-artist production pipeline and edge treatment should replace the rejected procedural art? | Open | Art P0 authoring decision, before asset-family expansion | [Art-production.md §8](art-production.md#8-artist-light-pipeline-investigation-2026-11-09) recommends an offline rigged-3D/Blender-to-sprite proof; Tripo first AI candidate, animated licensed assets as control, eligible Azure services for references/geometry. No vendor or soft-edge style approved; I-025 checks subscription eligibility, I-024 measures accepted quality, equipment feasibility and actual cost. Existing crisp-edge SPEC and separate UX gates remain in force |
-| Q-030 | Inventory commitment, targeted reviews and unknown-scroll reading policy? | Provisional | I-034/I-035; before action-journey acceptance | [Inventory UX proposal](inventory-ux.md): explicit action -> one command -> world; retain context on reopen, keep failures in inventory. Review Drop, unknown consumption and visible-threat Body changes. Identify chooses an explicit known scroll; never auto-select a hidden true type (B-010). General Read with an unknown scroll/target needs its own core contract. Review the study before treating these defaults as accepted design |
-| Q-031 | What are same-bag packing/rotation, drag, sorting and stack-split command/cost semantics? | Open | I-028; before packing UI | Current first-fit grid is read-only placement; `TransferItems.cell` handles explicit destination from another container, not same-bag movement. Preserve coordinates during browsing; no fake drag/repack or automatic rearrangement. Decide cost, rotation, atomic failure, interruption, stack identity and persistence before implementing those operations |
+| Q-030 | Inventory commitment, targeted reviews and unknown-scroll reading policy? | Resolved and UX implemented; unknown Read deferred | I-034/I-035 delivered | User interview 2026-11-10: keep inventory open after safe actions; after resolution close on any visible hostile or damage, but allow free browsing in danger. Separate persistent warnings for Drop, unknown consumables and threatened Body changes; checked "Warn me next time" disables that category when unchecked, Options re-enables it. Explicit known Identify source fixes B-010. Unknown-scroll Read, skill gain/risk-reward/discovery deferred for brainstorming; no new Read rules approved. [Contract/evidence](inventory-ux.md) |
+| Q-031 | What are same-bag packing/rotation, drag, sorting and stack-split command/cost semantics? | Resolved for organization; stacks deferred | I-036; remaining breadth I-028 | User interview 2026-11-10: free rearrangement/90-degree rotation even in danger; drag/drop, click-place and keyboard parity. Escape cancels, invalid placement leaves original intact. Explicit free Organize only, never automatic on pickup: deterministic best effort may rotate; all items must fit or preserve whole layout and explain. Guaranteed optimal packing not required. Orientation persistence/migration and atomic commands required; stack/lock semantics remain deferred |
 
 ## Resolution history
+
+Inventory interview, 2026-11-10 (user): keep inventory open after actions and
+close automatically if danger appears. This supersedes Q-030's proposed
+one-action/world-return default. After an action resolves, any visible hostile
+or damage taken closes inventory; opening/browsing while threatened is allowed
+and free. Remaining review/read policies are still being interviewed; update
+the owning UX contract together once those answers are captured.
+
+Inventory warning policy (same interview): confirmations must be configurable.
+Warn on the first and subsequent occurrences unless the player unchecks a
+checked "Warn me next time" box. Separate settings for dropping, unknown
+consumables and slow Body changes in danger persist across runs and restarts;
+Options can re-enable each. Do not turn this into a one-time-only warning.
+
+Unknown-scroll reading (same interview): deferred for brainstorming, including
+skill gain and risk/reward. User prefers target-first use as a starting direction;
+the scroll is destroyed on use and the message describes what happened, but
+the effect is not necessarily a clear identification. This is not approval of
+automatic type discovery or a complete consumption/failure contract. Do not
+implement new unknown-scroll reading rules in the inventory UX increment.
+
+Packing (same interview): rearranging within the backpack is free organization,
+including while enemies are visible. Equip/use/pickup/drop retain their normal
+costs. Allow 90-degree rotation during placement, also free. Support drag/drop,
+click-to-pick-up/click-to-place and keyboard placement/rotation through the same
+rules. Escape cancels; invalid placement leaves the item at its original
+position. Automatic packing may move existing items only through an explicit
+Organize button; never silently on pickup. Organize is free, deterministic
+best-effort packing and may rotate items. Commit only if every item fits;
+otherwise preserve the entire original layout and explain the failure. No
+guarantee to find every mathematically possible arrangement is required.
 
 Q-006 resolved by integrating the concurrent art session's committed documents.
 Q-007/Q-014/Q-018 remain open/provisional: prototype timing, colours and procedural

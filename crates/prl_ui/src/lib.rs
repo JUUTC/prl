@@ -8,10 +8,12 @@ use bevy::prelude::*;
 mod cursor;
 mod hud;
 mod input;
+mod inventory;
 mod repeat;
 mod theme;
 
 pub use input::{MovementBindings, UiMode};
+pub use inventory::InventoryWarningSettings;
 pub use repeat::RepeatSettings;
 pub use theme::{PlaceholderFontSource, PlaceholderTheme};
 
@@ -48,7 +50,7 @@ impl Plugin for PrlUiPlugin {
             .init_resource::<SettingsStatus>()
             // Before HUD setup so every text node spawns with the theme fonts.
             .add_systems(PreStartup, theme::load)
-            .add_plugins((input::plugin, hud::plugin));
+            .add_plugins((input::plugin, inventory::plugin, hud::plugin));
     }
 }
 
