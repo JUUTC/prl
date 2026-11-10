@@ -447,7 +447,7 @@ upload. The uploaded artifact is
 `prl-windows-x86_64-9265bb7d5eecc9ff5d838cb75fc9304e46303dd2`.
 No packaged Windows launch was performed by this session.
 
-Free organization follow-up (I-036), 2026-11-10:
+Free organization follow-up (I-036, implementation commit 3d0ff6d), 2026-11-10:
 atomic zero-cost same-bag placement, 90-degree rotation and explicit deterministic
 best-effort Organize now work through headless commands. Orientation-aware
 transfers and snapshot v5/v4 migration preserve items and run history.
@@ -466,6 +466,16 @@ and no application errors appeared. See
 [organization evidence](inventory-ux.md#native-organization-verification-2026-11-10).
 Packaged Windows launch, 4K, physical audio, human UX acceptance and separate
 art gates remain open.
+
+Windows workflow
+[42840683743](https://github.com/JUUTC/prl/actions/runs/42840683743) passed the
+organization implementation at 3d0ff6d. The cancellation-feedback correction
+in 1b723c6 passed the same final Linux gates and Windows workflow
+[42841569929](https://github.com/JUUTC/prl/actions/runs/42841569929): format,
+headless/workspace tests, strict lint, API docs, executable build, packaging and
+upload. Final artifact:
+`prl-windows-x86_64-1b723c6c370a2d33637cc5b3bf4428753ec7fe13`
+(ID 13775054229). No packaged Windows launch was performed.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.

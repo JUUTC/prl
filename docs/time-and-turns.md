@@ -1,13 +1,16 @@
 # Time & Turns
 
-PRL uses an **energy-based scheduler**. The world only advances when the player commits an action. Menus, inventory and look mode consume no time.
+PRL uses an **energy-based scheduler**. The world only advances when the player
+commits a costed action. Menus, inventory browsing and look mode consume no time.
+Same-backpack placement, 90-degree rotation and explicit Organize are also free,
+including in danger (Q-031/I-036).
 
 ## Energy model
 
 - Every actor has **speed** (base 100) and an **energy** pool.
 - Each **tick**, every active actor gains `speed` energy.
 - An actor with `energy ≥ 100` may act; the action's **cost** is subtracted.
-- When it is the player's turn, the game **waits for input**. Once the player acts, ticks advance until the player can act again; all other actors act as their energy allows.
+- When it is the player's turn, the game **waits for input**. Once the player commits a costed action, ticks advance until the player can act again; all other actors act as their energy allows.
 - Ties are broken deterministically (highest energy, then stable entity order) to keep runs reproducible.
 
 ### Speed examples
@@ -30,6 +33,7 @@ Speed modifiers: encumbrance, armor, haste/slow, terrain (swamp, deep snow), rac
 | Ranged attack | bow 100, crossbow 150 (higher damage) |
 | Cast spell | 100 × spell cost factor (circle-dependent, 100–200) |
 | Pick up item | 50 |
+| Same-backpack placement / rotation / explicit Organize | 0 |
 | Equip / unequip | 100 per item (armor body 300) |
 | Swap loadouts | 100 |
 | Quaff / read | 100 |
@@ -41,11 +45,16 @@ Speed modifiers: encumbrance, armor, haste/slow, terrain (swamp, deep snow), rac
 P2/P3 provisional (Q-020, Q-021): move, bump melee attack, open door,
 wait and stairs cost 100 energy. P3 adds pickup 50, equip/unequip 100
 (Body 300), quaff/read 100 and drop 100 (removing worn Body 300).
-Item actions take effect on commitment, then scheduling runs until the next
+Costed item actions take effect on commitment, then scheduling runs until the next
 player input boundary; body changes can expose the player to multiple enemy
 actions. The scheduler accounts for the complete cost even if current carried
 energy is below it; no negative-energy debt remains at the committed snapshot
 boundary. Monsters still use 100-energy actions.
+Accepted free organization commands change only the bag layout/orientation and
+record their outcome/message. They do not increment the player action counter,
+subtract energy, refresh visibility or run clocks, AI or RNG. Gameplay transfers
+(pickup/equip/unequip/drop) retain their normal costs; pickup never implicitly
+organizes the bag.
 Rejected commands cost nothing. Once the player dies the scheduler stops at once
 and every command except starting a new run is rejected without spending
 energy, advancing the clock or consuming RNG.

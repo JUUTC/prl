@@ -111,6 +111,8 @@ The depicted shield is placeholder art, not a working shield/block mechanic.
 | F1 / `?` | Help, including the art legend |
 | Esc | Cancel the inventory review/chooser first, then close; otherwise pause/close overlay |
 | PgUp / PgDn in inventory | Scroll details (Shift: backpack); narrow layouts scroll stacked content |
+| `P`, arrows, `R`, Enter in inventory | Begin placement, move preview, rotate, place (free); Esc cancels |
+| `O` in inventory | Explicit best-effort Organize (free, all-or-nothing) |
 | Mouse wheel | Scroll the inventory pane under the pointer |
 | PgUp / PgDn in help/examine | Scroll long text (free) |
 | `+` / `-` | World zoom, 1-4x in whole steps |

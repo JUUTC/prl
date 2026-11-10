@@ -474,7 +474,7 @@ This verifies the downloadable Windows build, not a packaged Windows launch.
 
 ### Native organization verification, 2026-11-10
 
-I-036 implements the UX-3 contract above. Required Linux format, strict
+Implementation commit 3d0ff6d delivers I-036's UX-3 contract above. Required Linux format, strict
 all-target clippy, workspace tests (212 passed, one existing ignored balance
 probe), warning-free API docs and native executable build pass.
 Core regressions cover free atomic placement, rotated transfers/restore,
@@ -496,3 +496,12 @@ quit/restart retained orientation in v5 and the native log had no application
 errors. These are developer checks, not packaged Windows launch, 4K or human
 usability acceptance. Unknown-scroll Read, stacks/locks and the separate
 Foundry/art work remain unchanged.
+
+Windows workflow 42840683743 passed all gates and packaging at 3d0ff6d.
+Cancellation feedback was then clarified and regressed in 1b723c6; final Windows
+workflow 42841569929 passed format, headless/workspace tests, strict lint,
+warning-free API docs, executable build, packaging and upload at that revision.
+Its downloadable artifact is
+`prl-windows-x86_64-1b723c6c370a2d33637cc5b3bf4428753ec7fe13`
+(artifact ID 13775054229). This is build/package evidence, not a packaged
+Windows launch or human UX acceptance.
