@@ -274,7 +274,7 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
         "P2"
     };
     format!(
-        "{stage} PLACEHOLDER - not final art/font/audio | F1 help\nRun {} | Seed {} | {vitals}\nTick {} | Clock {}s | Actions {} | Motion {} (T) | Sound {} (M, 9/0){prompt}{dungeon}",
+        "{stage} PLACEHOLDER - not final art/font/audio | F1 help\nRun {} | Seed {} | {vitals}\nTick {} | Clock {}s | Actions {} | Motion {} (T) | Sound {} (M, 9/0) | Save {}{prompt}{dungeon}",
         core.run_number(),
         core.seed(),
         core.clock().ticks(),
@@ -282,6 +282,7 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
         core.clock().player_actions(),
         settings.motion,
         settings.sound,
+        settings.persistence,
     )
 }
 

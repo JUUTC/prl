@@ -23,9 +23,10 @@ placeholder presentation and versioned RON snapshot/restore. P2 added a portable
 combat RNG stream; I-026 adds a separate headless crypt-generation stream and
 rooms/corridors proof. I-027 now adds a persistent two-floor playtest registry;
 I-012/I-017 add logical item/container ownership and shared stats/predicates.
-Production pack manifests, disk persistence and general world/reset ownership
-remain later work or open contracts. Windows launch
-acceptance is still pending.
+P4 now adds provisional local checkpoint, quit-save and death-barrier recovery
+around the snapshot seam; this does not close the profile/morgue or Windows
+launch acceptance gates. Production pack manifests and general world/reset
+ownership remain later work or open contracts.
 
 ## Contracts to establish before gameplay grows
 

@@ -40,6 +40,26 @@ mod tests {
 
     use super::*;
 
+    fn load_without_save(
+        path: &Path,
+    ) -> Result<
+        (
+            prl_core::CoreState,
+            prl_core::RunFactory,
+            prl_save::SnapshotStore,
+            bool,
+        ),
+        Box<dyn std::error::Error>,
+    > {
+        static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+        let save = std::env::temp_dir().join(format!(
+            "prl-assets-save-{}-{}.ron",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        crate::load_playtest(path, &save)
+    }
+
     struct PackageDirectory(PathBuf);
 
     impl PackageDirectory {
@@ -84,14 +104,14 @@ mod tests {
         let package = PackageDirectory::new();
         let path = resolve_content_path(&package.executable(), false).unwrap();
         assert_eq!(path, package.0.join("assets/packs/prl/base.ron"));
-        assert!(crate::load_playtest(&path).is_err());
+        assert!(load_without_save(&path).is_err());
     }
 
     #[test]
     fn development_opt_in_loads_checkout_when_no_adjacent_assets_exist() {
         let package = PackageDirectory::new();
         let path = resolve_content_path(&package.executable(), true).unwrap();
-        assert!(crate::load_playtest(&path).is_ok());
+        assert!(load_without_save(&path).is_ok());
     }
 
     #[test]
@@ -101,7 +121,7 @@ mod tests {
         for development in [false, true] {
             let path = resolve_content_path(&package.executable(), development).unwrap();
             assert_eq!(path, package.0.join("assets/packs/prl/base.ron"));
-            assert!(crate::load_playtest(&path).is_err());
+            assert!(load_without_save(&path).is_err());
         }
     }
 
@@ -121,16 +141,16 @@ mod tests {
         for development in [false, true] {
             let path = resolve_content_path(&package.executable(), development).unwrap();
             assert_eq!(path, pack.join("base.ron"));
-            assert!(crate::load_playtest(&path).is_ok());
+            assert!(load_without_save(&path).is_ok());
         }
         std::fs::remove_file(&dungeon).unwrap();
-        let error = crate::load_playtest(&pack.join("base.ron"))
+        let error = load_without_save(&pack.join("base.ron"))
             .err()
             .unwrap()
             .to_string();
         assert!(error.contains("crypt_playtest.ron"));
         std::fs::write(&dungeon, "invalid required dungeon").unwrap();
-        let error = crate::load_playtest(&pack.join("base.ron"))
+        let error = load_without_save(&pack.join("base.ron"))
             .err()
             .unwrap()
             .to_string();
@@ -138,7 +158,67 @@ mod tests {
         std::fs::write(pack.join("base.ron"), "invalid content").unwrap();
         for development in [false, true] {
             let path = resolve_content_path(&package.executable(), development).unwrap();
-            assert!(crate::load_playtest(&path).is_err());
+            assert!(load_without_save(&path).is_err());
         }
+    }
+
+    #[test]
+    fn startup_continues_valid_save_and_preserves_corrupt_save_on_error() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        let save_path = package.0.join("character.ron");
+        let (mut original, _, store, continued) = crate::load_playtest(&path, &save_path).unwrap();
+        assert!(!continued);
+        original.issue(prl_core::Command::Wait);
+        store.write(&original).unwrap();
+
+        let (continued, _, _, did_continue) = crate::load_playtest(&path, &save_path).unwrap();
+        assert!(did_continue);
+        assert_eq!(continued.snapshot(), original.snapshot());
+
+        std::fs::write(&save_path, "corrupt but preserved").unwrap();
+        let error = crate::load_playtest(&path, &save_path)
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("invalid save"));
+        assert_eq!(
+            std::fs::read_to_string(save_path).unwrap(),
+            "corrupt but preserved"
+        );
+    }
+
+    #[test]
+    fn startup_recovers_death_barrier_into_a_committed_new_crypt() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        let save_path = package.0.join("character.ron");
+        let store = prl_save::SnapshotStore::new(&save_path);
+        let mut dead = prl_core::CoreState::demo().unwrap();
+        store.write(&dead).unwrap();
+        dead.issue(prl_core::Command::Move(prl_core::Direction::East));
+        dead.issue(prl_core::Command::Move(prl_core::Direction::East));
+        dead.issue(prl_core::Command::OpenDoor(prl_core::Direction::East));
+        for _ in 0..2000 {
+            if dead.is_player_dead() {
+                break;
+            }
+            dead.issue(prl_core::Command::Wait);
+        }
+        assert!(dead.is_player_dead());
+        store.record_death(&dead).unwrap();
+
+        let (next, _, _, continued) = crate::load_playtest(&path, &save_path).unwrap();
+        assert!(!continued);
+        assert_eq!(next.seed(), dead.seed() + 1);
+        assert_eq!(next.run_number(), dead.run_number() + 1);
+        assert_eq!(
+            prl_save::SnapshotStore::new(save_path)
+                .load()
+                .unwrap()
+                .unwrap()
+                .snapshot(),
+            next.snapshot()
+        );
     }
 }

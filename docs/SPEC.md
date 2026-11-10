@@ -162,7 +162,7 @@ See [world-generation.md](world-generation.md) and [difficulty.md](difficulty.md
 
 ## 12. Death, Saves & Meta-Progression
 
-- **Permadeath (default)** — auto-save on quit plus a periodic crash-safety checkpoint (overwritten; never reloadable after death). The save is deleted on death.
+- **Permadeath (default)** — auto-save on quit plus a periodic crash-safety checkpoint (overwritten; never reloadable after death). A death barrier invalidates the living save before a fresh run can be continued.
 - **Explorer mode** — optional, no permadeath (respawn at last visited town with penalties). Run is flagged *Explorer*.
 - **Victory** — win screen, then Retire or continue into **New Game+** with the same character.
 - **Meta-progression** — specific in-game feats unlock new races, classes and legacy special abilities; all feats can be earned in any mode, including Explorer. See [meta-progression.md](meta-progression.md).
@@ -227,10 +227,13 @@ comparisons share one stat evaluator; ground labels use the Default loot filter.
 The [P3 subset](items-and-crafting.md#current-p3-subset) documents reversible
 limits: fixed supplies/affixes, no stacks or curses, a hard carry cap before
 STR-derived encumbrance, frozen inactive floors and run-local IDs (Q-015/Q-019).
-These do not replace the full rules above or mark M3/M5 complete. P4 now has a
-headless atomic snapshot storage API (I-029), but playable save/resume and death
-invalidation are not wired (I-030). Skills, campaign victory and general
-content-pack manifests remain later work.
+These do not replace the full rules above or mark M3/M5 complete. P4 now wires the headless atomic snapshot storage API (I-029) into automatic
+Continue, quit-save, provisional 20-action/floor checkpoints and death-barrier
+recovery (I-030). The interval remains provisional under Q-012; hard crashes
+can lose actions since the last checkpoint, and a crash between death resolution
+and the barrier write can still expose the previous checkpoint. This is not a
+power-loss or packaged Windows Continue acceptance claim. Skills, campaign
+victory and general content-pack manifests remain later work.
 P2/P3 Windows hands-on/audio acceptance is still pending.
 Actors and terrain draw from the disposable Gravebound placeholder atlas; this
 does not complete art P1. Art P0 is awaiting review.

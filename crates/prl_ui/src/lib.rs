@@ -23,6 +23,8 @@ pub struct SettingsStatus {
     pub motion: String,
     /// Sound setting label, changed with `M`, `9` and `0` (e.g. `80%`).
     pub sound: String,
+    /// Save/Continue feedback or the latest storage error.
+    pub persistence: String,
 }
 
 impl Default for SettingsStatus {
@@ -30,6 +32,7 @@ impl Default for SettingsStatus {
         Self {
             motion: "n/a".to_owned(),
             sound: "n/a".to_owned(),
+            persistence: "not checkpointed".to_owned(),
         }
     }
 }

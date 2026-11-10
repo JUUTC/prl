@@ -2,8 +2,9 @@
 
 This build tests a seeded two-floor crypt: exploring, fighting, looting, equipping,
 using consumables, returning upstairs and retrying after death. It is not the full
-game: there are no skills, disk saves, overworld, towns or campaign. The sprites are a
-generated placeholder atlas of the project's own Gravebound studies; if it fails
+game: there are no skills, profile, morgue, overworld, towns or campaign. The
+sprites are a generated placeholder atlas of the project's own Gravebound
+studies; if it fails
 to load, the game draws coloured shapes instead. Sprites, shapes, colours, the
 font and the sounds are all temporary placeholders. The separate
 art and animation effort still decides the final look.
@@ -20,6 +21,18 @@ For local development:
 ```sh
 cargo run -p prl -- --dev-assets
 ```
+
+The current provisional save slot continues automatically on launch. It saves
+after 20 committed player actions, on floor changes and when quitting. A death
+barrier prevents the prior living checkpoint from being continued; launch then
+creates the next run. On Windows the save is under `%LOCALAPPDATA%\PRL`, on
+Linux under `$XDG_DATA_HOME/PRL` or `~/.local/share/PRL`, and on macOS under
+`~/Library/Application Support/PRL`. Keep the save file if startup reports
+corruption or content incompatibility; it is not silently replaced.
+
+The 20-action interval is still provisional (Q-012). A hard crash can lose
+actions since the last checkpoint, and a crash immediately after death resolves
+but before its barrier is written can still leave the previous checkpoint.
 
 Linux development also needs the system packages listed in the repository README.
 Windows is the first downloadable target. A Linux build working does not prove
@@ -149,8 +162,8 @@ Combat numbers are provisional (`docs/combat.md`). Shield block and facing wait
 on Q-009. Gear bonuses now derive through one core function; actor base numbers
 remain provisional until P4 stats/skills (Q-019). Sounds are short waveforms
 generated in code at startup; with no audio device the game runs silently.
-Snapshots store logical state, independent of Bevy Entity allocations. Full
-save recovery, general world/reset identities and NG+ are later work.
+Snapshots store logical state, independent of Bevy Entity allocations. Profile,
+morgue, general world/reset identities and NG+ are later work.
 Inactive crypt floors are frozen with no catch-up or respawning. The slice uses
 a temporary 60 kg hard pickup cap, no stacking/repacking, and only Main hand/Body
 slots; failed transfers never lose items. The repository's

@@ -301,3 +301,107 @@ fn dead_state_cannot_overwrite_a_living_slot_or_be_loaded_as_continuable() {
     });
     assert!(store.load().unwrap_err().to_string().contains("dead runs"));
 }
+
+#[test]
+fn death_barrier_prevents_old_living_checkpoint_resurrection_and_recovers_next_seed() {
+    let (_directory, store) = slot();
+    let mut dead = CoreState::demo().unwrap();
+    store.write(&dead).unwrap();
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::OpenDoor(Direction::East));
+    for _ in 0..2000 {
+        if dead.is_player_dead() {
+            break;
+        }
+        dead.issue(Command::Wait);
+    }
+    assert!(dead.is_player_dead());
+    store.record_death(&dead).unwrap();
+    assert!(
+        store
+            .load()
+            .unwrap_err()
+            .to_string()
+            .contains("death barrier")
+    );
+    let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+        "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+    ))
+    .unwrap();
+    let factory = config.factory(prl_content::ContentPack::placeholder().unwrap());
+    let next = store.recover_death(&factory).unwrap().unwrap();
+    assert_eq!(next.seed(), dead.seed() + 1);
+    assert_eq!(next.run_number(), dead.run_number() + 1);
+    assert_eq!(store.load().unwrap().unwrap().snapshot(), next.snapshot());
+    assert!(!store.death_path().exists());
+}
+
+#[test]
+fn leftover_living_save_never_wins_over_a_death_barrier_after_interrupted_cleanup() {
+    let (_directory, store) = slot();
+    store.write(&crypt(12)).unwrap();
+    let mut dead = CoreState::demo().unwrap();
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::OpenDoor(Direction::East));
+    for _ in 0..2000 {
+        if dead.is_player_dead() {
+            break;
+        }
+        dead.issue(Command::Wait);
+    }
+    assert!(dead.is_player_dead());
+    SnapshotStore::new(store.death_path())
+        .write_snapshot(&dead, true)
+        .unwrap();
+    assert!(
+        store
+            .load()
+            .unwrap_err()
+            .to_string()
+            .contains("death barrier")
+    );
+    assert_eq!(store.load_state(false).unwrap().unwrap().seed(), 12);
+    let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+        "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+    ))
+    .unwrap();
+    let next = store
+        .recover_death(&config.factory(prl_content::ContentPack::placeholder().unwrap()))
+        .unwrap()
+        .unwrap();
+    assert_eq!(next.seed(), dead.seed() + 1);
+    assert_eq!(store.load().unwrap().unwrap().seed(), next.seed());
+}
+
+#[test]
+fn death_barrier_rejects_living_records_and_failed_cleanup_keeps_barrier() {
+    let (_directory, store) = slot();
+    let living = crypt(1);
+    assert!(store.record_death(&living).is_err());
+    store.write(&living).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let blocked = SnapshotStore::new(directory.path().join("slot.ron"));
+    fs::create_dir(blocked.path()).unwrap();
+    let mut dead = CoreState::demo().unwrap();
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::Move(Direction::East));
+    dead.issue(Command::OpenDoor(Direction::East));
+    for _ in 0..2000 {
+        if dead.is_player_dead() {
+            break;
+        }
+        dead.issue(Command::Wait);
+    }
+    assert!(dead.is_player_dead());
+    assert!(blocked.record_death(&dead).is_err());
+    assert!(blocked.death_path().exists());
+    assert!(
+        blocked
+            .load()
+            .unwrap_err()
+            .to_string()
+            .contains("death barrier")
+    );
+}

@@ -64,11 +64,13 @@ All races, classes, skills, abilities, synergies, spells, items, affixes, monste
 - Writes are atomic (write temp file, then rename).
 - Versioned format; incompatible versions refuse to load gracefully.
 
-### Current P4 snapshot store (I-029)
+### Current P4 save lifecycle (I-029/I-030)
 
-`prl_save::SnapshotStore` is a headless single-slot storage API, not yet a playable
-save/resume controller. Callers supply an explicit path with an existing writable
-parent. `write` validates a living committed `CoreState`, encodes it and atomically
+`prl_save::SnapshotStore` is a headless single-slot storage API used by the
+playable P4 save controller. The binary selects a per-user `PRL/character.ron`
+path (`%LOCALAPPDATA%` on Windows, `$XDG_DATA_HOME` or `$HOME/.local/share` on
+Linux, and `~/Library/Application Support` on macOS) and creates that directory.
+`write` validates a living committed `CoreState`, encodes it and atomically
 replaces that slot; `load` returns `None` only for an absent slot and reports
 I/O, malformed data, incompatible versions, checksum mismatch, dead state and
 invalid logical state as explicit errors. It never silently starts a new run,
@@ -97,19 +99,34 @@ already exist with durability unconfirmed. Windows metadata durability through
 sudden power loss is not guaranteed. This assumes one game writer in a normal
 local writable directory; it is not a multi-process save-slot coordinator.
 
-Storage regressions cover overwrite, lower-floor disk restoration/return with
+Storage and lifecycle regressions cover overwrite, lower-floor disk restoration/return with
 loot and open doors preserved, subsequent command/RNG/hash equivalence, abandoned
 temporary writes, failed replacement/cleanup, corrupt/oversized files, version
 rejection/migration and dead-state rejection. These are storage/API tests, not
 power-cut tests or packaged Windows Continue acceptance.
 
-**Still required (I-030):** choose a writable per-character save location, verify
-installed pack/config compatibility, reinstall `RunFactory`, integrate automatic
-checkpoints/quit-save/Continue, and invalidate every continuable save on death
-before allowing another load. Rejecting a dead snapshot alone does **not** prevent
-loading an older living checkpoint. No gameplay system calls the store yet, so
-the runnable build still has no saves and does not claim permadeath persistence.
+The controller checkpoints after each provisional 20 committed player actions
+and every floor transition, saves from Bevy's `OnAppExitSystems`, and exposes
+storage errors in the HUD. Startup recovers a death barrier first, otherwise
+continues a valid living slot, and only starts seed 1 when the slot is absent.
+Loaded generated content is rebuilt from the installed crypt settings and seed;
+mismatches fail visibly rather than replacing the save. The runtime `RunFactory`
+is reinstalled from current content/configuration and is never serialized.
+
+On observed death, the controller writes a dead-run barrier before removing the
+old living slot. Startup gives that barrier precedence, builds seed + 1 through
+`RunFactory`, commits the new living run and then clears the barrier. A failed
+write is surfaced and the barrier remains whenever it was successfully written.
 Explorer respawn, profile, morgue and skills remain later P4 work.
+
+Q-012's interval remains provisional. A hard crash can roll back up to 19
+committed actions (or progress since the most recent floor transition); there
+is also a small interval after death resolves in memory and before the next
+update durably writes the barrier. The implementation is not a write-ahead
+command protocol and does not claim crash-proof permadeath or sudden-power-loss
+durability. A save failure is shown while the application remains open and
+reported in logs; a failed death-barrier write cannot establish the normal
+no-resurrection guarantee.
 
 ### Current snapshot proof (I-008, Q-016)
 
@@ -131,10 +148,10 @@ against RON-restored state, including kills, loot, consumables and endpoint.
 `prl_gen::CryptPlaytest` constructs a `RunFactory` runtime resource; the core
 dispatcher uses it to rebuild geometry/content for retry at seed + 1 without a
 core-to-generation dependency. Build failures report a rejection and preserve
-the old run. The closure is not serialized: a future save loader must reinstall
-it from compatible content/configuration. Direct `CoreState::issue(NewRun)`
-rejects dungeon retries without this dispatcher; the fixed arena remains usable
-for headless combat tests.
+the old run. The closure is not serialized: startup reinstalls it from the
+current crypt content/configuration before loading or recovering. Direct
+`CoreState::issue(NewRun)` rejects dungeon retries without this dispatcher; the
+fixed arena remains usable for headless combat tests.
 
 The provisional canonical digest is BLAKE3 with derive-key context
 `PRL core snapshot RON hash v2` over the UTF-8 bytes from `CoreSnapshot::to_ron()`

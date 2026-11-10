@@ -6,7 +6,8 @@ mod assets;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pack_path = assets::content_path()?;
-    let state = load_playtest(&pack_path);
+    let save_path = persistence_path();
+    let state = save_path.and_then(|save_path| load_playtest(&pack_path, save_path.as_path()));
     let build = option_env!("PRL_BUILD_ID").unwrap_or("local development");
     let mut app = App::new();
     app.add_plugins(
@@ -22,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }),
     );
     let boot_error = match state {
-        Ok((state, factory)) => {
+        Ok((state, factory, store, continued)) => {
             if let Some(pack) = pack_path.parent() {
                 app.insert_resource(prl_render::PlaceholderArtSource(pack.to_path_buf()));
                 // `assets/packs/prl` -> `assets`, which holds the OFL fonts.
@@ -30,8 +31,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     app.insert_resource(prl_ui::PlaceholderFontSource(assets.to_path_buf()));
                 }
             }
+            let save_controller = prl_save::SaveController::new(store, &state);
             app.insert_resource(state)
                 .insert_resource(factory)
+                .insert_resource(save_controller)
+                .insert_resource(prl_save::PersistenceStatus {
+                    error: None,
+                    message: if continued { "continued" } else { "new run" }.into(),
+                })
                 .add_plugins((
                     prl_content::PrlContentPlugin,
                     prl_core::PrlCorePlugin,
@@ -45,7 +52,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             None
         }
         Err(error) => {
-            let message = format!("Could not load {}:\n{error}", pack_path.display());
+            let message = format!(
+                "Could not start PRL using {}:\n{error}",
+                pack_path.display()
+            );
             app.insert_resource(BootFailure(message.clone()))
                 .add_systems(Startup, show_boot_failure);
             Some(message)
@@ -65,7 +75,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn load_playtest(
     path: &std::path::Path,
-) -> Result<(prl_core::CoreState, prl_core::RunFactory), Box<dyn std::error::Error>> {
+    save_path: &std::path::Path,
+) -> Result<
+    (
+        prl_core::CoreState,
+        prl_core::RunFactory,
+        prl_save::SnapshotStore,
+        bool,
+    ),
+    Box<dyn std::error::Error>,
+> {
     let base = prl_content::ContentPack::load_from_path(path)?;
     let settings = path
         .parent()
@@ -75,10 +94,60 @@ fn load_playtest(
         .map_err(|error| std::io::Error::other(format!("{}: {error}", settings.display())))?;
     let config: prl_gen::CryptPlaytest = ron::from_str(&source)
         .map_err(|error| std::io::Error::other(format!("{}: {error}", settings.display())))?;
-    let state = config
+    let initial = config
         .build(&base, 1)
         .map_err(|error| std::io::Error::other(format!("{}: {error}", settings.display())))?;
-    Ok((state, config.factory(base)))
+    let factory = config.clone().factory(base.clone());
+    let store = prl_save::SnapshotStore::new(save_path);
+    let (state, continued) = if let Some(state) = store.recover_death(&factory)? {
+        (state, false)
+    } else if let Some(state) = store.load()? {
+        let expected = config.build(&base, state.seed()).map_err(|error| {
+            std::io::Error::other(format!(
+                "{}: saved world cannot be rebuilt: {error}",
+                settings.display()
+            ))
+        })?;
+        if state.content() != expected.content() {
+            return Err(std::io::Error::other(format!(
+                "saved content/configuration in {} differs from the installed crypt; preserve the save and review content compatibility",
+                save_path.display()
+            )).into());
+        }
+        (state, true)
+    } else {
+        (initial, false)
+    };
+    Ok((state, factory, store, continued))
+}
+
+fn persistence_path() -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
+    #[cfg(target_os = "windows")]
+    let root = std::env::var_os("LOCALAPPDATA")
+        .filter(|path| !path.is_empty())
+        .map(std::path::PathBuf::from);
+    #[cfg(target_os = "macos")]
+    let root = std::env::var_os("HOME")
+        .filter(|path| !path.is_empty())
+        .map(std::path::PathBuf::from)
+        .map(|home| home.join("Library/Application Support"));
+    #[cfg(target_os = "linux")]
+    let root = std::env::var_os("XDG_DATA_HOME")
+        .filter(|path| !path.is_empty())
+        .map(std::path::PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .filter(|path| !path.is_empty())
+                .map(std::path::PathBuf::from)
+                .map(|home| home.join(".local/share"))
+        });
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    let root: Option<std::path::PathBuf> = None;
+    let root =
+        root.ok_or_else(|| std::io::Error::other("no per-user data directory is available"))?;
+    let directory = root.join("PRL");
+    std::fs::create_dir_all(&directory)?;
+    Ok(directory.join("character.ron"))
 }
 
 #[derive(Resource)]
@@ -87,8 +156,9 @@ struct BootFailure(String);
 fn settings_changed(
     motion: Res<'_, prl_render::AnimationSpeed>,
     audio: Res<'_, prl_audio::AudioSettings>,
+    persistence: Res<'_, prl_save::PersistenceStatus>,
 ) -> bool {
-    motion.is_changed() || audio.is_changed()
+    motion.is_changed() || audio.is_changed() || persistence.is_changed()
 }
 
 /// Sibling presentation crates cannot depend on each other, so the binary
@@ -96,11 +166,16 @@ fn settings_changed(
 fn show_settings(
     motion: Res<'_, prl_render::AnimationSpeed>,
     audio: Res<'_, prl_audio::AudioSettings>,
+    persistence: Res<'_, prl_save::PersistenceStatus>,
     mut status: ResMut<'_, prl_ui::SettingsStatus>,
 ) {
     let next = prl_ui::SettingsStatus {
         motion: motion.label().to_owned(),
         sound: audio.label(),
+        persistence: persistence.error.as_ref().map_or_else(
+            || persistence.message.clone(),
+            |error| format!("ERROR: {error}"),
+        ),
     };
     if *status != next {
         *status = next;
@@ -113,7 +188,7 @@ fn show_boot_failure(mut commands: Commands<'_, '_>, failure: Res<'_, BootFailur
     commands.spawn((
         Name::new("Boot error"),
         Text::new(format!(
-            "PRL could not start\n\n{}\n\nKeep the assets folder next to prl.exe.\nSee playtest.log when using Launch.cmd.\nClose this window to exit.",
+            "PRL could not start\n\n{}\n\nSee playtest.log when using Launch.cmd.\nClose this window to exit.",
             failure.0
         )),
         TextFont { font_size: FontSize::Px(24.0), ..default() },

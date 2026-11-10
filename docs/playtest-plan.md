@@ -18,8 +18,9 @@ rendering/audio and HUD/input. The versioned RON snapshot proof now includes
 fresh-headless-ECS continuation and canonical hashes (I-008). A Windows packaging
 workflow is included. P3 now boots a seeded two-floor crypt with persistent
 stairs/return travel, loot/equipment, consumables, examine and a guardian endpoint
-(I-012/I-017/I-026/I-027). Production pack manifests and disk saves remain deferred;
-Windows hands-on acceptance remains pending.
+(I-012/I-017/I-026/I-027). P4 now adds playable single-slot Continue,
+checkpoint/quit-save and death-barrier recovery (I-030); skills and production
+pack manifests remain deferred. Windows hands-on acceptance remains pending.
 See [playtest-guide.md](playtest-guide.md).
 
 The recorded UX decisions are 64x64 world tiles, integer zoom, independent UI
@@ -166,13 +167,14 @@ filters do not need a second rules path.
 
 ### P4 - Grow and resume
 
-Current bounded foundation: I-029 adds the headless
-[`SnapshotStore`](architecture.md#current-p4-snapshot-store-i-029) API with
+Current bounded persistence slice: I-029 adds the headless
+[`SnapshotStore`](architecture.md#current-p4-save-lifecycle-i-029i-030) API with
 versioned checksummed files, validated restore and synchronized atomic
-replacement. It is not wired into gameplay: automatic checkpoint/quit-save,
-Continue, installed-content compatibility and death invalidation remain I-030.
-Skill progression remains independently blocked by Q-010; this storage work
-does not choose a challenge model or approve Q-012's proposed interval.
+replacement. I-030 wires it to automatic Continue, installed crypt-content
+compatibility, quit-save, provisional checkpoints, visible errors and
+death-barrier recovery. The interval remains a proposal under Q-012. Skill
+progression remains independently blocked by Q-010; persistence does not choose
+a challenge model.
 
 Implement trained versus effective skill values and PL as specified. **Q-010**
 blocks combat gain: the always-hit rule cannot simply supply `p = 1` to the gain
@@ -184,11 +186,12 @@ using a labelled developer fixture just below that threshold; do not multiply
 production gains to make a 15-minute run reach Master. Record actions/gains for
 later pacing simulations; a short playtest does not establish 20-hour balance.
 
-Save seed/settings, content versions, RNG, stable actor state, clock, map/instance
-state, inventory and skills. Write atomically at committed-action boundaries.
-Implement quit-save and an overwritten checkpoint; surface load/write errors.
-Test interruption during writing, incompatible saves, resume equivalence and
-permadeath deletion/invalidation. Resolve checkpoint frequency via **Q-012**.
+The current playtest save preserves seed, generated crypt state, RNG, actor state,
+clock, floors, inventory and feedback. It uses atomic writes at the configured
+checkpoint boundaries and on quit. Test interruption during writing,
+incompatible/corrupt saves, resume equivalence and death-barrier recovery.
+Resolve checkpoint frequency via **Q-012**; profile, morgue, skills and general
+content-pack compatibility are not part of this increment.
 
 ### P5 - Package and evaluate
 
@@ -282,7 +285,7 @@ its code compiles.
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
-| P4 | Storage foundation implemented; not playable save/resume | I-029 headless atomic snapshot store and disk continuation/failure regressions. Runtime checkpoint/quit/Continue/death/compatibility wiring remains I-030; progression remains blocked by Q-010. Profile/morgue are not implemented |
+| P4 | Playable persistence slice implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery; targeted headless startup/lifecycle tests pass. Q-012 remains provisional; crash window, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and morgue remain open |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
 Foundation follow-up, 2026-11-09: B-006 now requires explicit checkout-asset
