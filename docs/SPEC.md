@@ -232,8 +232,10 @@ Continue, quit-save, provisional 20-action/floor checkpoints and death-barrier
 recovery (I-030). The interval remains provisional under Q-012; hard crashes
 can lose actions since the last checkpoint, and a crash between death resolution
 and the barrier write can still expose the previous checkpoint. This is not a
-power-loss or packaged Windows Continue acceptance claim. Skills, campaign
-victory and general content-pack manifests remain later work.
+power-loss or hands-on packaged Windows Continue acceptance claim; Windows CI
+has built and packaged the executable, while user launch acceptance remains
+pending. Skills, campaign victory and general content-pack manifests remain
+later work.
 P2/P3 Windows hands-on/audio acceptance is still pending.
 Actors and terrain draw from the disposable Gravebound placeholder atlas; this
 does not complete art P1. Art P0 is awaiting review.

@@ -285,7 +285,7 @@ its code compiles.
 | P1 | Implementation present | Commands/scheduler, shadowcasting, map memory and input/HUD/zoom implemented. I-008 now proves fresh-headless-ECS continuation with different entity allocation and canonical hashes; Windows/4K acceptance pending. Movement tweening remains B-009, not implemented |
 | P2 | Implemented; awaiting hands-on Windows playtest | Combat, AI, death/new run, HP bars, damage numbers, motion Normal/Fast/Off, generated placeholder audio. Linux Xvfb smoke run passed; Windows launch and audio device unverified (I-001, I-004, I-005) |
 | P3 | Playable implementation; Windows hands-on acceptance pending | Persistent two-floor crypt, loot/equipment/consumables, shared comparisons/filter, examine and guardian endpoint. Automated repeatability/restore checks cover 100 constructed crypts; three scripted command-only runs complete both floors, loot/identify, return and retry. Required sidecar boot failures are tested. This is not Windows launch/audio/4K acceptance or full pack management |
-| P4 | Playable persistence slice implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery; targeted headless startup/lifecycle tests pass. Q-012 remains provisional; crash window, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and morgue remain open |
+| P4 | Playable persistence slice implemented; stage remains open | I-030 wires Continue, 20-action/floor checkpoints, quit-save and death-barrier recovery; full Linux gates and Windows workflow tests/build/package pass. Q-012 remains provisional; crash window, checkpoint rollback, Windows hands-on acceptance, skills (Q-010), profile and morgue remain open |
 | P5 | Planned | End-to-end candidate depends on earlier gates |
 
 Foundation follow-up, 2026-11-09: B-006 now requires explicit checkout-asset
@@ -338,6 +338,16 @@ restore/return, atomic overwrite, interrupted temporary files, replacement failu
 corruption/size/version handling and dead-state rejection. The executable's
 save/resume controls remain unavailable until I-030; no live checkpoint/death
 invalidation, power-cut durability or packaged Windows Continue claim is made.
+
+P4 playable persistence follow-up (I-030; commits 779edb4/2a663ae): startup
+continues a valid save, rejects corrupt/content-incompatible files without
+replacing them, and recovers a death barrier into a committed next crypt run.
+Headless regressions cover 20-action and floor-transition checkpoints, quit-save,
+visible write failures, death invalidation/retry and interrupted cleanup.
+Workspace format/clippy/tests/docs pass on Linux (165 passed, one ignored);
+Windows workflow 42763594336 passed headless tests, lint, docs, executable build
+and package upload. This does not verify an interactive Windows launch or
+hands-on Continue, and does not close Q-012's crash/power-loss questions.
 
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.
