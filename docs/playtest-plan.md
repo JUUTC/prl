@@ -355,6 +355,19 @@ Windows workflow 42763594336 passed headless tests, lint, docs, executable build
 and package upload. This does not verify an interactive Windows launch or
 hands-on Continue, and does not close Q-012's crash/power-loss questions.
 
+P4 dead-run records follow-up (I-031; commit 056b253): death now archives a
+text morgue before save cleanup, and startup/retry preserve or recreate the report
+before clearing the death barrier. Archive failures are visible and keep recovery
+blocked; a pending new-run save retries even after its one-frame outcome has
+been consumed. Identical retries do not duplicate or overwrite reports, and
+conflicting reports remain untouched with explicit errors. Reports retain
+known-only gear and label missing lifetime counters rather than counting a
+bounded log. Linux format/clippy/tests/docs gates pass (173 passed, one ignored);
+the isolated save suite passes all 27 tests. Windows workflow 42769587931
+passed headless/workspace tests, lint, docs, executable build and package upload.
+Windows hands-on acceptance, full run history/accounting (I-032) and combat
+skill progression (Q-010) remain open. No art or combat-balance change is included.
+
 After P5, prioritize observed problems before breadth. The next slice can add a
 minimal town/overworld link, dungeon resets, ranged/magic and character setup.
 Housing, crafting, companions and NG+ remain later spec milestones. P0-P5 cover
