@@ -331,6 +331,13 @@ impl SnapshotStore {
         Self::sync_directory(self.parent())
     }
 
+    #[cfg_attr(
+        not(unix),
+        expect(
+            clippy::unnecessary_wraps,
+            reason = "Unix directory-sync failures must be returned, while non-Unix targets cannot report this durability step"
+        )
+    )]
     fn sync_directory(path: &Path) -> Result<(), SaveError> {
         #[cfg(unix)]
         File::open(path)
