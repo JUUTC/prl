@@ -22,6 +22,10 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def notice_bytes(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def safe_path(name: str) -> str:
     path = PurePosixPath(name)
     if not name or "\\" in name or ":" in name or path.is_absolute() or ".." in path.parts:
@@ -252,7 +256,7 @@ def main() -> None:
     outputs = generate(args.archive.read_bytes(), selection, args.source_dir)
     # Notices are reviewed inputs, never invented from the archive (which omits them).
     for name in ("CC-BY-SA-3.0.txt", "upstream-readme.md", "upstream-LICENSE.txt", "CREDITS.md"):
-        outputs[name] = ((args.notices_dir or args.source_dir) / name).read_bytes()
+        outputs[name] = notice_bytes((args.notices_dir or args.source_dir) / name)
     outputs["checksums.json"] = (json.dumps({n: digest(b) for n, b in sorted(outputs.items())},
                                           indent=2) + "\n").encode()
     previous = args.output / "checksums.json"

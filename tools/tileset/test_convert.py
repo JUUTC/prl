@@ -33,6 +33,14 @@ def archive(entries=None, offset=0):
 
 
 class ConversionTests(unittest.TestCase):
+    def test_notice_hashes_survive_git_line_ending_normalization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "LICENSE.txt"
+            path.write_bytes(b"Licence\r\nTerms\r\n")
+            windows = convert.notice_bytes(path)
+            path.write_bytes(b"Licence\nTerms\n")
+            self.assertEqual(windows, convert.notice_bytes(path))
+
     def test_hash_paths_and_invalid_indices_fail_explicitly(self):
         data = archive()
         with self.assertRaisesRegex(ValueError, "SHA-256"):
