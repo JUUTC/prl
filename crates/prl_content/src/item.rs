@@ -36,6 +36,48 @@ pub enum ItemKind {
     Identify,
 }
 
+/// Public physical category for item art; never an effect, affix or definition ID.
+///
+/// Consumables deliberately use generic categories until appearance-safe art is
+/// reviewed. Identifying an item does not change this category.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ItemIcon {
+    /// Main-hand gear; a sword study for the current slice.
+    MainHand,
+    /// Body gear; a mail study for the current slice.
+    Body,
+    /// Generic potion placeholder, independent of effect or strength.
+    Potion,
+    /// Generic scroll placeholder, independent of effect.
+    Scroll,
+}
+
+impl ItemIcon {
+    /// Presentation marker key, shared by world and inventory surfaces.
+    #[must_use]
+    pub const fn marker(self) -> &'static str {
+        match self {
+            Self::MainHand => "item_main_hand",
+            Self::Body => "item_body",
+            Self::Potion => "item_potion",
+            Self::Scroll => "item_scroll",
+        }
+    }
+}
+
+impl ItemKind {
+    /// Physical category without exposing effect parameters or hidden identity.
+    #[must_use]
+    pub const fn icon(&self) -> ItemIcon {
+        match self {
+            Self::Gear(EquipSlot::MainHand) => ItemIcon::MainHand,
+            Self::Gear(EquipSlot::Body) => ItemIcon::Body,
+            Self::Healing { .. } => ItemIcon::Potion,
+            Self::Identify => ItemIcon::Scroll,
+        }
+    }
+}
+
 /// Integer additive modifiers reused by real and hypothetical loadouts.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]

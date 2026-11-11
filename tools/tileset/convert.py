@@ -139,6 +139,18 @@ def composite(tileset: Tileset, layers: list, selection: dict, source_dir: Path)
     return canvas, records
 
 
+def extrude(atlas, rect):
+    x, y, width, height = rect
+    frame = atlas.crop((x, y, x + width, y + height))
+    atlas.paste(frame.crop((0, 0, 1, height)), (x - 1, y))
+    atlas.paste(frame.crop((width - 1, 0, width, height)), (x + width, y))
+    atlas.paste(frame.crop((0, 0, width, 1)), (x, y - 1))
+    atlas.paste(frame.crop((0, height - 1, width, height)), (x, y + height))
+    for dx, sx in ((-1, 0), (width, width - 1)):
+        for dy, sy in ((-1, 0), (height, height - 1)):
+            atlas.putpixel((x + dx, y + dy), frame.getpixel((sx, sy)))
+
+
 def generate(archive: bytes, selection: dict, source_dir: Path) -> dict[str, bytes]:
     from PIL import Image
 
@@ -155,6 +167,15 @@ def generate(archive: bytes, selection: dict, source_dir: Path) -> dict[str, byt
             entry["open" if key == "open_layers" else "rect"] = (
                 len(frames) * (picture.width + 2 * PADDING) + PADDING,
                 PADDING, picture.width, picture.height)
+            if "crop" in visual:
+                cx, cy, cw, ch = visual["crop"]
+                if (any(type(v) is not int for v in (cx, cy, cw, ch))
+                        or min(cx, cy) < 0 or min(cw, ch) <= 0
+                        or cx + cw > picture.width or cy + ch > picture.height):
+                    raise ValueError(f"invalid visual crop: {visual_id}")
+                name = "open" if key == "open_layers" else "rect"
+                x, y, _, _ = entry[name]
+                entry[name] = (x + cx, y + cy, cw, ch)
             frames.append(picture)
             provenance[f"{visual_id}/{key}"] = records
         entries[visual_id] = entry
@@ -164,14 +185,11 @@ def generate(archive: bytes, selection: dict, source_dir: Path) -> dict[str, byt
     for index, frame in enumerate(frames):
         x = index * stride + PADDING
         atlas.paste(frame, (x, PADDING))
-        # Extrude each edge and corner so sampling cannot reach adjacent sprites.
-        atlas.paste(frame.crop((0, 0, 1, height)), (x - 1, PADDING))
-        atlas.paste(frame.crop((width - 1, 0, width, height)), (x + width, PADDING))
-        atlas.paste(frame.crop((0, 0, width, 1)), (x, 0))
-        atlas.paste(frame.crop((0, height - 1, width, height)), (x, height + PADDING))
-        for dx, sx in ((-1, 0), (width, width - 1)):
-            for dy, sy in ((0, 0), (height + PADDING, height - 1)):
-                atlas.putpixel((x + dx, dy), frame.getpixel((sx, sy)))
+    # Cropped icons need their own borders, not the unused canvas edges.
+    for entry in entries.values():
+        for name in ("rect", "open"):
+            if name in entry:
+                extrude(atlas, entry[name])
     buffer = io.BytesIO()
     atlas.save(buffer, format="PNG", optimize=False, compress_level=9)
     origin_x, origin_y = selection["origin"]

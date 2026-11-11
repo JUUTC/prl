@@ -48,7 +48,11 @@ loading validates coverage explicitly. A small outdoor approach precedes the
 crypt on new runs; the animated placeholder player can coexist with candidate
 scenery. The procedural atlas remains the default.
 See [tileset-integration.md](tileset-integration.md); final art, broader appearance
-coverage, item-icon work and Windows hands-on gates remain separate.
+coverage, consumable artwork and Windows hands-on gates remain separate.
+The bounded item-icon pass shares public physical categories through
+`prl_content::ItemIcon` / `Inventory::icon`, with image handles bridged by the
+binary between sibling presentation crates. Sword/mail icons decorate existing
+controls and visible filter-matching ground loot; no gameplay/save fields change.
 
 ## Contracts to establish before gameplay grows
 

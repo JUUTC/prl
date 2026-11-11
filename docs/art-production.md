@@ -44,6 +44,10 @@ candidate audit, current-crypt coverage, renderer gaps and dependency-ordered
 T0-T4 delivery checks. Subset rights/credits (I-040), the offline converter
 (I-041) and opt-in renderer (I-042) are implemented. Original source PNGs,
 provenance and CC BY-SA notices accompany the compact generated atlas.
+The bounded I-043 pass adds audited sword/mail category icons to existing
+inventory and visible ground-loot surfaces. Potion/scroll art remains explicitly
+placeholder; the modern-looking bottle candidate is excluded. This does not
+approve final icon quality, change inventory UX or depict equipped-player gear.
 Do not treat this bounded candidate as approval to expand the roster.
 
 ### Reuse and delivery checks

@@ -45,4 +45,8 @@ current equipment. A separate repository-owned animated placeholder player is
 the candidate default. Stone walls, wooden stairs and an armoured skeleton
 substitute replace the first fence, metal-stair and modern-clothed-zombie study;
 wall perspective and foreground occlusion still need final visual approval.
-Item icons remain repository-owned category placeholders.
+Sword and mail icons reuse the pinned longsword and chainmail hauberk item
+sprites; their native 32x32 rectangles are selected from the padded atlas without
+recolouring. The longsword is on upstream's incomplete sheet and remains a
+provisional visual, not quality approval. Potions and scrolls retain explicit
+text/category placeholders; no modern bottle or effect-specific icon is imported.

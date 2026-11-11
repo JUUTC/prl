@@ -15,7 +15,8 @@ pub use actor::{ActorBehavior, ActorDefinition, DEFAULT_CRIT_MULTIPLIER_PCT};
 pub use error::{ActorProblem, ContentError};
 pub use id::{ContentId, ContentIdError};
 pub use item::{
-    EquipSlot, ItemBonus, ItemCatalog, ItemDefinition, ItemKind, ItemPredicate, LootRule, Rarity,
+    EquipSlot, ItemBonus, ItemCatalog, ItemDefinition, ItemIcon, ItemKind, ItemPredicate, LootRule,
+    Rarity,
 };
 pub use map::{MapDefinition, MapProblem, SpawnDefinition};
 pub use pack::{CONTENT_SCHEMA_VERSION, ContentPack};

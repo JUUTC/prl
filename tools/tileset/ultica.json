@@ -7,6 +7,20 @@
   "scale": 2,
   "map_tiles": {"prl:crypt_approach": {"prl:floor": "outdoor_grass"}},
   "visuals": {
+    "prl:item_main_hand": {
+      "kind": "marker",
+      "crop": [0, 32, 32, 32],
+      "layers": [
+        ["longsword", "fg", null, 0, "pngs_incomplete_32x32/items/longsword/longsword.png"]
+      ]
+    },
+    "prl:item_body": {
+      "kind": "marker",
+      "crop": [0, 32, 32, 32],
+      "layers": [
+        ["mc_chainmail_hauberk", "fg", null, 0, "pngs_normal_32x32/items/ace_unsorted/chainmail_hauberk.png"]
+      ]
+    },
     "prl:player": {
       "kind": "actor",
       "layers": [

@@ -12,8 +12,10 @@ cargo run -p prl -- --dev-assets --tileset=ultica
 
 The candidate uses static, unmirrored enemies and can show either the animated
 repository-owned placeholder player or the fixed UltiCa sword/mail study.
-It does not depict equipment changes; item icons, loot markers and UI remain
-placeholders. No audio is imported. Omitting `--tileset=ultica` keeps the
+It does not depict equipment changes. Audited sword/mail item icons decorate
+existing inventory controls and visible ground loot; potion/scroll art remains
+text/category placeholders. No inventory redesign or audio import is included.
+Omitting `--tileset=ultica` keeps the
 repository-owned procedural atlas.
 
 ## Checks and reproducible export
@@ -56,6 +58,9 @@ canvas with origin `(0, -32)`; the manifest's 2x scale and `(0, 32)` world offse
 place the source cell correctly on PRL's 64-unit grid.
 Each frame has a one-pixel extruded border outside its manifest rectangle to
 prevent adjacent sprites bleeding into moving-camera tile edges.
+An optional integer `crop: [x, y, width, height]` selects an in-canvas native
+rectangle for item markers without resizing source pixels; invalid bounds fail
+explicitly. The two item crops exclude the unused top half of the common canvas.
 
 The atlas is CC BY-SA 3.0 artwork, separately from MIT tool code.
 `CREDITS.md`, `provenance.json`, original source PNGs and upstream notices live

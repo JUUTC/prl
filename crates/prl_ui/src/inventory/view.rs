@@ -11,7 +11,7 @@ use bevy::{
     prelude::*,
     ui::RelativeCursorPosition,
 };
-use prl_content::{EquipSlot, ItemKind};
+use prl_content::{EquipSlot, ItemIcon, ItemKind};
 use prl_core::{BACKPACK, CoreState, EQUIPMENT, Item};
 
 #[derive(Component)]
@@ -22,6 +22,64 @@ pub(super) struct Control(pub(super) Intent);
 
 #[derive(Component)]
 pub(super) struct Pane(usize);
+
+#[derive(Component)]
+pub(super) struct IconTarget(ItemIcon, bool);
+
+/// Decorate newly built controls only; idle frames retain the same widget tree.
+pub(super) fn decorate_icons(
+    mut commands: Commands<'_, '_>,
+    images: Res<'_, super::ItemIconImages>,
+    mut targets: Query<'_, '_, (Entity, &IconTarget, &mut Node), Added<IconTarget>>,
+) {
+    for (entity, target, mut node) in &mut targets {
+        let Some(image) = images.0.get(&target.0) else {
+            continue;
+        };
+        if !target.1 {
+            node.padding.left = px(38);
+        }
+        commands.entity(entity).with_child((
+            Name::new("Reviewed item icon"),
+            image.clone(),
+            Pickable::IGNORE,
+            Node {
+                position_type: PositionType::Absolute,
+                width: px(28),
+                height: px(28),
+                left: if target.1 { Val::Auto } else { px(4) },
+                right: if target.1 { px(2) } else { Val::Auto },
+                bottom: px(2),
+                ..default()
+            },
+        ));
+    }
+}
+
+pub(super) fn detail_icon(
+    parent: &mut ChildSpawnerCommands<'_>,
+    core: &CoreState,
+    item: &Item,
+    images: &super::ItemIconImages,
+) {
+    if let Some(image) = core
+        .inventory()
+        .and_then(|bag| bag.icon(item))
+        .and_then(|icon| images.0.get(&icon))
+    {
+        parent.spawn((
+            Name::new("Reviewed item icon"),
+            image.clone(),
+            Pickable::IGNORE,
+            Node {
+                width: px(32),
+                height: px(32),
+                flex_shrink: 0.0,
+                ..default()
+            },
+        ));
+    }
+}
 
 pub(super) fn text(
     parent: &mut ChildSpawnerCommands<'_>,
@@ -47,7 +105,7 @@ fn button(
     theme: &PlaceholderTheme,
     mut node: Node,
     disabled: bool,
-) {
+) -> Entity {
     let compact = node.height != Val::Auto;
     node.min_height = px(if compact { 0 } else { 44 });
     node.padding = UiRect::all(px(if compact { 2 } else { 6 }));
@@ -84,7 +142,8 @@ fn button(
             } else {
                 theme.text
             }),
-        ));
+        ))
+        .id()
 }
 
 fn row() -> Node {
@@ -143,7 +202,7 @@ fn item_button(
     } else {
         item_label(core, item)
     };
-    button(
+    let entity = button(
         parent,
         label,
         Intent::Select(item.id),
@@ -152,6 +211,12 @@ fn item_button(
         node,
         false,
     );
+    if let Some(icon) = core.inventory().and_then(|bag| bag.icon(item)) {
+        parent
+            .commands()
+            .entity(entity)
+            .insert(IconTarget(icon, grid));
+    }
 }
 
 fn equipment(
@@ -535,6 +600,7 @@ pub(super) fn refresh(
     mode: Res<'_, UiMode>,
     warnings: Res<'_, InventoryWarningSettings>,
     theme: Res<'_, PlaceholderTheme>,
+    images: Res<'_, super::ItemIconImages>,
     settings: Res<'_, SettingsStatus>,
     scale: Option<Res<'_, UiScale>>,
     windows: Query<'_, '_, &Window, With<bevy::window::PrimaryWindow>>,
@@ -600,7 +666,7 @@ pub(super) fn refresh(
             ))
             .with_children(|content| {
                 if matches!(workspace.stage, Stage::Browse | Stage::Placement(_)) {
-                    browse(content, &core, &workspace, &theme, size);
+                    browse(content, &core, &workspace, &theme, &images, size);
                     if matches!(workspace.stage, Stage::Placement(_)) {
                         content.spawn(row()).with_children(|buttons| {
                             button(
@@ -700,6 +766,7 @@ fn browse(
     core: &CoreState,
     workspace: &Workspace,
     theme: &PlaceholderTheme,
+    images: &super::ItemIconImages,
     size: Vec2,
 ) {
     let narrow = size.x < 1000.0;
@@ -749,7 +816,7 @@ fn browse(
                     .with_children(|pane| match index {
                         0 => equipment(pane, core, workspace, theme),
                         1 => bag(pane, core, workspace, theme),
-                        _ => details::render(pane, core, workspace, theme),
+                        _ => details::render(pane, core, workspace, theme, images),
                     });
             }
         });

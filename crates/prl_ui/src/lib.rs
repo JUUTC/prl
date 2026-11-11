@@ -13,7 +13,7 @@ mod repeat;
 mod theme;
 
 pub use input::{MovementBindings, UiMode};
-pub use inventory::InventoryWarningSettings;
+pub use inventory::{InventoryWarningSettings, ItemIconImages};
 pub use repeat::RepeatSettings;
 pub use theme::{PlaceholderFontSource, PlaceholderTheme};
 

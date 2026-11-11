@@ -15,6 +15,13 @@ mod packing;
 mod tests;
 mod view;
 
+/// Optional reviewed item images, supplied by the composition root.
+///
+/// UI does not depend on world rendering. Missing categories keep the existing
+/// text placeholders; these images never select by hidden definition or affix.
+#[derive(Resource, Default)]
+pub struct ItemIconImages(pub std::collections::BTreeMap<prl_content::ItemIcon, ImageNode>);
+
 /// Session view of independently persisted inventory warning preferences.
 ///
 /// The application bridges these to `prl_save`; UI never writes character saves.
@@ -148,6 +155,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Workspace>()
         .init_resource::<PointerIntent>()
         .init_resource::<InventoryWarningSettings>()
+        .init_resource::<ItemIconImages>()
         .add_observer(capture)
         .add_systems(
             PostUpdate,
@@ -166,7 +174,8 @@ pub(super) fn plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            (settle, view::refresh.after(settle))
+            (settle, view::refresh, view::decorate_icons)
+                .chain()
                 .in_set(CoreSet::Presentation)
                 .run_if(resource_exists::<CoreState>),
         )

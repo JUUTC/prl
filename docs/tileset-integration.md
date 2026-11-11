@@ -2,7 +2,7 @@
 
 **Status (2026-11-11):** the audited crypt subset, offline converter and opt-in
 world renderer are implemented. Final art selection/visual approval, broader
-coverage, item-icon work and Windows hands-on acceptance remain open.
+coverage, consumable artwork and Windows hands-on acceptance remain open.
 Q-036 / I-039 govern the work. This plan implements the accepted reuse direction
 without treating UltiCa as the approved final pack or replacing inventory UX.
 The [art-production override](art-production.md#current-direction-override-2026-11-11)
@@ -14,14 +14,14 @@ Omit the flag for the unchanged procedural-art default.
 
 ### Delivered candidate, not final visual acceptance
 
-- The compact 374x66 padded atlas covers four actors, floor/wall, both door states,
-  outdoor grass and both stair markers. Static single-facing sprites scale 2x on
+- The compact 442x66 padded atlas covers four actors, floor/wall, both door states,
+  outdoor grass, both stair markers and sword/mail icons. Static single-facing sprites scale 2x on
   the existing grid. The candidate defaults to the earlier animated placeholder
   player; `--player=ultica` selects the static fixed sword/mail study. Neither
   depicts equipment changes.
   Each frame has a one-pixel extruded border to prevent adjacent atlas art from
   bleeding into tile edges during fractional camera movement.
-- The converter compares every selected compiled rectangle against 16 original
+- The converter compares every selected compiled rectangle against 18 original
   source PNGs. The selected source histories and complete-subtree ancestor
   notice check found no additional per-folder licence/credit files for this
   subset. Original PNG metadata, upstream notices, CC BY-SA 3.0 legal text,
@@ -51,9 +51,17 @@ wood stairs and armoured skeleton substitute for the shambler avoid modern-looki
 metal stairs and jeans-clad zombie sprites; this is a visual substitute, not a
 change to the shambler's rules.
 
-The six item definitions retain existing category/text placeholders; ground loot
-still uses `*`. No inventory layout/widget code, UI theme, audio, rules or save
-schema changed. Dynamic equipment appearance, additional races/looks, connected
+The four sword/mail definitions share two physical-category icons in backpack
+Grid/List, equipment, details and current-cell ground controls. The visible
+world loot marker uses the same lookup for the first filter-visible item at a
+cell; it does not enumerate unseen or filtered items. Potions and scrolls retain
+their category/text placeholders and the world `*` marker. No consumable effect,
+affix, identification state or material changes these icons. Neither sword nor
+mail art represents item quality or equipped-player appearance.
+Inventory layout, selection, packing/rotation and drag behavior remain unchanged;
+image children ignore picking and are created with controls, not on idle frames.
+UI theme, audio, rules and save schema are unchanged.
+Dynamic equipment appearance, additional races/looks, connected
 wall variants and a final occlusion/perspective treatment remain later coverage.
 
 ## 1. Candidate and reproducible input
@@ -112,12 +120,12 @@ not reviewed visual matches or permission to ship:
 | `prl:shambler` | `mon_skeleton_brute` | Non-modern temporary visual substitute; gameplay definition remains the shambler |
 | `prl:skeleton` (guardian) | `mon_skeleton` | 32x48 sprite, shadow and anchor; readable at gameplay zoom |
 | `prl:grave_rat` | `mon_sewer_rat`, `mon_black_rat` or `mon_big_rat` | Size/readability and visual fit; do not infer availability from an exact `mon_rat` lookup |
-| Sword/mail icons and optional player layers | `longsword`, `overlay_wielded_longsword`, chainmail families | Item sword is on an `incomplete` sheet; review quality and actual layer compatibility before choosing |
-| Potion/scroll icons | Not selected | Generic appearance-safe placeholders are allowed until reviewed candidates exist |
+| Sword/mail icons and optional player layers | `longsword`, `mc_chainmail_hauberk`, `overlay_wielded_longsword` | Two item originals audited and mapped by public category. Sword is on an `incomplete` sheet; final quality review remains. Player layering is separate |
+| Potion/scroll icons | Not selected; category/text placeholders retained | Reviewed glass-bottle candidate looks modern and is excluded; do not encode hidden effects |
 
-Stairs now use candidate art in `prl_render/src/map.rs`; ground loot retains the
-text marker. Item icons are the next bounded pass, not a
-reason to redesign the inventory workspace.
+Stairs and sword/mail ground loot use candidate art in `prl_render/src/map.rs`;
+other ground categories retain the text marker. Consumable artwork and broader
+natural scenery remain gaps, not reasons to redesign the inventory workspace.
 
 Fantasy races, five looks per silhouette, full equipment/material coverage,
 creatures outside this roster, crafting/resource states and spell effects remain
@@ -130,7 +138,7 @@ unproven. Record gaps before promising the rest of the game can use this pack.
 | T0 / I-040 | Audited selected subset and preserved rights notices; done for candidate | Candidate pin above | Source pixel matches, per-file history, original metadata and notices; Q-036 visual exceptions remain unapproved |
 | T1 / I-041 | Offline subset converter; implemented | T0 for distributable art | Reproducible bounded output, checksums/provenance, invalid-input fixtures and complete packaged inventory check |
 | T2 / I-042 | Opt-in presentation manifest/loading, scaled terrain/actors/stairs; implemented | T1 | Native crypt scene, strict diagnostics and unchanged core outcomes at all animation speeds; final art approval separate |
-| T3 / I-043 | Knowledge-safe item icons on existing inventory/details/equipment/ground surfaces, without layout changes | T1/T2 shared visual lookup; item source clearance | Six current item definitions covered or explicitly marked placeholders; hidden-effect/affix invariance, rotation and drag/selection preserved |
+| T3 / I-043 | Bounded sword/mail pass implemented; potion/scroll artwork deferred | T1/T2 shared visual lookup; item source clearance | Four gear definitions share two audited category icons; consumables explicitly remain placeholders. Hidden-effect/affix invariance, rotation and drag/selection preserved; human visual review pending |
 | T4 / I-044 | Release notices, automated package checks and Windows hands-on proof | T2; include T3 if shipped | Fresh extracted package loads without checkout/network; all referenced images and notices present; Windows launch evidence and visual review recorded |
 
 Do not remove the existing placeholder path until the candidate proof is accepted.
@@ -226,9 +234,17 @@ Ground art follows the same knowledge and visibility/loot-label rules as text.
 
 Keep the current grid footprints, explicit rotation, stable `ItemId` selection,
 free placement and drag lifecycle. Rotating a backpack footprint need not rotate
-the art. Do not rebuild widgets every frame to animate icons. If UI and rendering
-need shared visual definitions, keep their data headless (in `prl_content`);
-do not make UI depend on render systems or put Bevy handles into core snapshots.
+the art. Do not rebuild widgets every frame to animate icons. `prl_content::ItemIcon` defines the shared physical categories; `Inventory::icon`
+exposes only that known-safe selection. The composition root bridges the
+renderer-loaded image/rectangles into `prl_ui::ItemIconImages` at startup.
+UI never depends on render systems or puts Bevy handles into core snapshots.
+
+The bounded pass passes workspace format/lint/tests/rustdoc and nine offline
+converter/package regressions. Native Linux rendering confirmed icon display in
+Grid/List, equipment and details, pointer selection over image children, safe
+equip actions and 1280x900/720 plus narrow resize. Ground regressions cover
+remembered-but-unseen cells, hidden-by-filter items and identical Normal/Magic
+category selection. This is not Windows launch or final icon-quality approval.
 
 ### T4: acceptance, packaging and rollback
 

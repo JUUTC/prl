@@ -177,6 +177,33 @@ class ConversionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing"):
                 convert.verify(target)
 
+    def test_icon_crop_preserves_native_pixels_and_rejects_bad_bounds(self):
+        data = archive()
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            Image.new("RGBA", (32, 32), "red").save(source / "item.png")
+            (source / "history.json").write_text(json.dumps({"item.png": []}))
+            visual = {"kind": "marker", "crop": [0, 32, 32, 32],
+                      "layers": [["base", "fg", None, 0, "item.png"]]}
+            selection = {
+                "release": "test", "revision": "test", "archive_sha256": convert.digest(data),
+                "canvas": [32, 64], "origin": [0, -32], "scale": 2,
+                "visuals": {"prl:item_main_hand": visual},
+            }
+            outputs = convert.generate(data, selection, source)
+            self.assertIn('"item_main_hand": (rect: (1, 33, 32, 32)',
+                          outputs["ultica.ron"].decode())
+            atlas = Image.open(io.BytesIO(outputs["ultica.png"]))
+            self.assertEqual(atlas.crop((1, 33, 33, 65)).tobytes(),
+                             Image.open(source / "item.png").tobytes())
+            self.assertEqual(atlas.getpixel((1, 32)), (255, 0, 0, 255))
+            self.assertEqual(atlas.getpixel((0, 32)), (255, 0, 0, 255))
+            for crop in ([0, 32, 33, 32], [-1, 32, 32, 32], [0, 32, 0, 32],
+                         [0, 32, 32, 33], [True, 32, 32, 32]):
+                visual["crop"] = crop
+                with self.assertRaisesRegex(ValueError, "invalid visual crop"):
+                    convert.generate(data, selection, source)
+
 
 if __name__ == "__main__":
     unittest.main()

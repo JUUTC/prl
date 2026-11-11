@@ -42,7 +42,7 @@ fn refresh(
         commands.entity(entity).despawn();
     }
     spawn_terrain(&mut commands, &state, art.as_deref());
-    spawn_loot(&mut commands, &state);
+    spawn_loot(&mut commands, &state, art.as_deref());
     if let Some(plan) = state.floor_plan() {
         for (position, label, marker) in [
             (plan.entrance, "<", "stairs_up"),
@@ -87,18 +87,35 @@ fn refresh(
     }
 }
 
-fn spawn_loot(commands: &mut Commands<'_, '_>, state: &CoreState) {
+fn spawn_loot(commands: &mut Commands<'_, '_>, state: &CoreState, art: Option<&AtlasArt>) {
     let Some(inventory) = state.inventory() else {
         return;
     };
     for position in state.map().visible_positions() {
-        if !state
+        let Some(item) = state
             .ground_items(position)
-            .any(|item| inventory.ground_label(item).0)
-        {
+            .find(|item| inventory.ground_label(item).0)
+        else {
+            continue;
+        };
+        let centre = tile_to_world(position.x, position.y);
+        if let Some((art, marker)) = art.and_then(|art| {
+            let icon = inventory.icon(item)?;
+            art.index
+                .markers
+                .get(icon.marker())
+                .map(|marker| (art, marker))
+        }) {
+            let mut sprite = art.sprite(marker.closed);
+            sprite.custom_size = Some(Vec2::splat(28.0));
+            commands.spawn((
+                Name::new("Reviewed ground item icon"),
+                sprite,
+                Transform::from_xyz(centre.x + 16.0, centre.y - 16.0, 0.11),
+                Placeholder,
+            ));
             continue;
         }
-        let centre = tile_to_world(position.x, position.y);
         commands.spawn((
             Name::new("Placeholder ground loot"),
             Text2d::new("*"),
@@ -207,6 +224,90 @@ fn terrain_color(appearance: TerrainAppearance, visible: bool) -> Color {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ground_icons_obey_visibility_filters_and_public_categories() {
+        let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+            "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+        ))
+        .unwrap();
+        let source = crate::ArtSource::ultica(
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl"),
+        );
+        for (supplies, show, away, expected) in [
+            (vec!["prl:iron_sword"], true, false, Some("item_main_hand")),
+            (vec!["prl:keen_sword"], true, false, Some("item_main_hand")),
+            (vec!["prl:iron_mail"], true, false, Some("item_body")),
+            (vec!["prl:healing_potion"], true, false, None),
+            (vec!["prl:identify_scroll"], true, false, None),
+            (vec!["prl:iron_sword"], false, false, None),
+            (vec!["prl:iron_sword"], true, true, None),
+            (
+                vec!["prl:healing_potion", "prl:iron_sword"],
+                true,
+                false,
+                Some("item_main_hand"),
+            ),
+        ] {
+            let mut config = config.clone();
+            config.items.supplies = supplies.into_iter().map(|id| id.parse().unwrap()).collect();
+            config.items.default_filter = vec![prl_content::LootRule {
+                predicate: prl_content::ItemPredicate::Always,
+                show,
+                emphasize: false,
+            }];
+            if config.items.supplies.len() > 1 {
+                config.items.default_filter.insert(
+                    0,
+                    prl_content::LootRule {
+                        predicate: prl_content::ItemPredicate::Definition(
+                            "prl:healing_potion".parse().unwrap(),
+                        ),
+                        show: false,
+                        emphasize: false,
+                    },
+                );
+            }
+            let mut state = config
+                .build(&prl_content::ContentPack::placeholder().unwrap(), 1)
+                .unwrap();
+            if away {
+                let origin = state.player().unwrap().position();
+                for _ in 0..6 {
+                    state.issue(prl_core::Command::Move(prl_core::Direction::North));
+                }
+                assert!(!state.is_visible(origin));
+                assert!(state.map().remembered_tile(origin).is_some());
+            }
+            let before = state.snapshot();
+            let (index, _) = crate::art::read(&source).unwrap();
+            let expected_frame = expected.map(|marker| index.markers[marker].closed);
+            let mut app = App::new();
+            app.add_plugins((MinimalPlugins, prl_core::PrlCorePlugin, plugin))
+                .insert_resource(state)
+                .insert_resource(AtlasArt {
+                    image: Handle::default(),
+                    layout: Handle::default(),
+                    index,
+                });
+            app.update();
+            let world = app.world_mut();
+            let icons: Vec<_> = world
+                .query::<(&Name, &Sprite)>()
+                .iter(world)
+                .filter(|(name, _)| name.as_str() == "Reviewed ground item icon")
+                .map(|(_, sprite)| sprite.texture_atlas.as_ref().unwrap().index)
+                .collect();
+            assert_eq!(icons, expected_frame.into_iter().collect::<Vec<_>>());
+            let markers = world
+                .query::<&Name>()
+                .iter(world)
+                .filter(|name| name.as_str() == "Placeholder ground loot")
+                .count();
+            assert_eq!(markers, usize::from(show && !away && expected.is_none()));
+            assert_eq!(world.resource::<CoreState>().snapshot(), before);
+        }
+    }
 
     #[test]
     fn memory_is_dimmer_than_visible_terrain() {

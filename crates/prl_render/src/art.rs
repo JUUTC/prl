@@ -7,7 +7,7 @@ use bevy::{
     image::{CompressedImageFormats, ImageSampler, ImageType},
     prelude::*,
 };
-use prl_content::ContentId;
+use prl_content::{ContentId, ItemIcon};
 use serde::Deserialize;
 
 /// Manifest path relative to the content pack directory.
@@ -111,7 +111,7 @@ impl ArtSource {
                     )));
                 }
             }
-            for marker in ["stairs_up", "stairs_down"] {
+            for marker in ["stairs_up", "stairs_down", "item_main_hand", "item_body"] {
                 if !index.markers.contains_key(marker) {
                     return Err(invalid(format!(
                         "{}: missing marker {marker}",
@@ -327,6 +327,18 @@ pub(crate) struct AtlasArt {
     pub(crate) index: AtlasIndex,
 }
 
+/// Read-only item art shared with sibling presentation crates by the binary.
+///
+/// Missing consumable entries are deliberate category/text placeholders, not
+/// effect-dependent fallbacks. Handles never enter core state or snapshots.
+#[derive(Resource, Debug)]
+pub struct ItemIconAtlas {
+    /// The already validated world atlas image.
+    pub image: Handle<Image>,
+    /// Native icon rectangles keyed only by public physical category.
+    pub rects: BTreeMap<ItemIcon, URect>,
+}
+
 #[derive(Resource, Debug)]
 pub(crate) struct PlayerArt(pub(crate) AtlasArt);
 
@@ -531,8 +543,26 @@ fn load(
                 index.actors.len(),
                 index.tiles.len()
             );
+            let image = images.add(image);
+            let rects = [
+                ItemIcon::MainHand,
+                ItemIcon::Body,
+                ItemIcon::Potion,
+                ItemIcon::Scroll,
+            ]
+            .into_iter()
+            .filter_map(|icon| {
+                let marker = index.markers.get(icon.marker())?;
+                let rect = index.rects.get(marker.closed)?;
+                Some((icon, *rect))
+            })
+            .collect();
+            commands.insert_resource(ItemIconAtlas {
+                image: image.clone(),
+                rects,
+            });
             commands.insert_resource(AtlasArt {
-                image: images.add(image),
+                image,
                 layout: layouts.add(layout),
                 index,
             });
@@ -568,7 +598,7 @@ fn load(
     }
 }
 
-fn read(source: &ArtSource) -> Result<(AtlasIndex, Image), ArtError> {
+pub(crate) fn read(source: &ArtSource) -> Result<(AtlasIndex, Image), ArtError> {
     let manifest_path = source.pack.join(source.manifest());
     let text = std::fs::read_to_string(&manifest_path)
         .map_err(|error| invalid(format!("cannot read {}: {error}", manifest_path.display())))?;
@@ -674,8 +704,17 @@ mod tests {
         source.validate_for(&prl_core::CoreState::demo()?)?;
         let (index, _) = read(&source)?;
         assert_eq!(index.scale, 2.0);
-        assert_eq!(index.size, UVec2::new(374, 66));
-        assert_eq!(index.markers.len(), 3);
+        assert_eq!(index.size, UVec2::new(442, 66));
+        assert_eq!(index.markers.len(), 5);
+        for icon in [ItemIcon::MainHand, ItemIcon::Body] {
+            assert_eq!(
+                index.rects[index.markers[icon.marker()].closed].size(),
+                UVec2::splat(32)
+            );
+        }
+        for icon in [ItemIcon::Potion, ItemIcon::Scroll] {
+            assert!(!index.markers.contains_key(icon.marker()));
+        }
         assert_eq!(
             index.map_tiles[&id("crypt_approach")?][&id("floor")?],
             "outdoor_grass"
@@ -725,8 +764,10 @@ mod tests {
             text.replace("\"prl:skeleton\"", "\"prl:missing_actor\""),
             text.replace("\"prl:floor\"", "\"prl:missing_tile\""),
             text.replace("\"stairs_up\"", "\"missing_marker\""),
+            text.replace("\"item_main_hand\"", "\"missing_item\""),
+            text.replace("\"item_body\"", "\"missing_item\""),
             text.replace("status: \"candidate\"", "status: \"placeholder\""),
-            text.replace("size: (374, 66)", "size: (375, 66)"),
+            text.replace("size: (442, 66)", "size: (443, 66)"),
         ] {
             std::fs::write(&target, changed)?;
             assert!(source.validate_for(&state).is_err());
@@ -746,7 +787,7 @@ mod tests {
             text.replace("offset_y: 32.0", "offset_y: inf"),
             text.replace("\"ultica.png\"", "\"../ultica.png\""),
             text.replace("\"ultica.png\"", "\"C:ultica.png\""),
-            text.replace("size: (374, 66)", "size: (9000, 66)"),
+            text.replace("size: (442, 66)", "size: (9000, 66)"),
         ] {
             assert!(parse_manifest(&changed).is_err(), "{changed}");
         }

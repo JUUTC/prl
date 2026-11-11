@@ -32,8 +32,12 @@ cargo run -p prl -- --dev-assets --tileset=ultica
 The candidate uses UltiCa world tiles, doors, stairs and static enemy sprites,
 with the earlier animated placeholder player by default. To retain the fixed
 UltiCa sword/mail player instead, add `--player=ultica`. Neither player depicts
-dynamic equipment. Inventory, item
-icons, ground loot markers and generated sounds are unchanged. The window title
+dynamic equipment. Sword/mail category icons appear in the existing inventory
+and visible ground-loot views; the same image covers Normal/Magic and
+identified/unidentified gear without revealing affixes. Potions and scrolls
+retain category/text placeholders; ground loot for those categories remains `*`.
+Multiple items on a cell still share one marker; inspect the ground panel for
+the full list. Inventory layout/controls and generated sounds are unchanged. The window title
 labels the candidate; omitting the tileset flag restores the procedural art.
 Missing or corrupt selected candidate files produce a visible boot error, not
 a silent fallback. The CC BY-SA 3.0 art notices and original selected sources

@@ -34,6 +34,26 @@ fn app(core: CoreState) -> App {
     .init_resource::<crate::SettingsStatus>()
     .init_resource::<UiScale>()
     .init_resource::<ButtonInput<KeyCode>>();
+    app.insert_resource(ItemIconImages(
+        [
+            (prl_content::ItemIcon::MainHand, 0.0),
+            (prl_content::ItemIcon::Body, 32.0),
+        ]
+        .into_iter()
+        .map(|(icon, offset)| {
+            (
+                icon,
+                ImageNode {
+                    rect: Some(Rect::from_corners(
+                        Vec2::splat(offset),
+                        Vec2::splat(offset + 32.0),
+                    )),
+                    ..default()
+                },
+            )
+        })
+        .collect(),
+    ));
     app.world_mut().spawn((
         Window {
             focused: true,
@@ -105,6 +125,7 @@ fn rendered_unknown_gear_does_not_leak_hidden_affixes_or_action_hints() {
     let id: prl_content::ContentId = "prl:keen_sword".parse().unwrap();
     config.items.supplies.insert(0, id.clone());
     let mut views = Vec::new();
+    let mut icons = Vec::new();
     for secret in [2, 900] {
         let definition = config
             .items
@@ -127,8 +148,73 @@ fn rendered_unknown_gear_does_not_leak_hidden_affixes_or_action_hints() {
             .collect();
         assert!(!text.iter().any(|text| text.contains("SECRET")));
         views.push(text);
+        icons.push(
+            world
+                .query::<&ImageNode>()
+                .iter(world)
+                .map(|image| (image.image.id(), image.rect, image.color))
+                .collect::<Vec<_>>(),
+        );
     }
     assert_eq!(views[0], views[1]);
+    assert!(icons[0].len() >= 3);
+    assert_eq!(icons[0], icons[1]);
+}
+
+#[test]
+fn icon_children_preserve_buttons_selection_and_idle_pointer_lifecycle() {
+    let mut app = app(carried());
+    open(&mut app);
+    let before = app.world().resource::<CoreState>().snapshot();
+    let (button, icon) = {
+        let world = app.world_mut();
+        let button = world
+            .query::<(Entity, &view::Control)>()
+            .iter(world)
+            .find(|(_, control)| matches!(control.0, Intent::Select(_)))
+            .unwrap()
+            .0;
+        let icon = world
+            .query::<(Entity, &ImageNode, &ChildOf)>()
+            .iter(world)
+            .find(|(_, _, parent)| parent.parent() == button)
+            .unwrap()
+            .0;
+        (button, icon)
+    };
+    for _ in 0..5 {
+        app.update();
+        assert!(app.world().get::<view::Control>(button).is_some());
+        assert!(app.world().get::<ImageNode>(icon).is_some());
+        assert_eq!(
+            *app.world().get::<Pickable>(icon).unwrap(),
+            Pickable::IGNORE
+        );
+    }
+    let intent = app.world().get::<view::Control>(button).unwrap().0;
+    app.world_mut()
+        .trigger(bevy::ui_widgets::Activate { entity: button });
+    app.update();
+    assert_eq!(app.world().resource::<Workspace>().focus, Some(intent));
+    assert_eq!(app.world().resource::<CoreState>().snapshot(), before);
+    act(&mut app, Intent::List);
+    let world = app.world_mut();
+    assert!(world.query::<&ImageNode>().iter(world).count() >= 2);
+}
+
+#[test]
+fn procedural_mode_keeps_text_controls_without_empty_icon_nodes() {
+    let mut app = app(carried());
+    app.world_mut().resource_mut::<ItemIconImages>().0.clear();
+    open(&mut app);
+    let world = app.world_mut();
+    assert_eq!(world.query::<&ImageNode>().iter(world).count(), 0);
+    assert!(
+        world
+            .query::<&view::Control>()
+            .iter(world)
+            .any(|control| matches!(control.0, Intent::Select(_)))
+    );
 }
 
 #[test]

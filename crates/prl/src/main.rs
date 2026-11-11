@@ -78,6 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     prl_ui::PrlUiPlugin,
                     prl_audio::PrlAudioPlugin,
                 ))
+                .add_systems(PostStartup, share_item_icons)
                 .add_systems(Update, show_settings.run_if(settings_changed));
             None
         }
@@ -186,6 +187,27 @@ fn persistence_path() -> Result<std::path::PathBuf, Box<dyn std::error::Error>> 
 
 #[derive(Resource)]
 struct BootFailure(String);
+
+fn share_item_icons(
+    atlas: Option<Res<'_, prl_render::ItemIconAtlas>>,
+    mut images: ResMut<'_, prl_ui::ItemIconImages>,
+) {
+    let Some(atlas) = atlas else { return };
+    images.0 = atlas
+        .rects
+        .iter()
+        .map(|(icon, rect)| {
+            (
+                *icon,
+                ImageNode {
+                    image: atlas.image.clone(),
+                    rect: Some(Rect::from_corners(rect.min.as_vec2(), rect.max.as_vec2())),
+                    ..default()
+                },
+            )
+        })
+        .collect();
+}
 
 fn settings_changed(
     motion: Res<'_, prl_render::AnimationSpeed>,

@@ -24,6 +24,12 @@ stair markers while retaining schema 1; map-specific visual overrides render
 the outdoor floor as grass without changing its logical tile. Candidate mode
 can load the separate animated player atlas or retain the static UltiCa player.
 Candidate coverage/image failures surface before play.
+Item art uses headless `prl_content::ItemIcon` physical categories exposed by
+`Inventory::icon`, never hidden affix/effect IDs. The binary bridges loaded
+image/rectangle data from `ItemIconAtlas` into `prl_ui::ItemIconImages`;
+presentation siblings do not depend on one another. Image children do not own
+selection or pointer input. Missing consumable art is explicitly placeholder,
+while missing required candidate sword/mail mappings fail validation.
 UltiCa's 32x32 source grid maps at 2x to existing 64-unit logical cells;
 taller sprites retain proportional bounds. Presentation does not change core
 coordinates, RNG, snapshots, FOV/memory or action timing. Item art must use known-only

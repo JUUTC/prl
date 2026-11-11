@@ -41,6 +41,20 @@
       "subject": "Ultica \"32x48 tilesheet\" (#896)"
     }
   ],
+  "pngs_incomplete_32x32/items/longsword/longsword.png": [
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "a089f28dc419a4c5b3bc663da5376e5ccebbf40f",
+      "subject": "m107a1, water and wind mills and other fillers (#171)"
+    }
+  ],
+  "pngs_normal_32x32/items/ace_unsorted/chainmail_hauberk.png": [
+    {
+      "author": "acepleiades",
+      "revision": "e37c24bfaded50a2af10bfe751b3f7168147cc7c",
+      "subject": "part 2"
+    }
+  ],
   "pngs_normal_32x32/monsters/animals/mutants/mon_sewer_rat.png": [
     {
       "author": "I-am-Erk",

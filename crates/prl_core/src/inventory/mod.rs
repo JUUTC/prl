@@ -151,6 +151,14 @@ impl Inventory {
             .find(|definition| definition.id == item.definition)
     }
 
+    /// Public physical art category; hidden affixes, effects and identity never
+    /// select a different icon. Generic consumables do not encode appearances.
+    #[must_use]
+    pub fn icon(&self, item: &Item) -> Option<prl_content::ItemIcon> {
+        self.definition(item)
+            .map(|definition| definition.kind.icon())
+    }
+
     /// Known name without leaking unidentified affixes.
     #[must_use]
     pub fn label(&self, item: &Item) -> String {
@@ -821,6 +829,36 @@ impl CoreState {
 mod tests {
     use super::*;
     use crate::{Command, CommandResult};
+
+    #[test]
+    fn icons_ignore_hidden_affixes_effect_strength_identity_and_rotation() {
+        let state = crate::test_support::dungeon();
+        let inventory = state.inventory().unwrap();
+        let before = state.snapshot();
+        for item in inventory.items() {
+            let expected = inventory.icon(item).unwrap();
+            let mut changed = inventory.clone();
+            let definition = changed
+                .catalog
+                .items
+                .iter_mut()
+                .find(|definition| definition.id == item.definition)
+                .unwrap();
+            definition.affix.damage = 900;
+            definition.affix_name = "SECRET".into();
+            definition.name = "SECRET TYPE".into();
+            definition.id = "prl:secret_replacement".parse().unwrap();
+            if let ItemKind::Healing { amount } = &mut definition.kind {
+                *amount = 999;
+            }
+            let mut public_item = item.clone();
+            public_item.definition = definition.id.clone();
+            public_item.identified = !item.identified;
+            public_item.rotated = !item.rotated;
+            assert_eq!(changed.icon(&public_item), Some(expected));
+        }
+        assert_eq!(state.snapshot(), before);
+    }
 
     #[test]
     fn item_previews_share_command_costs_and_never_mutate_state() {

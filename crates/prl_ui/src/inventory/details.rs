@@ -11,6 +11,7 @@ pub(super) fn render(
     core: &CoreState,
     workspace: &Workspace,
     theme: &PlaceholderTheme,
+    images: &super::ItemIconImages,
 ) {
     text(parent, "ITEM DETAILS", theme);
     let Some(item) = selected(core, workspace) else {
@@ -21,6 +22,7 @@ pub(super) fn render(
     let Some(definition) = bag.definition(item) else {
         return;
     };
+    super::view::detail_icon(parent, core, item, images);
     text(parent, bag.label(item), theme);
     text(
         parent,

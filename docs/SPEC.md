@@ -237,8 +237,9 @@ approve a replacement UI style.
 
 The [tileset integration plan](tileset-integration.md) pins the first UltiCa
 technical candidate. Subset notices, offline conversion and opt-in current-crypt
-rendering are implemented; knowledge-safe item icons and Windows acceptance
-remain open. This is not final art selection or approval of full-game coverage.
+rendering and bounded knowledge-safe sword/mail icons are implemented.
+Consumable artwork and Windows acceptance remain open. This is not final art
+selection or approval of full-game coverage.
 
 - **Tone:** grimdark-hopeful high fantasy — a weathered, earthy world with saturated accents for magic and the blight. Applies to art, UI and writing.
 - **Character baseline:** the earlier Gravebound brief calls for two unlabeled silhouettes and five looks per race/silhouette. Whether the selected tileset can support those targets and the earlier natural-proportion style remains under review (Q-036); no substitute appearance design is approved.

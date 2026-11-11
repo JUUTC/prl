@@ -15,6 +15,7 @@ ron.workspace = true
 serde.workspace = true
 
 [dev-dependencies]
+prl_gen.workspace = true
 tempfile.workspace = true
 
 [lints]

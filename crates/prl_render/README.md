@@ -23,7 +23,11 @@ larger canvases retain proportional bounds. Candidate enemies use single static,
 unmirrored frames, retaining traversal/hit feedback. The binary defaults to the
 animated placeholder player; `--player=ultica` selects the static fixed-kit art.
 Neither player represents current equipment. Map-specific overrides supply grass
-for the outdoor approach without changing terrain rules. UI, item icons and ground loot markers are unchanged.
+for the outdoor approach without changing terrain rules. Sword/mail ground icons
+share `Inventory::icon`'s public category lookup with inventory UI. The binary
+bridges `ItemIconAtlas` image/rectangles into `prl_ui::ItemIconImages`; the
+sibling crates do not depend on one another. Only visible, filter-matching
+ground items select a marker. Consumables retain text/category placeholders.
 See [`tools/tileset`](../../tools/tileset/README.md) for conversion, licences,
 original source pixels and package verification.
 

@@ -45,6 +45,20 @@
         "subject": "Ultica \"32x48 tilesheet\" (#896)"
       }
     ],
+    "pngs_incomplete_32x32/items/longsword/longsword.png": [
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "a089f28dc419a4c5b3bc663da5376e5ccebbf40f",
+        "subject": "m107a1, water and wind mills and other fillers (#171)"
+      }
+    ],
+    "pngs_normal_32x32/items/ace_unsorted/chainmail_hauberk.png": [
+      {
+        "author": "acepleiades",
+        "revision": "e37c24bfaded50a2af10bfe751b3f7168147cc7c",
+        "subject": "part 2"
+      }
+    ],
     "pngs_normal_32x32/monsters/animals/mutants/mon_sewer_rat.png": [
       {
         "author": "I-am-Erk",
@@ -357,6 +371,50 @@
         "source_sha256": "493dca14a3e59679fc4be2d5b76f70f44f1de8d0be5f79a1cc0f954c82fbeb38",
         "subtile": null,
         "tile_id": "mon_sewer_rat",
+        "variant": 0
+      }
+    ],
+    "prl:item_body/layers": [
+      {
+        "index": 3105,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          32,
+          2624,
+          64,
+          2656
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/items/ace_unsorted/chainmail_hauberk.png",
+        "source_sha256": "be1df0a6f4ac869bfa338aec81f909789d20e709c525363a1288f6f56d225ac1",
+        "subtile": null,
+        "tile_id": "mc_chainmail_hauberk",
+        "variant": 0
+      }
+    ],
+    "prl:item_main_hand/layers": [
+      {
+        "index": 13640,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          192,
+          384,
+          224,
+          416
+        ],
+        "sheet": "incomplete.png",
+        "source": "pngs_incomplete_32x32/items/longsword/longsword.png",
+        "source_sha256": "abc5731da489b72fb5d3c417c17d059d9ab4b7f9d16ab4001f2f2690ec1b61b1",
+        "subtile": null,
+        "tile_id": "longsword",
         "variant": 0
       }
     ],

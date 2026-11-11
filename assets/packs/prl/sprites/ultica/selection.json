@@ -97,6 +97,42 @@
         ]
       ]
     },
+    "prl:item_body": {
+      "crop": [
+        0,
+        32,
+        32,
+        32
+      ],
+      "kind": "marker",
+      "layers": [
+        [
+          "mc_chainmail_hauberk",
+          "fg",
+          null,
+          0,
+          "pngs_normal_32x32/items/ace_unsorted/chainmail_hauberk.png"
+        ]
+      ]
+    },
+    "prl:item_main_hand": {
+      "crop": [
+        0,
+        32,
+        32,
+        32
+      ],
+      "kind": "marker",
+      "layers": [
+        [
+          "longsword",
+          "fg",
+          null,
+          0,
+          "pngs_incomplete_32x32/items/longsword/longsword.png"
+        ]
+      ]
+    },
     "prl:outdoor_grass": {
       "kind": "marker",
       "layers": [

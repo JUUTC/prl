@@ -17,7 +17,7 @@ mod facing;
 mod map;
 mod motion;
 
-pub use art::{ArtError, ArtSource, PLACEHOLDER_MANIFEST, ULTICA_MANIFEST};
+pub use art::{ArtError, ArtSource, ItemIconAtlas, PLACEHOLDER_MANIFEST, ULTICA_MANIFEST};
 pub use camera::{TILE_SIZE, WorldZoom, tile_to_world};
 pub use motion::AnimationSpeed;
 
