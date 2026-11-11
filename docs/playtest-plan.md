@@ -54,6 +54,27 @@ The skills/character and scroll/Codex interviews record future rules in
 Q-030–Q-035 and I-037/I-038; they are not implemented in the present playtest.
 The defaults below remain proposals for the slice, not recovered timing answers.
 
+## Next systems work from the interview (2026-11-11)
+
+Visual acceptance is not a prerequisite for the following headless work. The
+playable code currently has no character stat/skill ledger, skill-gain stream,
+creation screen, general unknown-scroll Read or Codex. Saving/morgues and the
+inventory workspace are foundations, not delivery of those systems.
+
+| Priority | Bounded increment | What can proceed | What must not be assumed |
+|---|---|---|---|
+| 1 | Creation validation and section state (I-046) | Accepted point-buy costs/bounds, stat/skill budgets and starting cap; independent Default/Customize/Random sections, edit/reset rules and pure validation tests | Revised class allocations, racial skill bonuses, gear economy and random distributions are still open. Keep this headless until content is reconciled; do not silently replace the playable starter |
+| 2 | Progression simulation (I-047/I-006) | Compare explicitly experimental opponent-based gain models, zero-skill growth, repetition, practice and per-skill opportunity frequency | Old hit-probability formula, Tactics, school-specific Magic skills and legacy pacing are not accepted implementation defaults |
+| 3 | Live progression and creation integration (I-037) | After the needed catalogue/content and model decisions: stat/skill ledger, isolated RNG, save migration, known-only comparisons, HUD and morgue history | Stealth, racial aptitudes, class allocations, revised ability prerequisites and final growth parameters remain decisions, not programming details |
+| 4 | Scroll/Codex increment (I-038) | Preserve the accepted physical-item identity, unknown-target selection, consumption, run knowledge and quick-slot rules when designing the slice | Do not expose a Read button backed by arbitrary fizzle probabilities. Misfire/ID formulas, spell families/levels, per-type bonus properties and supporting Magic/Identification state must be specified first |
+
+I-028 stacks have accepted exclusions and pickup/transfer direction, but exact
+compatibility fields and merge-on-identification policy remain open. Broader
+slots/encumbrance depend on character stats. Town/storage, crafting, optimizer,
+custom filters and full overworld remain later slices, not prerequisites for
+these foundation increments. Windows/4K/audio/visual feedback gates remain open
+and should not be marked accepted merely because the package builds.
+
 ## Scope of the first complete slice
 
 | Include | Defer without changing the full-game spec |
@@ -64,7 +85,7 @@ The defaults below remain proposals for the slice, not recovered timing answers.
 | Physical melee, glance/block/crit/armor, simple enemy AI | Ranged combat, magic, elemental statuses and complex AI |
 | Light radius, FOV and remembered terrain | Day/night, dynamic fire and shader polish |
 | 10x6 grid inventory, weight, equipment, potion, Normal/Magic gear, Identify scroll | Bags, full affix catalogue, crafting, vendors, pack animals and houses |
-| Swords/Tactics gains, skill display, Power Level and a tested unlock | All skills, synergies and long-run balance |
+| Swords gains, skill display, Power Level and a tested unlock under the revised skill model | Full revised skill catalogue, synergies and long-run balance; removed Tactics is not a slice requirement |
 | Quit-save, overwritten checkpoint, permadeath, morgue and retry | Explorer respawn, profile feats, Malgareth, blight and NG+ |
 | Minimal data-driven base pack, theme, licensed placeholders and basic SFX | Mod browser, complete patch operations, scripting, original art and music |
 
