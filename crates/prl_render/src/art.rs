@@ -20,6 +20,7 @@ pub const ULTICA_MANIFEST: &str = "sprites/ultica/ultica.ron";
 pub struct ArtSource {
     pack: PathBuf,
     candidate: bool,
+    animated_player: bool,
 }
 
 impl ArtSource {
@@ -29,6 +30,7 @@ impl ArtSource {
         Self {
             pack,
             candidate: false,
+            animated_player: false,
         }
     }
 
@@ -38,6 +40,17 @@ impl ArtSource {
         Self {
             pack,
             candidate: true,
+            animated_player: false,
+        }
+    }
+
+    /// Select `UltiCa` scenery with the earlier animated placeholder player.
+    #[must_use]
+    pub fn ultica_with_animated_player(pack: PathBuf) -> Self {
+        Self {
+            pack,
+            candidate: true,
+            animated_player: true,
         }
     }
 
@@ -55,6 +68,27 @@ impl ArtSource {
     /// Reports invalid/missing files, mismatched source status and missing mappings.
     pub fn validate_for(&self, state: &prl_core::CoreState) -> Result<(), ArtError> {
         let (index, _) = read(self)?;
+        if self.animated_player {
+            let (player, _) = read(&Self::placeholder(self.pack.clone()))?;
+            for actor in state
+                .content()
+                .actors()
+                .filter(|actor| actor.behavior == prl_core::ActorBehavior::Player)
+            {
+                let Some(sprites) = player.actors.get(&actor.id) else {
+                    return Err(invalid(format!(
+                        "animated player atlas missing {}",
+                        actor.id
+                    )));
+                };
+                if sprites.walk.is_none() || sprites.attack.is_none() {
+                    return Err(invalid(format!(
+                        "animated player {} needs walk and attack clips",
+                        actor.id
+                    )));
+                }
+            }
+        }
         if self.candidate {
             for actor in state.content().actors() {
                 if !index.actors.contains_key(&actor.id) {
@@ -85,6 +119,18 @@ impl ArtSource {
                     )));
                 }
             }
+            if let Some(approach) = state
+                .content()
+                .maps()
+                .find(|map| map.id.to_string() == "prl:crypt_approach")
+                && !index.map_tiles.get(&approach.id).is_some_and(|tiles| {
+                    tiles.iter().any(|(tile, marker)| {
+                        tile.to_string() == "prl:floor" && marker == "outdoor_grass"
+                    })
+                })
+            {
+                return Err(invalid("candidate is missing the outdoor grass mapping"));
+            }
         }
         Ok(())
     }
@@ -107,6 +153,8 @@ struct Manifest {
     tiles: BTreeMap<ContentId, TileManifest>,
     #[serde(default)]
     markers: BTreeMap<String, TileManifest>,
+    #[serde(default)]
+    map_tiles: BTreeMap<ContentId, BTreeMap<ContentId, String>>,
 }
 
 fn unit_scale() -> f32 {
@@ -268,6 +316,7 @@ pub(crate) struct AtlasIndex {
     pub(crate) actors: BTreeMap<ContentId, ActorSprites>,
     pub(crate) tiles: BTreeMap<ContentId, TileSprites>,
     pub(crate) markers: BTreeMap<String, TileSprites>,
+    pub(crate) map_tiles: BTreeMap<ContentId, BTreeMap<ContentId, String>>,
 }
 
 /// Loaded presentation atlas used by the map renderer.
@@ -277,6 +326,9 @@ pub(crate) struct AtlasArt {
     pub(crate) layout: Handle<TextureAtlasLayout>,
     pub(crate) index: AtlasIndex,
 }
+
+#[derive(Resource, Debug)]
+pub(crate) struct PlayerArt(pub(crate) AtlasArt);
 
 impl AtlasArt {
     pub(crate) fn sprite(&self, index: usize) -> Sprite {
@@ -417,11 +469,18 @@ pub(crate) fn parse_manifest(text: &str) -> Result<AtlasIndex, ArtError> {
         .into_iter()
         .map(|(id, entry)| Ok((id, tile(entry)?)))
         .collect::<Result<_, ArtError>>()?;
-    let markers = manifest
+    let markers: BTreeMap<String, TileSprites> = manifest
         .markers
         .into_iter()
         .map(|(id, entry)| Ok((id, tile(entry)?)))
         .collect::<Result<_, ArtError>>()?;
+    for mappings in manifest.map_tiles.values() {
+        for marker in mappings.values() {
+            if !markers.contains_key(marker) {
+                return Err(invalid(format!("unknown map tile marker {marker}")));
+            }
+        }
+    }
     Ok(AtlasIndex {
         image: manifest.image,
         size,
@@ -430,6 +489,7 @@ pub(crate) fn parse_manifest(text: &str) -> Result<AtlasIndex, ArtError> {
         actors,
         tiles,
         markers,
+        map_tiles: manifest.map_tiles,
     })
 }
 
@@ -476,6 +536,25 @@ fn load(
                 layout: layouts.add(layout),
                 index,
             });
+            if source.animated_player {
+                match read(&ArtSource::placeholder(source.pack.clone())) {
+                    Ok((index, image)) => {
+                        let mut layout = TextureAtlasLayout::new_empty(index.size);
+                        for rect in &index.rects {
+                            layout.add_texture(*rect);
+                        }
+                        commands.insert_resource(PlayerArt(AtlasArt {
+                            image: images.add(image),
+                            layout: layouts.add(layout),
+                            index,
+                        }));
+                    }
+                    Err(error) => {
+                        error!("Animated player atlas unavailable: {error}");
+                        exit.write(AppExit::error());
+                    }
+                }
+            }
         }
         Err(error) => {
             error!(
@@ -595,8 +674,14 @@ mod tests {
         source.validate_for(&prl_core::CoreState::demo()?)?;
         let (index, _) = read(&source)?;
         assert_eq!(index.scale, 2.0);
-        assert_eq!(index.size, UVec2::new(320, 64));
-        assert_eq!(index.markers.len(), 2);
+        assert_eq!(index.size, UVec2::new(374, 66));
+        assert_eq!(index.markers.len(), 3);
+        assert_eq!(
+            index.map_tiles[&id("crypt_approach")?][&id("floor")?],
+            "outdoor_grass"
+        );
+        ArtSource::ultica_with_animated_player(pack())
+            .validate_for(&prl_core::CoreState::demo()?)?;
         assert_ne!(
             index.tiles[&id("door")?].open,
             Some(index.tiles[&id("door")?].closed)
@@ -641,7 +726,7 @@ mod tests {
             text.replace("\"prl:floor\"", "\"prl:missing_tile\""),
             text.replace("\"stairs_up\"", "\"missing_marker\""),
             text.replace("status: \"candidate\"", "status: \"placeholder\""),
-            text.replace("size: (320, 64)", "size: (321, 64)"),
+            text.replace("size: (374, 66)", "size: (375, 66)"),
         ] {
             std::fs::write(&target, changed)?;
             assert!(source.validate_for(&state).is_err());
@@ -661,7 +746,7 @@ mod tests {
             text.replace("offset_y: 32.0", "offset_y: inf"),
             text.replace("\"ultica.png\"", "\"../ultica.png\""),
             text.replace("\"ultica.png\"", "\"C:ultica.png\""),
-            text.replace("size: (320, 64)", "size: (9000, 64)"),
+            text.replace("size: (374, 66)", "size: (9000, 66)"),
         ] {
             assert!(parse_manifest(&changed).is_err(), "{changed}");
         }

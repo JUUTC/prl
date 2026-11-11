@@ -1,6 +1,6 @@
 {
   "archive_sha256": "da1edc5b2ecc6390b143dbea5bd3e5302faae473b939631e1593e9b86b0f120d",
-  "changes": "Selected fixed variants; composed layers; repacked native pixels. Player kit is a fixed candidate study, not dynamic equipment.",
+  "changes": "Selected fixed variants; composed layers; repacked native pixels with extruded one-pixel borders. Player kit is a fixed candidate study, not dynamic equipment.",
   "revision": "5ee942f9e6601970c5da356200e7cf5061226262",
   "source_history": {
     "pngs_human_body_32x36/overlay/wielded/longsword/longsword_mf.png": [
@@ -31,7 +31,7 @@
         "subject": "Ultica \"32x48 tilesheet\" (#896)"
       }
     ],
-    "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png": [
+    "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton_brute.png": [
       {
         "author": "Serhiy Zahoriya",
         "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
@@ -64,7 +64,7 @@
         "subject": "Ultica \"32x48 tilesheet\" (#896)"
       }
     ],
-    "pngs_normal_32x32/terrain/stairs/t_stairs_down.png": [
+    "pngs_normal_32x32/terrain/stairs/t_wood_stairs_down.png": [
       {
         "author": "I-am-Erk",
         "revision": "a8920c440fc364b8ec9e617cf2d4436cb8e41e7d",
@@ -105,6 +105,33 @@
         "author": "I-am-Erk",
         "revision": "9ed824e3326854f4fefd26597f22f8480dff3984",
         "subject": "broken door, wielded hammer, some item rearrangement"
+      }
+    ],
+    "pngs_normal_32x32/terrain/t_grass/t_grass_center.png": [
+      {
+        "author": "acepleiades",
+        "revision": "c44cdbe33a3772c4338dd49b96a72c64b51701e5",
+        "subject": "make things brighter"
+      },
+      {
+        "author": "acepleiades",
+        "revision": "39b9557aa44de89f8812aa8e8f6536e688aa0782",
+        "subject": "realistic grass 1"
+      },
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "ad22da1954d807abdab0f15502bfd12d11e4d549",
+        "subject": "Replacing dirt backgrounds with grass (#390)"
+      },
+      {
+        "author": "barsoosayque",
+        "revision": "cf86f326c9744ab3c34e510abfad8aba9ea07e02",
+        "subject": "Natural terrain update (#149)"
+      },
+      {
+        "author": "Isaac Freund",
+        "revision": "7172a59bf2fb481e6714fa8d21e6df602b7cb448",
+        "subject": "Reorganize directory structure"
       }
     ],
     "pngs_normal_32x32/terrain/t_rock/t_rock_center.png": [
@@ -333,6 +360,28 @@
         "variant": 0
       }
     ],
+    "prl:outdoor_grass/layers": [
+      {
+        "index": 6751,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          480,
+          9888,
+          512,
+          9920
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_grass/t_grass_center.png",
+        "source_sha256": "20bbcf086f074403de55f7cb5a27eb779eef0675e6cac05094777767a0de5462",
+        "subtile": null,
+        "tile_id": "t_grass",
+        "variant": 0
+      }
+    ],
     "prl:player/layers": [
       {
         "index": 12441,
@@ -433,27 +482,27 @@
         "source": "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png",
         "source_sha256": "2cbac7c144766eb371102cd96403dda8bf5816c1da18438194500f930f82e040",
         "subtile": null,
-        "tile_id": "mon_zombie",
+        "tile_id": "mon_skeleton_brute",
         "variant": 0
       },
       {
-        "index": 12612,
+        "index": 12545,
         "offset": [
           0,
           -16
         ],
         "plane": "fg",
         "rect": [
-          128,
-          672,
-          160,
-          720
+          32,
+          480,
+          64,
+          528
         ],
         "sheet": "human_body_plus.png",
-        "source": "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png",
-        "source_sha256": "3fc59372a124ab576a1c0bfef4f988d918079325046ee8b2351057242b401daf",
+        "source": "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton_brute.png",
+        "source_sha256": "38a66146854e660e72adf2488118dee31ea77f8575a4f6944911956aa13a8436",
         "subtile": null,
-        "tile_id": "mon_zombie",
+        "tile_id": "mon_skeleton_brute",
         "variant": 0
       }
     ],
@@ -501,23 +550,23 @@
     ],
     "prl:stairs_down/layers": [
       {
-        "index": 5492,
+        "index": 5493,
         "offset": [
           0,
           0
         ],
         "plane": "fg",
         "rect": [
-          128,
-          7392,
           160,
+          7392,
+          192,
           7424
         ],
         "sheet": "normal.png",
-        "source": "pngs_normal_32x32/terrain/stairs/t_stairs_down.png",
-        "source_sha256": "b8dbd2397c4ab0512bfe64c988d685d6966febf84241ad2362fbd5d0d6477f39",
+        "source": "pngs_normal_32x32/terrain/stairs/t_wood_stairs_down.png",
+        "source_sha256": "7266ddc7ebe17be46cc12ffa2fb65c661bf12f8b53c5daf1cadc09fc1c96ca7b",
         "subtile": null,
-        "tile_id": "t_stairs_down",
+        "tile_id": "t_wood_stairs_down",
         "variant": 0
       }
     ],

@@ -263,11 +263,23 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
     } else {
         String::new()
     };
-    let dungeon = core.floor_number().map_or_else(String::new, |floor| {
-        let weight = core.inventory().map_or_else(String::new, |inventory|
-            format!(" | Carry {}/{} g", inventory.carried_weight(), inventory.carry_capacity()));
-        format!("\nCrypt floor {floor}/2{weight} | G pickup | I inventory | X examine | Enter down | , up{}",
-            if core.slice_completed() { "\nCRYPT CLEARED - playtest endpoint. R: new run." } else { "" })
+    let dungeon = core.floor_plan().map_or_else(String::new, |plan| {
+        let weight = core.inventory().map_or_else(String::new, |inventory| {
+            format!(
+                " | Carry {}/{} g",
+                inventory.carried_weight(),
+                inventory.carry_capacity()
+            )
+        });
+        format!(
+            "\nLocation {}{weight} | G pickup | I inventory | X examine | Enter down | , up{}",
+            plan.definition.name().replace('_', " "),
+            if core.slice_completed() {
+                "\nCRYPT CLEARED - playtest endpoint. R: new run."
+            } else {
+                ""
+            }
+        )
     });
     let stage = if core.floor_number().is_some() {
         "P3"
@@ -354,10 +366,14 @@ fn examine_text(core: &CoreState, position: Option<prl_core::Position>) -> Strin
         }
         if let Some(plan) = core.floor_plan() {
             if position == plan.entrance {
-                lines.push("\n< Arrival / stairs up (comma; floor 1 has no outside map).".into());
+                if core.floor_number() == Some(1) {
+                    lines.push("\nStart of this run.".into());
+                } else {
+                    lines.push("\n< Stairs up / return (comma).".into());
+                }
             }
             if position == plan.exit {
-                lines.push("\n> Stairs down / guardian endpoint (Enter).".into());
+                lines.push("\n> Stairs down / continue or finish (Enter).".into());
             }
         }
     }
@@ -511,17 +527,18 @@ mod tests {
         let core = crate::crypt_fixture();
         let header = header_text(&core, &UiMode::default(), &SettingsStatus::default());
         assert!(header.contains("P3 PLACEHOLDER"));
-        assert!(header.contains("Crypt floor 1/2"));
+        assert!(header.contains("Location crypt approach"));
         let entrance = core.floor_plan().unwrap().entrance;
         let exit = core.floor_plan().unwrap().exit;
         assert!(!core.is_visible(exit));
         let unseen = examine_text(&core, Some(exit));
         assert!(unseen.contains("Unexplored"));
         assert!(!unseen.contains("Steel"));
-        assert!(!unseen.contains("guardian endpoint"));
+        assert!(!unseen.contains("Stairs down"));
         let visible = examine_text(&core, Some(entrance));
         assert!(visible.contains("Iron sword"));
-        assert!(visible.contains("Arrival"));
+        assert!(visible.contains("Start of this run."));
+        assert!(!visible.contains("Stairs up"));
         assert!(loot_text(&core, false).contains("Iron sword"));
         assert!(!loot_text(&core, true).contains("Steel"));
     }

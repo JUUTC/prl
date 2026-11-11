@@ -16,6 +16,7 @@ ROOT = HERE.parents[1]
 OUTPUT = ROOT / "assets/packs/prl/sprites/ultica"
 SELECTION = HERE / "ultica.json"
 PREFIX = "UltimateCataclysm/"
+PADDING = 1
 
 
 def digest(data: bytes) -> str:
@@ -152,14 +153,25 @@ def generate(archive: bytes, selection: dict, source_dir: Path) -> dict[str, byt
                 continue
             picture, records = composite(tileset, visual[key], selection, source_dir)
             entry["open" if key == "open_layers" else "rect"] = (
-                len(frames) * picture.width, 0, picture.width, picture.height)
+                len(frames) * (picture.width + 2 * PADDING) + PADDING,
+                PADDING, picture.width, picture.height)
             frames.append(picture)
             provenance[f"{visual_id}/{key}"] = records
         entries[visual_id] = entry
     width, height = selection["canvas"]
-    atlas = Image.new("RGBA", (width * len(frames), height))
+    stride = width + 2 * PADDING
+    atlas = Image.new("RGBA", (stride * len(frames), height + 2 * PADDING))
     for index, frame in enumerate(frames):
-        atlas.paste(frame, (index * width, 0))
+        x = index * stride + PADDING
+        atlas.paste(frame, (x, PADDING))
+        # Extrude each edge and corner so sampling cannot reach adjacent sprites.
+        atlas.paste(frame.crop((0, 0, 1, height)), (x - 1, PADDING))
+        atlas.paste(frame.crop((width - 1, 0, width, height)), (x + width, PADDING))
+        atlas.paste(frame.crop((0, 0, width, 1)), (x, 0))
+        atlas.paste(frame.crop((0, height - 1, width, height)), (x, height + PADDING))
+        for dx, sx in ((-1, 0), (width, width - 1)):
+            for dy, sy in ((0, 0), (height + PADDING, height - 1)):
+                atlas.putpixel((x + dx, dy), frame.getpixel((sx, sy)))
     buffer = io.BytesIO()
     atlas.save(buffer, format="PNG", optimize=False, compress_level=9)
     origin_x, origin_y = selection["origin"]
@@ -190,6 +202,14 @@ def generate(archive: bytes, selection: dict, source_dir: Path) -> dict[str, byt
         if entry["kind"] == "marker":
             lines.append(f'        "{visual_id.split(":")[-1]}": (rect: {entry["rect"]}, offset_x: {offset_x}, '
                          f'offset_y: {offset_y}, open: None),')
+    lines += ["    },", "    map_tiles: {"]
+    for map_id, mappings in sorted(selection.get("map_tiles", {}).items()):
+        lines.append(f'        "{map_id}": {{')
+        for tile_id, marker in sorted(mappings.items()):
+            if f"prl:{marker}" not in entries or entries[f"prl:{marker}"]["kind"] != "marker":
+                raise ValueError(f"unknown map tile marker: {marker}")
+            lines.append(f'            "{tile_id}": "{marker}",')
+        lines.append("        },")
     lines += ["    },", ")"]
     outputs = {"ultica.png": buffer.getvalue(), "ultica.ron": ("\n".join(lines) + "\n").encode()}
     sources = sorted({r["source"] for rows in provenance.values() for r in rows})
@@ -200,7 +220,8 @@ def generate(archive: bytes, selection: dict, source_dir: Path) -> dict[str, byt
         json.dumps({s: histories[s] for s in sources}, indent=2, sort_keys=True) + "\n").encode()
     outputs["selection.json"] = (json.dumps(selection, indent=2, sort_keys=True) + "\n").encode()
     report = {"revision": selection["revision"], "archive_sha256": digest(archive),
-              "changes": "Selected fixed variants; composed layers; repacked native pixels. "
+              "changes": "Selected fixed variants; composed layers; repacked native pixels "
+                         "with extruded one-pixel borders. "
                          "Player kit is a fixed candidate study, not dynamic equipment.",
               "visuals": provenance, "source_history": {s: histories[s] for s in sources}}
     outputs["provenance.json"] = (json.dumps(report, indent=2, sort_keys=True) + "\n").encode()

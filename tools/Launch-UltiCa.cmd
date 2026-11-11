@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-echo PRL - UltiCa crypt candidate (fixed player appearance, not final art)
+echo PRL - UltiCa candidate (animated placeholder player, not final art)
 echo Diagnostic output is written to playtest-ultica.log in this folder.
 prl.exe --tileset=ultica > playtest-ultica.log 2>&1
 if errorlevel 1 (

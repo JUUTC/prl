@@ -17,6 +17,10 @@ historical context, not prerequisites for adopting a tileset.
 - Static actors and tiles are acceptable. Reuse supplied facings and frames;
   dedicated idle/walk/attack/work/consumable/casting poses and independently
   authored left/right sets are not mandatory.
+- The user requested the earlier animated placeholder player in the candidate
+  dungeon and an outdoor location. Candidate mode uses that player by default;
+  the fixed UltiCa player remains selectable. Avoid visibly modern designs
+  when selecting assets for these fantasy scenes.
 - Detailed anatomical hand/grip animation and visible per-action props are
   optional where supported, not reasons to recreate the tileset. Preserve
   gameplay main/off-hand semantics regardless of visual coverage.

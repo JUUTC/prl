@@ -4,6 +4,11 @@
     32,
     64
   ],
+  "map_tiles": {
+    "prl:crypt_approach": {
+      "prl:floor": "outdoor_grass"
+    }
+  },
   "origin": [
     0,
     -32
@@ -92,6 +97,18 @@
         ]
       ]
     },
+    "prl:outdoor_grass": {
+      "kind": "marker",
+      "layers": [
+        [
+          "t_grass",
+          "fg",
+          null,
+          0,
+          "pngs_normal_32x32/terrain/t_grass/t_grass_center.png"
+        ]
+      ]
+    },
     "prl:player": {
       "kind": "actor",
       "layers": [
@@ -129,18 +146,18 @@
       "kind": "actor",
       "layers": [
         [
-          "mon_zombie",
+          "mon_skeleton_brute",
           "bg",
           null,
           0,
           "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png"
         ],
         [
-          "mon_zombie",
+          "mon_skeleton_brute",
           "fg",
           null,
           0,
-          "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png"
+          "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton_brute.png"
         ]
       ]
     },
@@ -167,11 +184,11 @@
       "kind": "marker",
       "layers": [
         [
-          "t_stairs_down",
+          "t_wood_stairs_down",
           "fg",
           null,
           0,
-          "pngs_normal_32x32/terrain/stairs/t_stairs_down.png"
+          "pngs_normal_32x32/terrain/stairs/t_wood_stairs_down.png"
         ]
       ]
     },

@@ -359,6 +359,7 @@ impl CoreState {
             },
         );
         next.actors.insert(self.player, player);
+        let message = format!("You enter {}.", plan.definition.name().replace('_', " "));
         Ok(TravelPlan {
             dungeon: Box::new(dungeon),
             next: Some(next),
@@ -366,7 +367,7 @@ impl CoreState {
                 from: old_id,
                 to: target,
             },
-            message: format!("You enter crypt floor {}.", target.get()),
+            message,
         })
     }
 

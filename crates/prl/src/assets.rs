@@ -4,15 +4,20 @@ use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
 
-pub(super) fn launch_assets() -> io::Result<(PathBuf, bool)> {
-    let (development, ultica) = options(std::env::args_os().skip(1))?;
+pub(super) fn launch_assets() -> io::Result<(PathBuf, bool, bool)> {
+    let (development, ultica, animated_player) = options(std::env::args_os().skip(1))?;
     let executable = std::env::current_exe()?;
-    Ok((resolve_content_path(&executable, development)?, ultica))
+    Ok((
+        resolve_content_path(&executable, development)?,
+        ultica,
+        animated_player,
+    ))
 }
 
-fn options(arguments: impl IntoIterator<Item = OsString>) -> io::Result<(bool, bool)> {
+fn options(arguments: impl IntoIterator<Item = OsString>) -> io::Result<(bool, bool, bool)> {
     let mut development = false;
     let mut selection = None;
+    let mut player = None;
     for argument in arguments {
         if argument == "--dev-assets" && !development {
             development = true;
@@ -20,14 +25,25 @@ fn options(arguments: impl IntoIterator<Item = OsString>) -> io::Result<(bool, b
             selection = Some(true);
         } else if argument == "--tileset=placeholder" && selection.is_none() {
             selection = Some(false);
+        } else if argument == "--player=animated" && player.is_none() {
+            player = Some(true);
+        } else if argument == "--player=ultica" && player.is_none() {
+            player = Some(false);
         } else {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                "usage: prl [--dev-assets] [--tileset=ultica|--tileset=placeholder]",
+                "usage: prl [--dev-assets] [--tileset=ultica|--tileset=placeholder] [--player=animated|--player=ultica]",
             ));
         }
     }
-    Ok((development, selection.unwrap_or(false)))
+    let ultica = selection.unwrap_or(false);
+    if !ultica && player.is_some() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "--player requires --tileset=ultica",
+        ));
+    }
+    Ok((development, ultica, player.unwrap_or(ultica)))
 }
 
 fn resolve_content_path(executable: &Path, development: bool) -> io::Result<PathBuf> {
@@ -95,10 +111,10 @@ mod tests {
 
     #[test]
     fn checkout_assets_require_explicit_opt_in() {
-        assert_eq!(options([]).unwrap(), (false, false));
+        assert_eq!(options([]).unwrap(), (false, false, false));
         assert_eq!(
             options([OsString::from("--dev-assets")]).unwrap(),
-            (true, false)
+            (true, false, false)
         );
         assert!(options([OsString::from("--dev-asset")]).is_err());
         assert!(
@@ -118,13 +134,18 @@ mod tests {
         ] {
             assert_eq!(
                 options(arguments.map(OsString::from)).unwrap(),
-                (true, true)
+                (true, true, true)
             );
         }
         assert_eq!(
             options([OsString::from("--tileset=ultica")]).unwrap(),
-            (false, true)
+            (false, true, true)
         );
+        assert_eq!(
+            options(["--tileset=ultica", "--player=ultica"].map(OsString::from)).unwrap(),
+            (false, true, false)
+        );
+        assert!(options([OsString::from("--player=ultica")]).is_err());
         assert!(options([OsString::from("--tileset=unknown")]).is_err());
         assert!(
             options(["--tileset=ultica", "--tileset=placeholder"].map(OsString::from)).is_err()
@@ -217,6 +238,30 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(save_path).unwrap(),
             "corrupt but preserved"
+        );
+    }
+
+    #[test]
+    fn legacy_crypt_save_continues_without_overwriting_and_new_run_has_approach() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        let save_path = package.0.join("character.ron");
+        let base = prl_content::ContentPack::load_from_path(&path).unwrap();
+        let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+            "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+        ))
+        .unwrap();
+        let legacy = config.build_legacy(&base, 1).unwrap();
+        let store = prl_save::SnapshotStore::new(&save_path);
+        store.write(&legacy).unwrap();
+        let (mut continued, factory, _, did_continue) =
+            crate::load_playtest(&path, &save_path).unwrap();
+        assert!(did_continue);
+        assert_eq!(continued.snapshot(), legacy.snapshot());
+        factory.issue(&mut continued, prl_core::Command::NewRun);
+        assert_eq!(
+            continued.map().definition().to_string(),
+            "prl:crypt_approach"
         );
     }
 

@@ -44,7 +44,9 @@ items. See [inventory-ux.md](inventory-ux.md).
 The CDDA presentation increment adds an audited, opt-in UltiCa crypt atlas and
 offline subset tooling without changing core/content definitions, snapshots or
 the logical grid. Scale/offsets and static actors belong to rendering; candidate
-loading validates coverage explicitly. The procedural atlas remains the default.
+loading validates coverage explicitly. A small outdoor approach precedes the
+crypt on new runs; the animated placeholder player can coexist with candidate
+scenery. The procedural atlas remains the default.
 See [tileset-integration.md](tileset-integration.md); final art, broader appearance
 coverage, item-icon work and Windows hands-on gates remain separate.
 

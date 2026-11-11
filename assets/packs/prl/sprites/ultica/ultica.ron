@@ -2,20 +2,26 @@
 (
     schema_version: 2, status: "candidate",
     source: "UltiCa 2026-11-08 / 5ee942f9e6601970c5da356200e7cf5061226262",
-    image: "ultica.png", size: (320, 64), scale: 2.0,
+    image: "ultica.png", size: (374, 66), scale: 2.0,
     actors: {
-        "prl:grave_rat": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(96, 0, 32, 64)], left: None), walk: None, attack: None),
-        "prl:player": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(128, 0, 32, 64)], left: None), walk: None, attack: None),
-        "prl:shambler": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(160, 0, 32, 64)], left: None), walk: None, attack: None),
-        "prl:skeleton": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(192, 0, 32, 64)], left: None), walk: None, attack: None),
+        "prl:grave_rat": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(103, 1, 32, 64)], left: None), walk: None, attack: None),
+        "prl:player": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(171, 1, 32, 64)], left: None), walk: None, attack: None),
+        "prl:shambler": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(205, 1, 32, 64)], left: None), walk: None, attack: None),
+        "prl:skeleton": (offset_x: 0.0, offset_y: 32.0, idle: (frame_ms: 1000, right: [(239, 1, 32, 64)], left: None), walk: None, attack: None),
     },
     tiles: {
-        "prl:door": (rect: (0, 0, 32, 64), offset_x: 0.0, offset_y: 32.0, open: Some((32, 0, 32, 64))),
-        "prl:floor": (rect: (64, 0, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
-        "prl:wall": (rect: (288, 0, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
+        "prl:door": (rect: (1, 1, 32, 64), offset_x: 0.0, offset_y: 32.0, open: Some((35, 1, 32, 64))),
+        "prl:floor": (rect: (69, 1, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
+        "prl:wall": (rect: (341, 1, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
     },
     markers: {
-        "stairs_down": (rect: (224, 0, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
-        "stairs_up": (rect: (256, 0, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
+        "outdoor_grass": (rect: (137, 1, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
+        "stairs_down": (rect: (273, 1, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
+        "stairs_up": (rect: (307, 1, 32, 64), offset_x: 0.0, offset_y: 32.0, open: None),
+    },
+    map_tiles: {
+        "prl:crypt_approach": {
+            "prl:floor": "outdoor_grass",
+        },
     },
 )

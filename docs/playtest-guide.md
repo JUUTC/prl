@@ -1,6 +1,6 @@
 # Playtest Guide (P3 "Explore and loot")
 
-This build tests a seeded two-floor crypt: exploring, fighting, looting, equipping,
+This build tests a small outdoor approach and seeded two-floor crypt: exploring, fighting, looting, equipping,
 using consumables, returning upstairs and retrying after death. It is not the full
 game: there are no skills, profile, overworld, towns or campaign. The
 sprites are a generated placeholder atlas of the project's own Gravebound
@@ -29,9 +29,10 @@ Windows package, or locally:
 cargo run -p prl -- --dev-assets --tileset=ultica
 ```
 
-This replaces world tiles, doors, stairs and actors only. Actors are static,
-unmirrored sprites with cosmetic movement/hit feedback. The player has a **fixed
-sword/mail appearance study**, not dynamic equipment visuals. Inventory, item
+The candidate uses UltiCa world tiles, doors, stairs and static enemy sprites,
+with the earlier animated placeholder player by default. To retain the fixed
+UltiCa sword/mail player instead, add `--player=ultica`. Neither player depicts
+dynamic equipment. Inventory, item
 icons, ground loot markers and generated sounds are unchanged. The window title
 labels the candidate; omitting the tileset flag restores the procedural art.
 Missing or corrupt selected candidate files produce a visible boot error, not
@@ -39,7 +40,9 @@ a silent fallback. The CC BY-SA 3.0 art notices and original selected sources
 are included under `assets/packs/prl/sprites/ultica/`.
 This is not final art approval or evidence of a verified Windows launch.
 
-The current provisional save slot continues automatically on launch. It saves
+The current provisional save slot continues automatically on launch. Older
+two-floor saves continue unchanged; start a new run with `R` twice to see the
+outdoor approach. It saves
 after 20 committed player actions, on floor changes and when quitting. A death
 barrier prevents the prior living checkpoint from being continued; launch then
 creates the next run. On Windows the save is under `%LOCALAPPDATA%\PRL`, on
@@ -74,7 +77,9 @@ fallback.
 
 ## Goal
 
-You start at `<` on the upper floor with supplies at your feet. Press `G`
+New runs start outdoors with supplies at your feet. Walk north to the stairs and
+press Enter to enter the upper crypt. Press comma at its up-stairs to return
+outside. Press `G`
 seven times to pick them up, or open `I` and use the ground panel's Pick up.
 Select and equip sword/mail with `E` or the labelled action button. Inventory
 stays open after safe actions; it closes after an action if a hostile is visible
@@ -88,7 +93,8 @@ The crypt has enemies with different speeds:
 
 You are the figure with a shield and coif. Your character faces left or right
 from the horizontal part of each move or attack; straight up or down keeps the
-last facing. Creatures have independent left/right idle, walk and attack clips.
+last facing. The animated placeholder has independent idle, walk and attack
+clips; UltiCa enemies and the optional UltiCa player are static.
 
 Explore toward `>`; some corridors have closed doors (`O`, then direction).
 Both exits contain Magic gear. In inventory, `C` offers an explicit known
@@ -96,8 +102,8 @@ Identify source, followed by review. Starting scrolls are unknown; the UI
 deliberately does not guess their hidden type. General unknown-scroll Read is
 not yet available, so fresh runs currently have no usable known source.
 Enter at the upper `>` descends; comma at the lower
-`<` returns, preserving kills, loot and doors. Floor one's `<` has no outside
-destination. Defeat the lower-floor skeleton guardian, reach its `>` and press
+`<` returns, preserving kills, loot and doors. The upper floor's `<` returns
+to the outdoor approach in new runs. Defeat the lower-floor skeleton guardian, reach its `>` and press
 Enter to clear the crypt. This is a playtest endpoint, not campaign victory.
 If you die, `R` starts a fresh crypt at the next seed.
 The depicted shield is placeholder art, not a working shield/block mechanic.
@@ -223,8 +229,8 @@ steps to reproduce. We are especially interested in:
 ## Implementation boundary
 
 `assets/packs/prl/base.ron` holds the validated tile and actor definitions for
-the actors/terrain. Required `data/dungeons/crypt_playtest.ron` supplies two floor
-settings, encounters, items and Default filter. This is not the full mod/DLC manifest described
+the actors/terrain. Required `data/dungeons/crypt_playtest.ron` supplies the
+outdoor map, two floor settings, encounters, items and Default filter. This is not the full mod/DLC manifest described
 in `docs/standards/extensibility.md`. Unknown or invalid required content must
 fail with an error; there is no silent fallback when a packaged file is broken.
 

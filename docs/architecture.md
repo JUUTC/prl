@@ -20,11 +20,13 @@ The [CDDA integration plan](tileset-integration.md) uses an offline, pinned subs
 conversion to PRL visual mappings; it does not add a runtime CDDA renderer or
 gameplay definitions. `ArtSource` explicitly selects the unchanged procedural
 atlas or the audited UltiCa candidate. Schema 2 adds scale, two-axis offsets and
-stair markers while retaining schema 1; static, single-facing actors need no
-invented animation. Candidate coverage/image failures surface before play.
+stair markers while retaining schema 1; map-specific visual overrides render
+the outdoor floor as grass without changing its logical tile. Candidate mode
+can load the separate animated player atlas or retain the static UltiCa player.
+Candidate coverage/image failures surface before play.
 UltiCa's 32x32 source grid maps at 2x to existing 64-unit logical cells;
-taller sprites retain proportional bounds. Core coordinates, RNG, snapshots,
-FOV/memory and action timing do not change. Item art must use known-only
+taller sprites retain proportional bounds. Presentation does not change core
+coordinates, RNG, snapshots, FOV/memory or action timing. Item art must use known-only
 appearance data, preserving the separate inventory UX work.
 
 ## Workspace layout

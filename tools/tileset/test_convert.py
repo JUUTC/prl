@@ -109,13 +109,59 @@ class ConversionTests(unittest.TestCase):
             outputs = convert.generate(data, selection, source)
             self.assertEqual(outputs, convert.generate(data, selection, source))
             image = Image.open(io.BytesIO(outputs["ultica.png"]))
+            self.assertEqual(image.size, (34, 66))
+            self.assertEqual(image.getpixel((1, 1)), (0, 0, 255, 255))
+            self.assertEqual(image.getpixel((1, 33)), (255, 0, 0, 255))
             self.assertEqual(image.getpixel((0, 0)), (0, 0, 255, 255))
-            self.assertEqual(image.getpixel((0, 32)), (255, 0, 0, 255))
+            self.assertEqual(image.getpixel((33, 65)), (255, 0, 0, 255))
             manifest = outputs["ultica.ron"].decode()
             self.assertIn('status: "candidate"', manifest)
             self.assertIn("scale: 2.0", manifest)
             self.assertIn("offset_x: 0.0, offset_y: 32.0", manifest)
             self.assertIn("left: None", manifest)
+
+    def test_padding_extrudes_each_edge_without_changing_sprite_pixels(self):
+        data = archive(offset=-32)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            Image.new("RGBA", (32, 32), "red").save(source / "red.png")
+            Image.new("RGBA", (32, 64), "blue").save(source / "blue.png")
+            (source / "history.json").write_text(json.dumps({"red.png": [], "blue.png": []}))
+            selection = {
+                "release": "test", "revision": "test", "archive_sha256": convert.digest(data),
+                "canvas": [32, 64], "origin": [0, -32], "scale": 2,
+                "visuals": {
+                    "prl:floor": {"kind": "tile", "layers": [["base", "fg", None, 0, "red.png"]]},
+                    "prl:player": {"kind": "actor", "layers": [["tall", "fg", None, 0, "blue.png"]]},
+                },
+            }
+            outputs = convert.generate(data, selection, source)
+            atlas = Image.open(io.BytesIO(outputs["ultica.png"]))
+            self.assertEqual(atlas.size, (68, 66))
+            tileset = convert.Tileset(data, convert.digest(data))
+            for index in range(2):
+                x = index * 34 + 1
+                frame = atlas.crop((x, 1, x + 32, 65))
+                visual = list(sorted(selection["visuals"]))[index]
+                expected, _ = convert.composite(
+                    tileset, selection["visuals"][visual]["layers"], selection, source)
+                self.assertEqual(frame.tobytes(), expected.tobytes())
+                for y in range(64):
+                    self.assertEqual(atlas.getpixel((x - 1, y + 1)), frame.getpixel((0, y)))
+                    self.assertEqual(atlas.getpixel((x + 32, y + 1)), frame.getpixel((31, y)))
+                    # A fractional camera can move the sample just outside the
+                    # frame. Nearest sampling must still see that frame's edge.
+                    for sample_x in (-0.25, 0.25, 31.75, 32.25):
+                        atlas_x = x + int(sample_x // 1)
+                        edge_x = max(0, min(31, int(sample_x // 1)))
+                        self.assertEqual(atlas.getpixel((atlas_x, y + 1)),
+                                         frame.getpixel((edge_x, y)))
+                for column in range(32):
+                    self.assertEqual(atlas.getpixel((x + column, 0)), frame.getpixel((column, 0)))
+                    self.assertEqual(atlas.getpixel((x + column, 65)), frame.getpixel((column, 63)))
+                for dx, sx in ((-1, 0), (32, 31)):
+                    for dy, sy in ((0, 0), (65, 63)):
+                        self.assertEqual(atlas.getpixel((x + dx, dy)), frame.getpixel((sx, sy)))
 
     def test_package_verification_rejects_missing_notices_or_untracked_art(self):
         output = convert.OUTPUT

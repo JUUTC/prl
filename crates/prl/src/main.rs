@@ -6,7 +6,7 @@ mod assets;
 mod preferences;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (pack_path, ultica) = assets::launch_assets()?;
+    let (pack_path, ultica, animated_player) = assets::launch_assets()?;
     let save_path = persistence_path();
     let state = save_path.and_then(|save_path| {
         let (state, factory, store, continued) = load_playtest(&pack_path, save_path.as_path())?;
@@ -14,7 +14,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .parent()
             .ok_or_else(|| std::io::Error::other("pack path has no parent"))?
             .to_path_buf();
-        let art = if ultica {
+        let art = if ultica && animated_player {
+            prl_render::ArtSource::ultica_with_animated_player(pack)
+        } else if ultica {
             prl_render::ArtSource::ultica(pack)
         } else {
             prl_render::ArtSource::placeholder(pack)
@@ -34,7 +36,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     title: format!(
                         "PRL P3 {} - {build}",
                         if ultica {
-                            "UltiCa candidate (fixed appearance)"
+                            if animated_player {
+                                "UltiCa candidate (animated placeholder player)"
+                            } else {
+                                "UltiCa candidate (fixed UltiCa player)"
+                            }
                         } else {
                             "placeholders"
                         }
@@ -132,7 +138,11 @@ fn load_playtest(
                 settings.display()
             ))
         })?;
-        if state.content() != expected.content() {
+        let legacy_matches = state.content() == expected.content()
+            || config
+                .build_legacy(&base, state.seed())
+                .is_ok_and(|legacy| state.content() == legacy.content());
+        if !legacy_matches {
             return Err(std::io::Error::other(format!(
                 "saved content/configuration in {} differs from the installed crypt; preserve the save and review content compatibility",
                 save_path.display()

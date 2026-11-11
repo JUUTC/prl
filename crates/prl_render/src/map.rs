@@ -48,6 +48,9 @@ fn refresh(
             (plan.entrance, "<", "stairs_up"),
             (plan.exit, ">", "stairs_down"),
         ] {
+            if marker == "stairs_up" && state.floor_number() == Some(1) {
+                continue;
+            }
             if !state.map().is_visible(position) && state.map().remembered_tile(position).is_none()
             {
                 continue;
@@ -127,7 +130,15 @@ fn spawn_terrain(commands: &mut Commands<'_, '_>, state: &CoreState, art: Option
             let centre = tile_to_world(x, y);
             let raised = definition.door || definition.blocks_movement;
             let z = if raised { depth(y) } else { 0.0 };
-            if let Some(tile) = art.and_then(|art| art.index.tiles.get(&memory.definition)) {
+            let tile = art.and_then(|art| {
+                art.index
+                    .map_tiles
+                    .get(map.definition())
+                    .and_then(|tiles| tiles.get(&memory.definition))
+                    .and_then(|marker| art.index.markers.get(marker))
+                    .or_else(|| art.index.tiles.get(&memory.definition))
+            });
+            if let Some(tile) = tile {
                 let index = if definition.door && memory.door_open {
                     tile.open.unwrap_or(tile.closed)
                 } else {

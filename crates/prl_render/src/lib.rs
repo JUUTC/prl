@@ -3,7 +3,8 @@
 //! Reads `prl_core` state and ordered outcomes; never mutates game rules.
 //! The default uses a generated Gravebound placeholder atlas or shape fallback.
 //! Explicit `UltiCa` candidate selection uses an audited, separately licensed
-//! crypt subset with static actors. Neither is final art approval.
+//! crypt and outdoor subset with static enemies and a selectable player.
+//! Neither is final art approval.
 
 use bevy::prelude::*;
 

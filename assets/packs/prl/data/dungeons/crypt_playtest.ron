@@ -1,6 +1,28 @@
 // P3 provisional encounters; art production remains independent.
 (
     format: 1,
+    approach: Some((
+        map: (
+            id: "prl:crypt_approach",
+            rows: [
+                "###############",
+                "#.............#",
+                "#.............#",
+                "#..#.......#..#",
+                "#.............#",
+                "#.............#",
+                "#.............#",
+                "#..#.......#..#",
+                "#.............#",
+                "#.............#",
+                "###############",
+            ],
+            legend: [('#', "prl:wall"), ('.', "prl:floor")],
+            spawns: [(actor: "prl:player", x: 7, y: 8)],
+        ),
+        entrance: (x: 7, y: 8),
+        exit: (x: 7, y: 2),
+    )),
     floors: [
         (format: 1, map: "prl:crypt_upper", width: 32, height: 24,
          wall: "prl:wall", floor: "prl:floor", player: "prl:player"),

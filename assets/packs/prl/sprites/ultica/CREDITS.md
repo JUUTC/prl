@@ -33,13 +33,16 @@ no filler tree or soundpack assets are used here.
 
 PRL adaptations: selected fixed variants, composited source foregrounds,
 backgrounds, shadows and a fixed player kit, repacked native pixels into
-`ultica.png`, and authored PRL visual mappings in `ultica.ron`. Door composites
+`ultica.png` with one-pixel extruded atlas borders, and authored PRL visual
+mappings in `ultica.ron`. Door composites
 include the selected rock floor. No palette recolour, mirroring or interpolated
 resizing is baked into the PNG; the renderer applies nearest-neighbour 2x scale.
 The adapted atlas is offered under CC BY-SA 3.0 Unported with these notices.
 
-This is an opt-in technical candidate, not final visual approval. Player sword
-and mail are a fixed appearance study, not a depiction of current equipment.
-Stone walls and wooden up-stairs replace the first fence/metal-stair study;
+This is an opt-in technical candidate, not final visual approval. The optional
+UltiCa player sword and mail are a fixed appearance study, not a depiction of
+current equipment. A separate repository-owned animated placeholder player is
+the candidate default. Stone walls, wooden stairs and an armoured skeleton
+substitute replace the first fence, metal-stair and modern-clothed-zombie study;
 wall perspective and foreground occlusion still need final visual approval.
 Item icons remain repository-owned category placeholders.

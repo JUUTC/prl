@@ -684,7 +684,24 @@ impl CoreState {
     /// # Errors
     ///
     /// Returns [`CoreError::InvalidRun`] for invalid catalog or non-dungeon runs.
-    pub fn with_items(mut self, catalog: ItemCatalog) -> Result<Self, CoreError> {
+    pub fn with_items(self, catalog: ItemCatalog) -> Result<Self, CoreError> {
+        self.seed_items(catalog, false)
+    }
+
+    /// Adds supplies to every location and rewards only after the first one.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::InvalidRun`] for invalid catalog or non-dungeon runs.
+    pub fn with_items_without_first_reward(self, catalog: ItemCatalog) -> Result<Self, CoreError> {
+        self.seed_items(catalog, true)
+    }
+
+    fn seed_items(
+        mut self,
+        catalog: ItemCatalog,
+        skip_first_reward: bool,
+    ) -> Result<Self, CoreError> {
         let dungeon = self
             .dungeon
             .as_ref()
@@ -723,6 +740,9 @@ impl CoreState {
                 (plan.entrance, &inventory.catalog.supplies),
                 (plan.exit, &inventory.catalog.rewards),
             ] {
+                if skip_first_reward && index == 0 && position == plan.exit {
+                    continue;
+                }
                 let container = ContainerId(inventory.next_container);
                 inventory.next_container += 1;
                 inventory

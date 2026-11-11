@@ -10,7 +10,8 @@ Run without changing the default art:
 cargo run -p prl -- --dev-assets --tileset=ultica
 ```
 
-The candidate uses static, unmirrored actors and a fixed sword/mail player study.
+The candidate uses static, unmirrored enemies and can show either the animated
+repository-owned placeholder player or the fixed UltiCa sword/mail study.
 It does not depict equipment changes; item icons, loot markers and UI remain
 placeholders. No audio is imported. Omitting `--tileset=ultica` keeps the
 repository-owned procedural atlas.
@@ -53,6 +54,8 @@ unsupported directional/animated encodings, mismatched source pixels, clipped
 layers, unsafe paths and oversized inputs. It composes on a common 32x64 native
 canvas with origin `(0, -32)`; the manifest's 2x scale and `(0, 32)` world offset
 place the source cell correctly on PRL's 64-unit grid.
+Each frame has a one-pixel extruded border outside its manifest rectangle to
+prevent adjacent sprites bleeding into moving-camera tile edges.
 
 The atlas is CC BY-SA 3.0 artwork, separately from MIT tool code.
 `CREDITS.md`, `provenance.json`, original source PNGs and upstream notices live

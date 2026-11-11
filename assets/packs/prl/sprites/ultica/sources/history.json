@@ -27,7 +27,7 @@
       "subject": "Ultica \"32x48 tilesheet\" (#896)"
     }
   ],
-  "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png": [
+  "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton_brute.png": [
     {
       "author": "Serhiy Zahoriya",
       "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
@@ -60,7 +60,7 @@
       "subject": "Ultica \"32x48 tilesheet\" (#896)"
     }
   ],
-  "pngs_normal_32x32/terrain/stairs/t_stairs_down.png": [
+  "pngs_normal_32x32/terrain/stairs/t_wood_stairs_down.png": [
     {
       "author": "I-am-Erk",
       "revision": "a8920c440fc364b8ec9e617cf2d4436cb8e41e7d",
@@ -101,6 +101,33 @@
       "author": "I-am-Erk",
       "revision": "9ed824e3326854f4fefd26597f22f8480dff3984",
       "subject": "broken door, wielded hammer, some item rearrangement"
+    }
+  ],
+  "pngs_normal_32x32/terrain/t_grass/t_grass_center.png": [
+    {
+      "author": "acepleiades",
+      "revision": "c44cdbe33a3772c4338dd49b96a72c64b51701e5",
+      "subject": "make things brighter"
+    },
+    {
+      "author": "acepleiades",
+      "revision": "39b9557aa44de89f8812aa8e8f6536e688aa0782",
+      "subject": "realistic grass 1"
+    },
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "ad22da1954d807abdab0f15502bfd12d11e4d549",
+      "subject": "Replacing dirt backgrounds with grass (#390)"
+    },
+    {
+      "author": "barsoosayque",
+      "revision": "cf86f326c9744ab3c34e510abfad8aba9ea07e02",
+      "subject": "Natural terrain update (#149)"
+    },
+    {
+      "author": "Isaac Freund",
+      "revision": "7172a59bf2fb481e6714fa8d21e6df602b7cb448",
+      "subject": "Reorganize directory structure"
     }
   ],
   "pngs_normal_32x32/terrain/t_rock/t_rock_center.png": [

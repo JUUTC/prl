@@ -12,15 +12,18 @@ definition's sprite needs no engine change. If the source is absent or the
 manifest/PNG is invalid, an error is logged and procedural shapes are drawn.
 Neither is final PRL art or palette, and neither completes art P1.
 
-`ArtSource::ultica(pack_dir)` selects the audited, pinned crypt candidate under
-`sprites/ultica/ultica.ron`. The binary opts in with `--tileset=ultica`, validates
+`ArtSource::ultica(pack_dir)` selects the audited, pinned candidate under
+`sprites/ultica/ultica.ron`; `ArtSource::ultica_with_animated_player(pack_dir)`
+combines it with the animated placeholder player. The binary opts in with `--tileset=ultica`, validates
 image decoding and actor/tile/door/stair coverage before play and reports invalid
 candidate data on its boot-error screen; it never silently switches atlases.
 Schema 2 adds display scale, two-axis offsets and stair markers; schema 1 remains
 compatible. Native 32x32 cells display at 2x on the 64-unit logical grid;
-larger canvases retain proportional bounds. Candidate actors use single static,
-unmirrored frames, retaining traversal/hit feedback. The player kit is fixed art,
-not current equipment. UI, item icons and ground loot markers are unchanged.
+larger canvases retain proportional bounds. Candidate enemies use single static,
+unmirrored frames, retaining traversal/hit feedback. The binary defaults to the
+animated placeholder player; `--player=ultica` selects the static fixed-kit art.
+Neither player represents current equipment. Map-specific overrides supply grass
+for the outdoor approach without changing terrain rules. UI, item icons and ground loot markers are unchanged.
 See [`tools/tileset`](../../tools/tileset/README.md) for conversion, licences,
 original source pixels and package verification.
 

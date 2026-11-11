@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use bevy::prelude::*;
 use prl_core::{ACTION_ENERGY, Actor, ActorBehavior, ActorId, CoreSet, CoreState, Position};
 
-use crate::art::{Action, AtlasArt};
+use crate::art::{Action, AtlasArt, PlayerArt};
 use crate::camera::{TILE_SIZE, tile_to_world};
 use crate::facing::{ActorMotion, Motion};
 use crate::motion::AnimationSpeed;
@@ -171,6 +171,7 @@ pub(crate) fn sync_actor_views(
     mut commands: Commands<'_, '_>,
     state: Res<'_, CoreState>,
     art: Option<Res<'_, AtlasArt>>,
+    player_art: Option<Res<'_, PlayerArt>>,
     motion: Option<Res<'_, ActorMotion>>,
     speed: Option<Res<'_, AnimationSpeed>>,
     time: Res<'_, Time>,
@@ -200,7 +201,12 @@ pub(crate) fn sync_actor_views(
             .as_deref()
             .map(|motion| motion.get(id))
             .unwrap_or_default();
-        let atlas = art.as_deref().and_then(|art| {
+        let selected_art = if actor.is_player() {
+            player_art.as_deref().map(|art| &art.0).or(art.as_deref())
+        } else {
+            art.as_deref()
+        };
+        let atlas = selected_art.and_then(|art| {
             atlas_frame(art, actor, current, now, speed)
                 .map(|(index, offset)| (art.sprite(index), offset))
         });
@@ -307,6 +313,7 @@ pub(crate) fn animate_walks(
 fn animate_frames(
     state: Res<'_, CoreState>,
     art: Res<'_, AtlasArt>,
+    player_art: Option<Res<'_, PlayerArt>>,
     motion: Res<'_, ActorMotion>,
     speed: Res<'_, AnimationSpeed>,
     time: Res<'_, Time>,
@@ -318,10 +325,15 @@ fn animate_frames(
         if current.action == Action::Walk && view.walk.from == view.walk.to {
             current.action = Action::Idle;
         }
-        let Some((index, _)) = state
-            .actor(view.id)
-            .and_then(|actor| atlas_frame(&art, actor, current, now, *speed))
-        else {
+        let Some(actor) = state.actor(view.id) else {
+            continue;
+        };
+        let selected_art = if actor.is_player() {
+            player_art.as_deref().map_or(&*art, |art| &art.0)
+        } else {
+            &*art
+        };
+        let Some((index, _)) = atlas_frame(selected_art, actor, current, now, *speed) else {
             continue;
         };
         if sprite
@@ -331,7 +343,7 @@ fn animate_frames(
             && let Some(atlas) = sprite.texture_atlas.as_mut()
         {
             atlas.index = index;
-            sprite.custom_size = art
+            sprite.custom_size = selected_art
                 .index
                 .rects
                 .get(index)
@@ -583,6 +595,50 @@ mod tests {
     }
 
     #[test]
+    fn candidate_can_render_animated_player_with_separate_world_atlas()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use crate::art::ArtSource;
+        use bevy::asset::AssetPlugin;
+        use std::time::Duration;
+
+        let pack =
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl");
+        let mut app = App::new();
+        app.add_plugins((
+            MinimalPlugins,
+            AssetPlugin::default(),
+            prl_core::PrlCorePlugin,
+            crate::PrlRenderPlugin,
+        ))
+        .init_asset::<Image>()
+        .init_asset::<TextureAtlasLayout>()
+        .insert_resource(ArtSource::ultica_with_animated_player(pack))
+        .insert_resource(CoreState::demo()?)
+        .insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
+            Duration::from_millis(150),
+        ));
+        app.update();
+        let player = app.world().resource::<CoreState>().player_id();
+        let image = app.world().resource::<PlayerArt>().0.image.clone();
+        assert_ne!(image, app.world().resource::<AtlasArt>().image);
+        let current = |app: &mut App| {
+            let world = app.world_mut();
+            let (_, sprite) = world
+                .query::<(&ActorView, &Sprite)>()
+                .iter(world)
+                .find(|(view, _)| view.id == player)
+                .unwrap();
+            assert_eq!(sprite.image, image);
+            sprite.texture_atlas.as_ref().unwrap().index
+        };
+        let first = current(&mut app);
+        app.update();
+        assert_ne!(first, current(&mut app));
+        assert_eq!(app.world().resource::<CoreState>().clock().ticks(), 0);
+        Ok(())
+    }
+
+    #[test]
     fn candidate_and_placeholder_views_preserve_identical_command_outcomes_at_all_speeds()
     -> Result<(), Box<dyn std::error::Error>> {
         use crate::art::ArtSource;
@@ -599,6 +655,7 @@ mod tests {
             for source in [
                 ArtSource::placeholder(pack.clone()),
                 ArtSource::ultica(pack.clone()),
+                ArtSource::ultica_with_animated_player(pack.clone()),
             ] {
                 let mut expected = CoreState::demo()?;
                 source.validate_for(&expected)?;

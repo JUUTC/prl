@@ -57,7 +57,12 @@ fn shipped_crypt_builds_one_hundred_repeatable_complete_registries() {
             state.player().unwrap().position(),
             state.floor_plan().unwrap().entrance
         );
-        assert_eq!(state.actors().count(), 3);
+        assert_eq!(state.actors().count(), 1);
+        assert_eq!(state.map().definition().to_string(), "prl:crypt_approach");
+        assert_eq!(
+            state.ground_items(state.floor_plan().unwrap().exit).count(),
+            0
+        );
         assert_eq!(
             CoreState::restore(state.snapshot()).unwrap().snapshot(),
             state.snapshot()
@@ -188,6 +193,23 @@ fn three_seeded_runs_fight_loot_identify_return_complete_and_retry() {
     for seed in 1..=3 {
         let mut state = config.build(&base, seed).unwrap();
         let mut mirror = CoreState::restore(state.snapshot()).unwrap();
+        let approach_exit = state.floor_plan().unwrap().exit;
+        while state.player().unwrap().position() != approach_exit {
+            let command = path_command(&state, approach_exit);
+            step(&mut state, &mut mirror, command);
+        }
+        step(
+            &mut state,
+            &mut mirror,
+            Command::Stairs(StairDirection::Down),
+        );
+        step(&mut state, &mut mirror, Command::Stairs(StairDirection::Up));
+        assert_eq!(state.map().definition().to_string(), "prl:crypt_approach");
+        step(
+            &mut state,
+            &mut mirror,
+            Command::Stairs(StairDirection::Down),
+        );
         for floor in 1..=2 {
             supplies(&mut state, &mut mirror);
             for _ in 0..1500 {
@@ -221,6 +243,7 @@ fn three_seeded_runs_fight_loot_identify_return_complete_and_retry() {
                 .items()
                 .find(|item| {
                     !item.identified
+                        && matches!(item.container, BACKPACK | EQUIPMENT)
                         && inventory.definition(item).unwrap().rarity == prl_content::Rarity::Magic
                 })
                 .unwrap()
@@ -282,5 +305,8 @@ fn malformed_required_dungeon_and_item_settings_fail_explicitly() {
     assert!(config.build(&base, 1).is_err());
     config.items.supplies.pop();
     config.floors[1].map = config.floors[0].map.clone();
+    assert!(config.build(&base, 1).is_err());
+    config.floors[1].map = ContentId::new("prl", "crypt_lower").unwrap();
+    config.approach.as_mut().unwrap().exit = Position::new(0, 0);
     assert!(config.build(&base, 1).is_err());
 }

@@ -44,7 +44,9 @@ subset rights, conversion, renderer proof, item icons and Windows acceptance;
 the candidate is not the selected shipping pack. Keep the current runnable
 placeholder path until the replacement passes review.
 Use `--tileset=ultica` or the packaged `Launch-UltiCa.cmd` to inspect the candidate.
-The player kit is fixed art; item icons, loot markers and UI remain unchanged.
+The earlier animated placeholder player is used with candidate scenery by
+default; `--player=ultica` selects the static fixed-kit candidate. New runs
+start at a small outdoor approach. Item icons, loot markers and UI remain unchanged.
 The skills/character and scroll/Codex interviews record future rules in
 Q-030–Q-035 and I-037/I-038; they are not implemented in the present playtest.
 The defaults below remain proposals for the slice, not recovered timing answers.

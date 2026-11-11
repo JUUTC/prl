@@ -479,7 +479,19 @@ fn placement_preview_cancel_invalid_and_drag_paths_preserve_time_and_ownership()
 fn threatened_with_body_equipped() -> CoreState {
     use prl_core::Direction;
     use std::collections::{BTreeMap, VecDeque};
-    let mut core = carried();
+    let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+        "../../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+    ))
+    .unwrap();
+    let mut core = config
+        .build_legacy(&prl_content::ContentPack::placeholder().unwrap(), 1)
+        .unwrap();
+    while let Some(command) = core.pickup_command() {
+        assert!(matches!(
+            core.issue(command),
+            CommandResult::Accepted { .. }
+        ));
+    }
     let body = find(&core, |item| {
         core.inventory()
             .unwrap()

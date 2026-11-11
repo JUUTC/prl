@@ -300,7 +300,7 @@ fn carve_line(rows: &mut [Vec<char>], from: (u16, u16), to: (u16, u16)) {
     }
 }
 
-fn connected(state: &CoreState, entrance: Position, exit: Position) -> bool {
+pub(crate) fn connected(state: &CoreState, entrance: Position, exit: Position) -> bool {
     let width = usize::from(state.map().width());
     let height = usize::from(state.map().height());
     let index = |position: Position| -> Option<usize> {

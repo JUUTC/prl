@@ -57,10 +57,12 @@ from other spawns, never on stairs. The final skeleton is the sole guardian;
 the other encounters use shambler/grave-rat definitions. A closed door is placed
 when a suitable orthogonal corridor choke point exists, never on a reserved
 endpoint or spawn. Opening it uses normal commands; some layouts have no door.
-Supplies occupy each entrance; fixed Magic rewards occupy each exit.
+Supplies occupy each entrance; fixed Magic rewards occupy crypt exits, not the
+outdoor approach's doorway.
 
 P3 is one persistent **run-local instance**, not the general world system.
-MapIds are floor ordinals 1/2, actor IDs allocate monotonically across floors,
+New runs prepend a small fixed outdoor approach to the two crypt floors. MapIds
+are location ordinals 1/2/3 (approach, upper, lower); actor IDs allocate monotonically across floors,
 and items/containers have separate run-local allocators. Travel costs 100 energy,
 moves the same player record to the corresponding arrival/departure cell and
 activates stored terrain/actors. Inactive floors retain memory, open doors,
@@ -68,8 +70,9 @@ kills, AI/energy and item ownership but are completely frozen: no catch-up,
 regeneration or respawn. RunFactory retry rebuilds both maps at seed + 1.
 World/dungeon/reset/NG+ identity and lazy generation remain future work (Q-015).
 
-Use Enter at `>` to descend; comma at `<` returns upstairs. Floor one's `<`
-is an arrival marker with no outside map. On floor two, Enter at `>` requires
+Use Enter at `>` to descend; comma at `<` returns upstairs, including from the
+upper crypt to the approach. Existing two-floor saves retain their old layout
+until a new run. On the lower crypt floor, Enter at `>` requires
 the guardian to be dead and commits a one-time playtest completion outcome.
 There is no Malgareth victory, feat, morgue or campaign save.
 

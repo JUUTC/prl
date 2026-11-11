@@ -14,11 +14,15 @@ Omit the flag for the unchanged procedural-art default.
 
 ### Delivered candidate, not final visual acceptance
 
-- The compact 320x64 atlas covers four actors, floor/wall, both door states and
-  both stair markers. Static single-facing sprites scale 2x on the existing grid.
-  The player is a fixed sword/mail study; equipment changes are not depicted.
-- The converter compares every selected compiled rectangle against 15 original
-  source pixels. The selected source histories and complete-subtree ancestor
+- The compact 374x66 padded atlas covers four actors, floor/wall, both door states,
+  outdoor grass and both stair markers. Static single-facing sprites scale 2x on
+  the existing grid. The candidate defaults to the earlier animated placeholder
+  player; `--player=ultica` selects the static fixed sword/mail study. Neither
+  depicts equipment changes.
+  Each frame has a one-pixel extruded border to prevent adjacent atlas art from
+  bleeding into tile edges during fractional camera movement.
+- The converter compares every selected compiled rectangle against 16 original
+  source PNGs. The selected source histories and complete-subtree ancestor
   notice check found no additional per-folder licence/credit files for this
   subset. Original PNG metadata, upstream notices, CC BY-SA 3.0 legal text,
   collective attribution and adaptation notices are preserved in
@@ -40,6 +44,12 @@ Omit the flag for the unchanged procedural-art default.
   image, provenance and licence inventories. Workflow 42957259134 passed all
   gates and uploaded the artifact for d12ed5f. Hands-on Windows launch remains
   separate; successful packaging does not claim user-machine verification.
+
+New runs start at a small fixed grassy approach linked to the generated upper
+crypt. Existing two-floor saves continue unchanged until a new run. The selected
+wood stairs and armoured skeleton substitute for the shambler avoid modern-looking
+metal stairs and jeans-clad zombie sprites; this is a visual substitute, not a
+change to the shambler's rules.
 
 The six item definitions retain existing category/text placeholders; ground loot
 still uses `*`. No inventory layout/widget code, UI theme, audio, rules or save
@@ -82,9 +92,11 @@ Resolve sources by the full commit above, not `master` or `latest`.
 
 ## 2. First playable proof, not full-game coverage
 
-Replace only the existing two-floor crypt's world art first. Keep current
+Replace the existing two-floor crypt's world art and add a bounded outdoor
+approach. Keep current
 controls, camera, inventory layout, fonts, rules, audio and save data unchanged.
-Use static actors, existing cosmetic traversal/lunges and resolved hit feedback.
+Use static enemies, existing cosmetic traversal/lunges and resolved hit feedback.
+The earlier animated placeholder player is selectable alongside the candidate art.
 Do not wait for custom animations, a race roster or a full equipment compositor.
 
 The IDs below exist in the inspected release. They are **mapping candidates**,
@@ -95,9 +107,9 @@ not reviewed visual matches or permission to ship:
 | `prl:floor` | `t_rock_floor` | Select connected/center variants; continuous floor without accidental seams |
 | `prl:wall` | Fixed `t_rock/center` | Solid stone selected after fence-like half-wall review; final perspective/foreground occlusion remains open |
 | `prl:door`, closed/open | `t_door_c` / `t_door_o` | Include foreground/background; visible state and passage remain clear |
-| Entrance/exit markers | `t_wood_stairs_up` / `t_stairs_down` | Implemented as existing floor-plan endpoint overlays; final fit/readability review remains |
+| Entrance/exit markers | `t_wood_stairs_up` / `t_wood_stairs_down` | Implemented as existing floor-plan endpoint overlays; final fit/readability review remains |
 | `prl:player` | `player_male` with mail/sword layers | Fixed kit study only; no implication that equipment/races/looks are covered |
-| `prl:shambler` | `mon_zombie` | Choose a suitable non-modern-looking variant; alternatives are weighted variants, not automatically animation frames |
+| `prl:shambler` | `mon_skeleton_brute` | Non-modern temporary visual substitute; gameplay definition remains the shambler |
 | `prl:skeleton` (guardian) | `mon_skeleton` | 32x48 sprite, shadow and anchor; readable at gameplay zoom |
 | `prl:grave_rat` | `mon_sewer_rat`, `mon_black_rat` or `mon_big_rat` | Size/readability and visual fit; do not infer availability from an exact `mon_rat` lookup |
 | Sword/mail icons and optional player layers | `longsword`, `overlay_wielded_longsword`, chainmail families | Item sword is on an `incomplete` sheet; review quality and actual layer compatibility before choosing |
