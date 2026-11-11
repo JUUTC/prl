@@ -292,9 +292,9 @@ resolution/source in the register; do not delete the history.
 
 ## Validation and playtest record
 
-**2026-11-11 UltiCa candidate increment (working tree):** format, workspace
+**2026-11-11 UltiCa candidate increment (00449d2, packaging fix d12ed5f):** format, workspace
 Clippy with denied warnings, 217 Rust tests (one existing ignored balance probe)
-and denied-warning rustdoc pass. Six converter/package tests, deterministic
+and denied-warning rustdoc pass. Seven converter/package tests, deterministic
 regeneration from the pinned ZIP and preserved originals, and stdlib-only
 complete image/source/notice inventory verification pass. Headless comparisons
 preserve identical command results/snapshots with both art sources and all
@@ -309,8 +309,10 @@ up-stair art. Removing only the packaged candidate PNG produced the boot-error
 screen and exit 1 despite a valid source-checkout atlas; restoring it and omitting
 the selection flag loaded the procedural atlas and exited normally. This is
 technical evidence, not final art or human usability approval. No audio device
-was available. Windows workflow checks/launcher are wired, but no remote run or
-hands-on Windows launch of this increment is claimed (I-044).
+was available. Windows workflow 42957259134 passed all gates, uploaded the
+playtest artifact for d12ed5f, and verified the packaged asset/licence inventory.
+Hands-on Windows launch is still pending (I-044); successful packaging is not
+proof that a user machine launched it.
 
 Run the smallest affected tests during iteration; run workspace format, clippy,
 tests and warning-free docs before stage handoff. Add the planned CI gates in P0;

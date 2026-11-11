@@ -37,8 +37,9 @@ Omit the flag for the unchanged procedural-art default.
   wooden up-stairs after visual inspection. Final scene/style approval and
   Windows launch are not inferred from that smoke check.
 - Windows packaging includes a candidate launcher and validates original/copied
-  image, provenance and licence inventories. The workflow changes still need
-  a remote run and hands-on Windows launch.
+  image, provenance and licence inventories. Workflow 42957259134 passed all
+  gates and uploaded the artifact for d12ed5f. Hands-on Windows launch remains
+  separate; successful packaging does not claim user-machine verification.
 
 The six item definitions retain existing category/text placeholders; ground loot
 still uses `*`. No inventory layout/widget code, UI theme, audio, rules or save

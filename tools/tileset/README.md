@@ -43,6 +43,8 @@ Omit `--check` to regenerate. The committed output was generated with Pillow
 10.2.0; a different PNG encoder version may require reviewing byte differences
 even when pixels match. There is no network access in the converter or renderer.
 Use `--output PATH` / `--verify --output PATH` to validate a copied package.
+Notice text is normalized to LF before hashing, matching the repository's Git
+attributes on both Windows and Linux; original source PNG bytes are untouched.
 
 `ultica.json` selects layers explicitly; indices are resolved from the upstream
 configuration, not guessed. Every selected compiled rectangle is compared with
