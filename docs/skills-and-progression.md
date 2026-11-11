@@ -4,7 +4,38 @@ PRL has **no character levels and no XP**. Characters improve by using skills, U
 
 Skill values are fixed-point with one decimal (e.g., `47.3`).
 
+## Interview decisions and revision status
+
+The 2026-11-10 skills interview is ongoing (Q-034/Q-035, I-037). The
+following accepted decisions supersede conflicting legacy tables and formulas
+below; those tables are design history, not an implementation-ready catalogue.
+
+- No skill may block essential survival or main-path progress. Baseline healing
+  and non-skill identification are available to every build; required locked or
+  trapped routes have a non-skill alternative, with keys expensive or rare.
+- Keep weapon-family proficiencies, Shields, Light Armor, Heavy Armor, Athletics,
+  Meditation and Magic Resistance. Basic weapon and equipment use does not
+  require skill; some heavy weapons/armor and casting gear may require stats.
+  Remove Tactics and Dual Wielding tracks; use weapon skills/stats instead.
+- One Magic skill covers casting; schools are descriptive categories. Keep
+  optional Identification and one Companion Handling skill for all companions.
+  Basic follow/stay/attack/dismiss commands work reliably at zero skill.
+- Combine locks and traps into Security, tracking and healing into Survival;
+  use Equipment Crafting, Alchemy & Cooking, Arcane Crafting, Extraction
+  (ore/wood) and Harvesting (herbs/animal materials). Remove Bartering;
+  Charisma influences prices. Stealth remains undecided.
+- Zero-skill use reaches basic competence quickly then slows. Safe practice
+  can train basics, but meaningful field use is needed for advanced mastery.
+  Balance gains against opportunities per skill; ID and Meditation may need
+  different rates from attacks. The sample formula, pacing and safe-practice
+  ceilings below need simulation rather than being accepted final rates.
+- Magic Resistance combines skill, stats and gear: magic damage reduction
+  and hostile-effect resistance chance each cap at 90%. Combination formulas
+  and interaction with the general resistance cap remain open.
+
 ## Skill list
+
+**Legacy list:** superseded where it conflicts with the interview decisions above.
 
 ### Combat
 | Skill | Trained by | Trains stat |
@@ -117,6 +148,9 @@ Each skill gain has a chance to train a linked stat:
 Abilities unlock automatically at skill thresholds **25, 50, 75, 100, 150, 200**. Beyond 200, every +50 grants a **minor rank** to that skill's mastery passive. Full list: [abilities.md](abilities.md).
 
 ### Synergy abilities — the progression tree
+
+**Legacy examples:** school and Healing thresholds below require redesign;
+no direct mapping to new thresholds has been approved.
 
 **Synergy abilities** unlock when several skill thresholds are met together. Single-skill unlocks plus synergies form a web connecting skill families:
 

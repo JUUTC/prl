@@ -1,0 +1,59 @@
+# UltiCa crypt candidate tooling
+
+The renderer's opt-in candidate is generated offline from release `2026-11-08`.
+It is a bounded technical proof, not art approval. See
+[`docs/tileset-integration.md`](../../docs/tileset-integration.md).
+
+Run without changing the default art:
+
+```sh
+cargo run -p prl -- --dev-assets --tileset=ultica
+```
+
+The candidate uses static, unmirrored actors and a fixed sword/mail player study.
+It does not depict equipment changes; item icons, loot markers and UI remain
+placeholders. No audio is imported. Omitting `--tileset=ultica` keeps the
+repository-owned procedural atlas.
+
+## Checks and reproducible export
+
+Tests/export require Python 3 and Pillow (`requirements.txt`); package validation
+uses only Python's standard library and does not download anything:
+
+```sh
+python3 -m unittest discover -s tools/tileset -v
+python3 tools/tileset/convert.py --verify
+```
+
+Obtain `UltimateCataclysm.zip` from the fixed upstream release (not `latest`).
+The converter verifies its SHA-256 against `ultica.json` before parsing.
+The package already preserves all selected original pixels and their audited
+history, notices and legal text, so a checkout can regenerate without fetching
+the whole upstream source tree:
+
+```sh
+python3 tools/tileset/convert.py \
+  --archive /path/to/UltimateCataclysm.zip \
+  --source-dir assets/packs/prl/sprites/ultica/sources \
+  --notices-dir assets/packs/prl/sprites/ultica \
+  --check
+```
+
+Omit `--check` to regenerate. The committed output was generated with Pillow
+10.2.0; a different PNG encoder version may require reviewing byte differences
+even when pixels match. There is no network access in the converter or renderer.
+Use `--output PATH` / `--verify --output PATH` to validate a copied package.
+
+`ultica.json` selects layers explicitly; indices are resolved from the upstream
+configuration, not guessed. Every selected compiled rectangle is compared with
+the audited original source pixels. The converter rejects ambiguous/missing IDs,
+unsupported directional/animated encodings, mismatched source pixels, clipped
+layers, unsafe paths and oversized inputs. It composes on a common 32x64 native
+canvas with origin `(0, -32)`; the manifest's 2x scale and `(0, 32)` world offset
+place the source cell correctly on PRL's 64-unit grid.
+
+The atlas is CC BY-SA 3.0 artwork, separately from MIT tool code.
+`CREDITS.md`, `provenance.json`, original source PNGs and upstream notices live
+beside the generated atlas and are included in `checksums.json`. When expanding
+the selection, audit source and inherited notices/history first; do not assume
+that adjacent tiles or sounds share the same rights.

@@ -6,13 +6,26 @@ now from the extension points reviewed before later systems are added.
 
 ## Stack
 
-- **Rust** (edition 2024), **Bevy 0.20** (ECS, 2D sprites, `ImagePlugin::default_nearest()` and integer zoom for crisp 64×64 pixels at any resolution up to 4K).
+- **Rust** (edition 2024), **Bevy 0.20** (ECS, 2D sprites, `ImagePlugin::default_nearest()` and integer zoom; 64×64 logical cells are independent of source sprite dimensions).
 - **World rendering:** three-quarter overhead over hidden square cells, no drawn floor grid, half-height foreground walls. Eight-direction movement stays in game logic; depth ordering and character/equipment facing belong to rendering.
-- **Animation contract:** start with authored left/right poses, with anatomical main/off-hand attachments and per-facing depth order; never mirror the final equipped character. Actions specify grips, temporary props, and cosmetic effects separately from equipped items. Two-handed grips reserve both attachments. North/south travel retains facing. Action definitions must allow future facing sets; animation timing never drives rules.
-- **Effects/world assets:** projectile visuals, spell travel/impact, harvest-state transitions, stations, consumables and creature/NPC animations are presentation assets. Archery separates bow grip, drawing hand, and projectile release. Resource depletion and item consumption are explicit rule events, never inferred from animation frames.
+- **Animation contract:** use available tileset frames and facings, including static sprites; bespoke action poses and anatomical attachments are optional. Rendering never changes equipped items or drives rules; preserve extensibility for richer assets.
+- **Effects/world assets:** projectile visuals, spell travel/impact, harvest-state transitions, stations, consumables and creature/NPC animations are presentation assets where supported. Resource depletion and item consumption are explicit rule events, never inferred from animation frames.
 - **Atmospheric depth:** optional low-opacity fog/ash layers use differential camera offsets; interactable geometry and actors never parallax. Exclude readable actor/target regions from obscuring effects, support reduced motion/off, and keep all drift independent of game time.
 - **UI:** `bevy_ui` with a shared theme/widget module for all player-facing UI; `bevy_egui` only for dev/debug tools behind a Cargo feature.
 - Planned libraries: `rand_chacha` (deterministic RNG), `noise` (overworld), `serde` + `ron` (content data, profile), `bincode` + `zstd` (saves), `bevy_ecs_tilemap` or custom chunked sprite batching for maps (decide in M1).
+
+### Tileset integration boundary (opt-in candidate, I-039)
+
+The [CDDA integration plan](tileset-integration.md) uses an offline, pinned subset
+conversion to PRL visual mappings; it does not add a runtime CDDA renderer or
+gameplay definitions. `ArtSource` explicitly selects the unchanged procedural
+atlas or the audited UltiCa candidate. Schema 2 adds scale, two-axis offsets and
+stair markers while retaining schema 1; static, single-facing actors need no
+invented animation. Candidate coverage/image failures surface before play.
+UltiCa's 32x32 source grid maps at 2x to existing 64-unit logical cells;
+taller sprites retain proportional bounds. Core coordinates, RNG, snapshots,
+FOV/memory and action timing do not change. Item art must use known-only
+appearance data, preserving the separate inventory UX work.
 
 ## Workspace layout
 

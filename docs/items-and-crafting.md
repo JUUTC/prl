@@ -1,5 +1,42 @@
 # Items, Loot & Crafting
 
+## Accepted design updates (not yet implemented)
+
+The 2026-11-10 interview decisions below supersede conflicting legacy sections
+in this document. Current P3 behavior is described separately and remains
+unchanged until I-028/I-037/I-038 ship.
+
+- Essential healing is reliably available without skill investment. Every
+  build can identify items via alternatives such as a paid town service or an
+  identification scroll; Identification skill is optional.
+- High Identification offers one personal chance per identifiable physical
+  item to **add** a bonus property. A failed attempt spends its action and that
+  chance but does not damage, consume or weaken the item. Town service and
+  identification scrolls do not spend this chance; already identified store
+  items are eligible. Timing, rates, costs, and type-specific properties remain
+  open (Q-034); do not infer repeat opportunities or affix limits.
+- Unknown scroll use selects the scroll first and then an ordinary target,
+  including self, without filtering by hidden effect. Canceling is free; a
+  committed read costs 100 energy and consumes the scroll. Incompatible
+  targets produce a bounded fizzle/weaken/backfire variant, not a free reject.
+  Magic reduces misfire probability and severity; Expert Magic eliminates
+  misfires. Reading trains Magic and reveals only observed outcomes, not type.
+  The configurable unknown-consumable warning applies.
+- A separate 100-energy Identification attempt on a scroll scales in
+  difficulty with level/rarity. Failure is harmless and does not consume it;
+  success identifies the exact spell+level family for the run, including
+  present and future matching copies, not other levels or spells. ID trains
+  with limited meaningful repeat awards; formulas are open (Q-030).
+- Compatible consumables, materials and ammo auto-merge on pickup/transfer up
+  to content-defined limits. Gear, unique items, scrolls and unidentified
+  consumables remain separate. Quantity split offers one/half/all shortcuts.
+  Compatibility fields and merging immediately after identification remain
+  open (Q-031).
+- Crafting uses Equipment Crafting, Alchemy & Cooking and Arcane Crafting;
+  gathering uses Extraction and Harvesting. Basic work is available at zero
+  skill, with possible failure and low quality/quantity; tools and materials
+  still matter. Bartering is not a skill; Charisma influences shop prices.
+
 ## Current P3 subset
 
 The sections below remain the full-game target. The playable crypt currently
@@ -83,14 +120,14 @@ Head, Amulet, Body, Cloak, Hands, Belt, Feet, Ring ×2, Main hand, Off hand, Amm
 ## Identification
 
 - **Gear:** Normal items are always known. Magic/Rare/Set/Unique/Crafted-by-others items drop **unidentified**: base type and rarity colour are visible, affixes hidden, curse status hidden. Unidentified items cannot be enchanted or socketed.
-- **Consumables:** potions, scrolls, wands and rings use **randomized appearances per seed** ("murky green potion", "scroll labelled XOTH"). Using one identifies its type for the rest of the run.
+- **Consumables:** potions, scrolls, wands and rings use **randomized appearances per seed** ("murky green potion", "scroll labelled XOTH"). Scroll use does not automatically identify its type; see the accepted update above.
 - **Ways to identify:**
-  1. **Sage NPC** in towns — costs gold scaled by ilvl and rarity (and Bartering/CHA).
+  1. **Sage NPC** in towns — costs gold scaled by ilvl and rarity (and CHA).
   2. **Scroll of Identify** — one item (blessed: all carried items).
-  3. **Item Lore skill** — inspect (takes time) or automatic on pickup at higher skill (see [abilities.md](abilities.md)).
+  3. **Identification skill** — a separate attempt; details and automatic-identification proposals require review (Q-034).
   4. **Equipping** — reveals affixes after some turns but risks curses.
 - **Curses:** some items carry negative affixes and/or are *sticky* (can't be unequipped). Removed by Remove Curse scroll, Abjuration *Dispel Magic*, a town temple, or Enchanting 150.
-- **Blessed / Uncursed / Cursed** status for consumables (standard roguelike); detectable via Item Lore 75 or altars.
+- **Blessed / Uncursed / Cursed** status for consumables (standard roguelike); detection through Identification or altars needs review, including thresholds and non-skill routes.
 
 **Retempering** (NG+): raise an old item to the current NG+ tier; see [endgame.md](endgame.md#new-game).
 
@@ -100,7 +137,7 @@ Potions (healing, mana, stamina, cure, resist, speed, strength, invisibility, an
 
 ## Gold & economy
 
-- Shops in each town with seeded stock that refreshes over time. Prices affected by CHA and Bartering.
+- Shops in each town with seeded stock that refreshes over time. Prices affected by CHA, not a Bartering skill.
 - **Bank** shared across all towns. Each player house has its **own separate storage**; see [housing-and-logistics.md](housing-and-logistics.md). Both use named custom **tabs** with auto-sort rules and refill kits; see [gear-and-storage.md](gear-and-storage.md#storage).
 - Inventory is a Diablo-style **grid + weight**; see [housing-and-logistics.md](housing-and-logistics.md#inventory).
 - Selling unidentified items yields reduced prices.
@@ -132,6 +169,9 @@ Materials can themselves carry properties (silver: +damage vs undead; mithril: l
 
 ### Crafting skills
 
+The following legacy professions are consolidated as described above; station
+and product examples remain useful but do not define separate skill tracks.
+
 | Skill | Station | Products |
 |---|---|---|
 | Blacksmithing | Forge + anvil | Metal weapons, heavy armor, shields, tools; repair metal |
@@ -143,6 +183,9 @@ Materials can themselves carry properties (silver: +damage vs undead; mithril: l
 | Enchanting | Enchanting altar | Socket/unsocket, add/reroll/remove affixes, upgrade rarity, remove curses |
 
 ### Gathering skills
+
+The following legacy professions are consolidated into Extraction and
+Harvesting; tool/source examples remain useful.
 
 | Skill | Tool | Sources |
 |---|---|---|

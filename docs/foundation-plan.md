@@ -41,6 +41,13 @@ migrates v4 items as unrotated without losing kill history. Drag/drop,
 click-place and keyboard share core validation; pickup never repacks existing
 items. See [inventory-ux.md](inventory-ux.md).
 
+The CDDA presentation increment adds an audited, opt-in UltiCa crypt atlas and
+offline subset tooling without changing core/content definitions, snapshots or
+the logical grid. Scale/offsets and static actors belong to rendering; candidate
+loading validates coverage explicitly. The procedural atlas remains the default.
+See [tileset-integration.md](tileset-integration.md); final art, broader appearance
+coverage, item-icon work and Windows hands-on gates remain separate.
+
 ## Contracts to establish before gameplay grows
 
 These are architecture proposals consistent with the existing standards, not

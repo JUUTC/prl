@@ -6,9 +6,24 @@ mod assets;
 mod preferences;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let pack_path = assets::content_path()?;
+    let (pack_path, ultica) = assets::launch_assets()?;
     let save_path = persistence_path();
-    let state = save_path.and_then(|save_path| load_playtest(&pack_path, save_path.as_path()));
+    let state = save_path.and_then(|save_path| {
+        let (state, factory, store, continued) = load_playtest(&pack_path, save_path.as_path())?;
+        let pack = pack_path
+            .parent()
+            .ok_or_else(|| std::io::Error::other("pack path has no parent"))?
+            .to_path_buf();
+        let art = if ultica {
+            prl_render::ArtSource::ultica(pack)
+        } else {
+            prl_render::ArtSource::placeholder(pack)
+        };
+        if ultica {
+            art.validate_for(&state)?;
+        }
+        Ok((state, factory, store, continued, art))
+    });
     let build = option_env!("PRL_BUILD_ID").unwrap_or("local development");
     let mut app = App::new();
     app.add_plugins(
@@ -16,7 +31,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .set(ImagePlugin::default_nearest())
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: format!("PRL P3 placeholders - {build}"),
+                    title: format!(
+                        "PRL P3 {} - {build}",
+                        if ultica {
+                            "UltiCa candidate (fixed appearance)"
+                        } else {
+                            "placeholders"
+                        }
+                    ),
                     resolution: (1280, 900).into(),
                     ..default()
                 }),
@@ -24,17 +46,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }),
     );
     let boot_error = match state {
-        Ok((state, factory, store, continued)) => {
+        Ok((state, factory, store, continued, art)) => {
             preferences::install(&mut app, store.clone());
             if let Some(pack) = pack_path.parent() {
-                app.insert_resource(prl_render::PlaceholderArtSource(pack.to_path_buf()));
                 // `assets/packs/prl` -> `assets`, which holds the OFL fonts.
                 if let Some(assets) = pack.ancestors().nth(2) {
                     app.insert_resource(prl_ui::PlaceholderFontSource(assets.to_path_buf()));
                 }
             }
             let save_controller = prl_save::SaveController::new(store, &state);
-            app.insert_resource(state)
+            app.insert_resource(art)
+                .insert_resource(state)
                 .insert_resource(factory)
                 .insert_resource(save_controller)
                 .insert_resource(prl_save::PersistenceStatus {
@@ -190,7 +212,7 @@ fn show_boot_failure(mut commands: Commands<'_, '_>, failure: Res<'_, BootFailur
     commands.spawn((
         Name::new("Boot error"),
         Text::new(format!(
-            "PRL could not start\n\n{}\n\nSee playtest.log when using Launch.cmd.\nClose this window to exit.",
+            "PRL could not start\n\n{}\n\nSee playtest.log or playtest-ultica.log when using a .cmd launcher.\nClose this window to exit.",
             failure.0
         )),
         TextFont { font_size: FontSize::Px(24.0), ..default() },

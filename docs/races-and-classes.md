@@ -1,5 +1,13 @@
 # Races & Classes
 
+**Revision required:** the 2026-11-10 interview changed the skill catalogue and
+creation modes (Q-033–Q-035/I-037). The aptitude and class allocation tables
+below are legacy examples, not valid final builds: school and removed skills
+must be reconciled, capped at 50 per starting skill and redistributed to retain
+150 default points. Exact revised class values and race-aptitude treatment are
+open; do not treat these lists as approved new allocations. Class is a starting
+template, never an equipment restriction.
+
 ## Races
 
 Racial stat modifiers apply **after** point-buy. Racial traits are permanent special abilities. Racial **aptitudes** give +5 starting points and a +20% gain-rate multiplier on listed skills.

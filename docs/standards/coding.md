@@ -84,6 +84,11 @@ Use game-domain terms from the spec consistently (`skill`, `ability`, `synergy`,
 - Add workspace-wide dependencies in root `[workspace.dependencies]`; crates use `dep.workspace = true`.
 - Before adding a crate, check maintenance, licence (MIT/Apache/BSD/Zlib/CC0/OFL for assets) and compile-time cost. Note new dependencies in the PR description.
 - Library crates use Bevy with `default-features = false` and enable only the features they need.
+- **CDDA art exception (2026-11-11):** the accepted reuse direction permits a
+  reviewed UltiCa CC BY-SA 3.0 subset, with per-file provenance, preserved source
+  notices, legal text and adapted-art change notices packaged with the artwork.
+  This is not permission to relicense art as MIT, import unreviewed tilesets or
+  treat soundpacks as covered. See [the integration plan](../tileset-integration.md).
 
 ## 9. Performance
 

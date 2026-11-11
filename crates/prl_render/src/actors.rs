@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use bevy::prelude::*;
 use prl_core::{ACTION_ENERGY, Actor, ActorBehavior, ActorId, CoreSet, CoreState, Position};
 
-use crate::art::{Action, PlaceholderArt};
+use crate::art::{Action, AtlasArt};
 use crate::camera::{TILE_SIZE, tile_to_world};
 use crate::facing::{ActorMotion, Motion};
 use crate::motion::AnimationSpeed;
@@ -115,7 +115,7 @@ pub(super) fn plugin(app: &mut App) {
                 .run_if(resource_changed::<CoreState>),
             animate_frames
                 .run_if(resource_exists::<CoreState>)
-                .run_if(resource_exists::<PlaceholderArt>),
+                .run_if(resource_exists::<AtlasArt>),
             animate_walks.run_if(resource_exists::<CoreState>),
         )
             .chain()
@@ -126,12 +126,12 @@ pub(super) fn plugin(app: &mut App) {
 /// Atlas frame for an actor's current cosmetic motion; `None` when the
 /// placeholder atlas has no entry for its definition (shape fallback).
 fn atlas_frame(
-    art: &PlaceholderArt,
+    art: &AtlasArt,
     actor: &Actor,
     motion: Motion,
     now: std::time::Duration,
     speed: AnimationSpeed,
-) -> Option<(usize, f32)> {
+) -> Option<(usize, Vec2)> {
     let sprites = art.index.actors.get(actor.definition())?;
     // Motion Off holds the first idle frame of the current facing.
     let (action, since, now_ms) = if speed == AnimationSpeed::Off {
@@ -153,7 +153,7 @@ fn atlas_frame(
     } else {
         sprites.frame(motion.facing, action, since, now_ms)
     };
-    Some((frame, sprites.offset_y))
+    Some((frame, sprites.offset))
 }
 
 /// The player's dead tint for the atlas; living actors keep their atlas colours.
@@ -170,7 +170,7 @@ fn atlas_tint(actor: &Actor) -> Color {
 pub(crate) fn sync_actor_views(
     mut commands: Commands<'_, '_>,
     state: Res<'_, CoreState>,
-    art: Option<Res<'_, PlaceholderArt>>,
+    art: Option<Res<'_, AtlasArt>>,
     motion: Option<Res<'_, ActorMotion>>,
     speed: Option<Res<'_, AnimationSpeed>>,
     time: Res<'_, Time>,
@@ -202,12 +202,12 @@ pub(crate) fn sync_actor_views(
             .unwrap_or_default();
         let atlas = art.as_deref().and_then(|art| {
             atlas_frame(art, actor, current, now, speed)
-                .map(|(index, offset_y)| (art.sprite(index), offset_y))
+                .map(|(index, offset)| (art.sprite(index), offset))
         });
-        let (new_sprite, base, color, rotation) = if let Some((mut sprite, offset_y)) = atlas {
+        let (new_sprite, base, color, rotation) = if let Some((mut sprite, offset)) = atlas {
             let color = atlas_tint(actor);
             sprite.color = color;
-            (sprite, centre + Vec2::new(0.0, offset_y), color, 0.0)
+            (sprite, centre + offset, color, 0.0)
         } else {
             let look = appearance(actor);
             (
@@ -306,7 +306,7 @@ pub(crate) fn animate_walks(
 /// Advances cosmetic atlas frames from wall-clock time; never touches core.
 fn animate_frames(
     state: Res<'_, CoreState>,
-    art: Res<'_, PlaceholderArt>,
+    art: Res<'_, AtlasArt>,
     motion: Res<'_, ActorMotion>,
     speed: Res<'_, AnimationSpeed>,
     time: Res<'_, Time>,
@@ -331,6 +331,11 @@ fn animate_frames(
             && let Some(atlas) = sprite.texture_atlas.as_mut()
         {
             atlas.index = index;
+            sprite.custom_size = art
+                .index
+                .rects
+                .get(index)
+                .map(|rect| rect.size().as_vec2() * art.index.scale);
         }
     }
 }
@@ -522,7 +527,7 @@ mod tests {
     #[test]
     fn placeholder_atlas_animates_visible_actors_without_touching_rules()
     -> Result<(), Box<dyn std::error::Error>> {
-        use crate::art::{Facing, PlaceholderArtSource};
+        use crate::art::{ArtSource, Facing};
         use bevy::asset::AssetPlugin;
         use prl_core::{Command, CommandResult, Direction};
 
@@ -539,13 +544,13 @@ mod tests {
         ))
         .init_asset::<Image>()
         .init_asset::<TextureAtlasLayout>()
-        .insert_resource(PlaceholderArtSource(pack))
+        .insert_resource(ArtSource::placeholder(pack))
         .insert_resource(state);
         for _ in 0..10 {
             app.update();
         }
         let world = app.world_mut();
-        assert!(world.contains_resource::<PlaceholderArt>());
+        assert!(world.contains_resource::<AtlasArt>());
         let atlas_actors = world
             .query::<(&ActorView, &Sprite)>()
             .iter(world)
@@ -574,6 +579,72 @@ mod tests {
         assert_ne!(motion.action, Action::Idle);
         // Presentation never advances the simulation on its own.
         assert_eq!(world.resource::<CoreState>().clock().ticks(), ticks);
+        Ok(())
+    }
+
+    #[test]
+    fn candidate_and_placeholder_views_preserve_identical_command_outcomes_at_all_speeds()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use crate::art::ArtSource;
+        use bevy::asset::AssetPlugin;
+        use prl_core::{Command, Direction};
+
+        let pack =
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl");
+        for speed in [
+            AnimationSpeed::Normal,
+            AnimationSpeed::Fast,
+            AnimationSpeed::Off,
+        ] {
+            for source in [
+                ArtSource::placeholder(pack.clone()),
+                ArtSource::ultica(pack.clone()),
+            ] {
+                let mut expected = CoreState::demo()?;
+                source.validate_for(&expected)?;
+                let mut app = App::new();
+                app.add_plugins((
+                    MinimalPlugins,
+                    AssetPlugin::default(),
+                    prl_core::PrlCorePlugin,
+                    crate::PrlRenderPlugin,
+                ))
+                .init_asset::<Image>()
+                .init_asset::<TextureAtlasLayout>()
+                .insert_resource(speed)
+                .insert_resource(source)
+                .insert_resource(expected.clone());
+                app.update();
+                for command in [
+                    Command::Wait,
+                    Command::Move(Direction::East),
+                    Command::OpenDoor(Direction::East),
+                    Command::Move(Direction::East),
+                    Command::Move(Direction::East),
+                    Command::Wait,
+                ] {
+                    let result = expected.issue(command);
+                    assert_eq!(
+                        app.world_mut().resource_mut::<CoreState>().issue(command),
+                        result
+                    );
+                    for _ in 0..3 {
+                        app.update();
+                    }
+                    assert_eq!(
+                        app.world().resource::<CoreState>().snapshot(),
+                        expected.snapshot()
+                    );
+                    let world = app.world_mut();
+                    let count = world
+                        .query::<(&ActorView, &Sprite)>()
+                        .iter(world)
+                        .filter(|(_, sprite)| sprite.texture_atlas.is_some())
+                        .count();
+                    assert_eq!(count, expected.visible_actors().count());
+                }
+            }
+        }
         Ok(())
     }
 

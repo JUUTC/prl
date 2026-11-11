@@ -1,5 +1,13 @@
 # Combat
 
+**Skill revision:** the general Tactics skill has been removed; weapon-family
+skills and stats replace its benefits. The full-game formulas below are legacy
+proposals needing recalibration (Q-034/Q-035/I-037); the P2 implementation
+described separately remains unchanged. One Magic skill replaces school skills.
+Total magic damage reduction and hostile magic-effect resistance chance each
+cap at 90%; their combination and interaction with the general resistance cap
+require design and simulation.
+
 ## Resolution model: always hit
 
 Attacks and offensive spells **always connect**. There is no miss roll. Defence works by **reducing** damage:
@@ -33,7 +41,7 @@ final   = max(1, round(result))
 | Flat armor | `Σ armor pieces / 10` |
 | Armor % | `armor / (armor + 10 × raw)`, capped at 85% |
 
-Spells use the school skill in place of the weapon skill and INT or WIS in place of DEX for accuracy. **Magic Resistance** gives targets glancing chance against spells and shortens hostile status effects.
+Spells use Magic in place of the weapon skill and INT or WIS in place of DEX for accuracy. Magic Resistance combines with stats and equipment; the precise defensive formulas remain open.
 
 ### P2 provisional implementation
 

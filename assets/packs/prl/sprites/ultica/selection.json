@@ -1,0 +1,203 @@
+{
+  "archive_sha256": "da1edc5b2ecc6390b143dbea5bd3e5302faae473b939631e1593e9b86b0f120d",
+  "canvas": [
+    32,
+    64
+  ],
+  "origin": [
+    0,
+    -32
+  ],
+  "release": "2026-11-08",
+  "revision": "5ee942f9e6601970c5da356200e7cf5061226262",
+  "scale": 2,
+  "visuals": {
+    "prl:door": {
+      "kind": "tile",
+      "layers": [
+        [
+          "t_rock_floor",
+          "fg",
+          "center",
+          0,
+          "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png"
+        ],
+        [
+          "t_door_c",
+          "bg",
+          null,
+          0,
+          "pngs_normal_32x32/terrain/t_door/t_door_frame.png"
+        ],
+        [
+          "t_door_c",
+          "fg",
+          null,
+          0,
+          "pngs_normal_32x32/terrain/t_door/t_door_c.png"
+        ]
+      ],
+      "open_layers": [
+        [
+          "t_rock_floor",
+          "fg",
+          "center",
+          0,
+          "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png"
+        ],
+        [
+          "t_door_o",
+          "bg",
+          null,
+          0,
+          "pngs_normal_32x32/terrain/t_door/t_door_frame.png"
+        ],
+        [
+          "t_door_o",
+          "fg",
+          null,
+          0,
+          "pngs_normal_32x32/terrain/t_door/t_door_o.png"
+        ]
+      ]
+    },
+    "prl:floor": {
+      "kind": "tile",
+      "layers": [
+        [
+          "t_rock_floor",
+          "fg",
+          "center",
+          0,
+          "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png"
+        ]
+      ]
+    },
+    "prl:grave_rat": {
+      "kind": "actor",
+      "layers": [
+        [
+          "mon_sewer_rat",
+          "bg",
+          null,
+          0,
+          "pngs_normal_32x32/monsters/common/shadow_32x32_small.png"
+        ],
+        [
+          "mon_sewer_rat",
+          "fg",
+          null,
+          0,
+          "pngs_normal_32x32/monsters/animals/mutants/mon_sewer_rat.png"
+        ]
+      ]
+    },
+    "prl:player": {
+      "kind": "actor",
+      "layers": [
+        [
+          "player_male",
+          "bg",
+          null,
+          0,
+          "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png"
+        ],
+        [
+          "player_male",
+          "fg",
+          null,
+          0,
+          "pngs_human_body_plus_32x48/overlay/skin/skin_brown_m.png"
+        ],
+        [
+          "overlay_male_worn_mc_chainmail_suit",
+          "fg",
+          null,
+          0,
+          "pngs_human_body_32x36/overlay/worn/armour_antique/chainmail_suit_m.png"
+        ],
+        [
+          "overlay_wielded_longsword",
+          "fg",
+          null,
+          0,
+          "pngs_human_body_32x36/overlay/wielded/longsword/longsword_mf.png"
+        ]
+      ]
+    },
+    "prl:shambler": {
+      "kind": "actor",
+      "layers": [
+        [
+          "mon_zombie",
+          "bg",
+          null,
+          0,
+          "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png"
+        ],
+        [
+          "mon_zombie",
+          "fg",
+          null,
+          0,
+          "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png"
+        ]
+      ]
+    },
+    "prl:skeleton": {
+      "kind": "actor",
+      "layers": [
+        [
+          "mon_skeleton",
+          "bg",
+          null,
+          0,
+          "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png"
+        ],
+        [
+          "mon_skeleton",
+          "fg",
+          null,
+          0,
+          "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton.png"
+        ]
+      ]
+    },
+    "prl:stairs_down": {
+      "kind": "marker",
+      "layers": [
+        [
+          "t_stairs_down",
+          "fg",
+          null,
+          0,
+          "pngs_normal_32x32/terrain/stairs/t_stairs_down.png"
+        ]
+      ]
+    },
+    "prl:stairs_up": {
+      "kind": "marker",
+      "layers": [
+        [
+          "t_wood_stairs_up",
+          "fg",
+          null,
+          0,
+          "pngs_tall_32x64/terrain/t_stairs_up/t_wood_stairs_up.png"
+        ]
+      ]
+    },
+    "prl:wall": {
+      "kind": "tile",
+      "layers": [
+        [
+          "t_rock",
+          "fg",
+          "center",
+          0,
+          "pngs_normal_32x32/terrain/t_rock/t_rock_center.png"
+        ]
+      ]
+    }
+  }
+}

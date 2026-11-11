@@ -26,7 +26,7 @@ PRL is a single-player, high-fantasy, pixel-art roguelike written in Rust. It co
 | Language | Rust (edition 2024) |
 | Engine | Bevy 0.20 (ECS, 2D sprites) |
 | Platforms | Desktop: Windows, macOS, Linux |
-| Art | Pixel art, **64×64** tiles, nearest-neighbour **integer zoom** (4K-ready) |
+| Art | Pixel art on a **64×64 logical tile**, nearest-neighbour **integer zoom**; source sprite dimensions depend on the selected tileset |
 | Display | Resolution-independent; integer world zoom, UI scale setting |
 | UI | `bevy_ui` with a shared theme/widget module; `bevy_egui` for dev/debug tools only (feature-flagged) |
 | Fonts | **Pixelify Sans** (UI/body) + **Silkscreen** (small labels/numbers), both OFL; title display font TBD |
@@ -73,7 +73,7 @@ Six classic stats: **STR, DEX, CON, INT, WIS, CHA**.
 | STR | Melee damage, carry capacity, heavy weapon/armor requirements, stamina |
 | DEX | Accuracy, evasion, ranged damage, light weapon speed, lockpicking/traps |
 | CON | Max HP, HP regen, poison/disease resistance, stamina |
-| INT | Max mana, spell power (Evocation, Mysticism, Summoning, Necromancy), crafting quality, Item Lore |
+| INT | Max mana, spell power (Evocation, Mysticism, Summoning, Necromancy), crafting quality, Identification |
 | WIS | Mana regen, spell power (Restoration, Abjuration), perception, magic resistance |
 | CHA | Shop prices, quest rewards, pet/summon control slots, NPC reactions |
 
@@ -84,6 +84,22 @@ Six classic stats: **STR, DEX, CON, INT, WIS, CHA**.
 | Cost | 0 | 1 | 2 | 3 | 4 | 5 | 7 | 9 |
 
 Modifier = `floor((stat − 10) / 2)`.
+
+**Creation modes (accepted, not implemented):** independently choose Default,
+Customize or Random for stats, skills and gear, or Random Character for an
+unlocked race/class and all character sections without changing world settings.
+Customized sections survive a class change; provide explicit reset to class
+defaults. Randomized sections cannot be edited but can be rerolled freely
+before confirmation. Character-roll RNG is independent of the world seed.
+
+Default/custom stats use 27 points and 8–15 before racial modifiers. Weighted
+random stats use 24–30 points and can reach 18 before racial modifiers; scores
+16, 17 and 18 cost 12, 15 and 18 points respectively. Default/custom skills
+use 150 points, random skills 180; each starting skill is capped at 50. Custom
+gear can use the full starter catalogue within the class kit value; random
+gear is class-weighted with some off-theme results and rare over-budget
+jackpots without debt. Values, distributions and class allocations remain open
+(Q-033/I-037); free rerolls are not an irreversible risk.
 
 **Growth** — stats train slowly through related skill use (e.g., heavy weapons train STR), with a logarithmic soft cap and no hard cap. See [skills-and-progression.md](skills-and-progression.md#stat-training).
 
@@ -106,24 +122,29 @@ Modifier = `floor((stat − 10) / 2)`.
 ## 6. Progression
 
 - **No character levels, no XP.**
-- **Use-based skills** — ~40 skills across Combat, Magic, Subterfuge, Crafting, Gathering, Companions.
+- **Use-based skills** across Combat, Magic, Subterfuge, Crafting, Gathering and Companions; the revised catalogue remains under interview.
 - **No skill cap** — neither per-skill nor total. Growth slows logarithmically but never stops.
 - **Abilities unlock at skill thresholds** (25 / 50 / 75 / 100 / 150 / 200, then minor ranks every +50).
 - **Synergy abilities** unlock from combinations of skill thresholds, forming the progression "tree".
 - **Gear-gated** — most abilities require appropriate equipment.
+- Essential survival and main-path actions must not be skill-gated. Every build
+  has reliable baseline healing and non-skill identification routes. Basic
+  weapon use requires no weapon skill, though gear may have stat requirements.
+  Safe practice builds basics; meaningful field use develops advanced mastery.
+  Gains must reflect opportunities to train each skill (Q-035).
 
 See [skills-and-progression.md](skills-and-progression.md) and [abilities.md](abilities.md).
 
 ## 7. Items, Loot & Crafting
 
-Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item level, sockets, durability, curses. Unidentified items are identified by a **town Sage**, a **Scroll of Identify**, or the **Item Lore** skill. Full crafting and gathering. See [items-and-crafting.md](items-and-crafting.md). Gear comparison, an on-demand loadout optimizer, custom loot filters with preset defaults, custom storage tabs with auto-sort, inventory refill kits and crafting from storage are in [gear-and-storage.md](gear-and-storage.md).
+Diablo-style rarity (Normal, Magic, Rare, Set, Unique, Crafted), affixes, item level, sockets, durability, curses. Unidentified items can be identified by a **town Sage**, a **Scroll of Identify**, or the optional **Identification** skill. Full crafting and gathering. See [items-and-crafting.md](items-and-crafting.md). Gear comparison, an on-demand loadout optimizer, custom loot filters with preset defaults, custom storage tabs with auto-sort, inventory refill kits and crafting from storage are in [gear-and-storage.md](gear-and-storage.md).
 
 ## 8. Magic
 
 - **Mana pool**, no Vancian memorization.
 - Spells learned permanently by **studying spellbooks**; **scrolls** are single-use casts (Inscription scribes them).
-- **Spell schools are skills**: Evocation, Abjuration, Restoration, Mysticism, Necromancy, Summoning.
-- Spell failure depends on school skill vs. spell circle, INT/WIS, and armor hindrance.
+- One **Magic skill** improves casting; spell schools are descriptive categories, not individual skills. Casting is not gated by Magic skill; casting gear may have stat requirements.
+- Spell failure depends on Magic, spell difficulty, INT/WIS and armor hindrance; formulas remain open.
 
 See [abilities.md](abilities.md#spells).
 
@@ -132,6 +153,10 @@ See [abilities.md](abilities.md#spells).
 - **Always hit**: no miss rolls. Evasion → glancing blows (50%), shields → blocks (−75%), armor → flat + % physical reduction, resistances → elemental reduction.
 - Damage types: **Physical** (slash/pierce/blunt), **Fire, Cold, Lightning, Poison**. Holy/unholy are bonus tags, not types.
 - Resist cap 75% (90% max via rare affixes); difficulty and NG+ apply a resist penalty.
+- Magic damage reduction and hostile magic-effect resistance chance each cap at
+  90% total, including skill, stats and gear; higher Magic Resistance skill may
+  substitute for gear contributions. Exact combination and interaction with the
+  general resistance rule remain open.
 
 See [combat.md](combat.md).
 
@@ -199,27 +224,39 @@ study uses synthetic actions and predates these interview decisions.
 
 Production requirements, decision status, asset contracts and dependency-ordered
 quality gates are defined in [Art Specification & Production Plan](art-production.md).
-**Gravebound is an approved direction, not approved artwork.** Current procedural
-atelier sprites are placeholders and are not acceptable for release. Production
-expansion requires explicit approval of a finished in-world reference.
+Current procedural atelier sprites are placeholders and are not approved release
+art. A representative in-world reuse proof requires review before expansion.
+
+**2026-11-11 sourcing change:** pursue reuse of CDDA art and separately audited
+sound assets. Animation requirements now follow the selected tileset; the
+[current direction override](art-production.md#current-direction-override-2026-11-11)
+supersedes conflicting custom-animation gates. Pack selection, licensing and
+full-game coverage review remain open (Q-036/I-039); the bounded UltiCa crypt
+subset is audited and integrated as an opt-in candidate. This does not change gameplay or
+approve a replacement UI style.
+
+The [tileset integration plan](tileset-integration.md) pins the first UltiCa
+technical candidate. Subset notices, offline conversion and opt-in current-crypt
+rendering are implemented; knowledge-safe item icons and Windows acceptance
+remain open. This is not final art selection or approval of full-game coverage.
 
 - **Tone:** grimdark-hopeful high fantasy — a weathered, earthy world with saturated accents for magic and the blight. Applies to art, UI and writing.
-- **Character baseline: Gravebound** — sunken faces, natural tapered proportions, ragged charcoal layers, and worn materials; avoid toy-like heads and squared limbs. Two visually selectable body silhouettes, without gender labels, with at least five looks per race and silhouette.
-- **Equipment-driven appearance:** characters initially show their race, silhouette, and starting class equipment. Equipped items, material, and item-level improvements change the visible gear independently of the underlying appearance. Classes impose no visual equipment restrictions after creation. Power Level remains skill-derived, not a gear tier or automatic aura.
+- **Character baseline:** the earlier Gravebound brief calls for two unlabeled silhouettes and five looks per race/silhouette. Whether the selected tileset can support those targets and the earlier natural-proportion style remains under review (Q-036); no substitute appearance design is approved.
+- **Equipment-driven appearance:** the earlier target displays race, silhouette and equipped gear, material and improvements independently of skills. Actual tileset coverage remains to be audited; classes impose no equipment restrictions after creation. Power Level remains skill-derived, not a gear tier or automatic aura.
 - **Writing voice:** terse, archaic-lite prose; no modern slang.
-- **64×64** pixel-art world tiles, shown with integer zoom so they stay crisp up to 4K. Large monsters and bosses may use bigger multi-tile sprites.
+- **64×64 logical world tiles**, shown with integer zoom so they stay crisp up to 4K. Source sprites may use different dimensions; larger sprites may span tiles.
 - **World perspective:** three-quarter overhead on a hidden square grid, not isometric. Floor art has no visible grid overlay; cardinal and diagonal movement remains eight-directional. Use half-height foreground walls to reduce character occlusion while retaining depth.
-- **Initial character animation:** two independently authored three-quarter facing sets (left/right), not mirrored composites. East/west and diagonal movement select facing from the horizontal component; north/south preserves last facing. Keep the asset/action schema extensible to additional facings without changing movement rules.
-- **Hand-aware equipment animation:** main/off-hand items retain anatomical assignment across facings. Dual wielding has two attachments; two-handed weapons and tools coordinate both grips and reserve the off hand. Action props temporarily stow held gear without modifying the equipped loadout.
-- **Action coverage:** idle, walk, melee attack, archery draw/release, crafting, mining, tree chopping, gathering, eating, drinking, healing, and casting require dedicated action poses. Different crafting disciplines and weapon-specific actions can extend those families. Presentation never advances or gates game time.
-- **World asset coverage:** spell cast/travel/impact effects, distinct arrow appearances, monsters/enemies, townsfolk, animals (including pack animals), standing/falling/felled trees, intact/depleted ore, crafting stations, and food/drink props share the Gravebound direction. Visual arrow studies do not establish new damage or affix rules.
+- **Character animation:** use the selected tileset's supplied frames and facings; static sprites are acceptable. Independent left/right sets are not mandatory. Keep presentation extensible without changing movement rules.
+- **Equipment animation:** detailed hand/grip attachments and temporary action props are optional where supported by the tileset. Main/off-hand equipment rules remain authoritative regardless of visual coverage; presentation never changes the equipped loadout.
+- **Action coverage:** dedicated idle, walk, combat, work, consumable and casting poses are optional, not release requirements. Cosmetic movement, hit feedback, projectiles and UI outcomes must retain readability. Presentation never advances or gates game time.
+- **World asset coverage:** audit the selected tileset for creatures, NPCs, environments, resource states, stations, items and effects; missing fantasy coverage needs explicit decisions. Visual studies do not establish gameplay rules.
 - **Atmosphere/parallax:** subtle layered fog and drifting ash may use differential camera motion for depth. Terrain, characters, structures, resource nodes, and interactables stay grid-anchored. Preserve character/gear and targeting readability; provide reduced-motion and atmosphere-off controls. These effects are presentation-only, not a side-on or isometric camera change.
 - **Palette (target):** a locked, ramp-based PRL palette (~24 hue ramps × 6–8 shades, ~150–190 colours), extended from a Lospec base and checked in CI. *Status:* not yet locked. The [P0 candidate](style/gravebound-p0.md#palette-candidate) is an unapproved original proposal; the proposed seed (Resurrect 64 by Kerrie Lake) has unverified reuse terms. Do not install a palette or CI check until approved (Q-014/Q-018).
 - **Fonts (target):** Pixelify Sans (UI/body) and Silkscreen (small labels/numbers), both OFL; a fantasy display font for titles will be chosen later. *Status:* the placeholder UI uses both fonts from `assets/fonts/` (credited in `assets/CREDITS.md`), falling back to Bevy's bundled Fira Mono if they are missing.
 - Hi-res UI elements (item icons, portraits); lighting/shader effects, particles.
-- Idle animations 2–4 frames; hit flashes; per-biome tilesets; light-radius rendering.
+- Idle frames where supplied by the tileset (static sprites acceptable); hit feedback; per-biome tilesets; light-radius rendering.
 - **Audio:** basic SFX (combat, spells, UI, footsteps, ambience loops) in v1; music in a later milestone.
-- **Art sourcing:** placeholder art may use the CC0 subset of the Dungeon Crawl Stone Soup 32×32 tiles, shown at 2× until original 64×64 art replaces it, once the subset's licence is verified. *Status:* no DCSS tiles are imported; gameplay builds draw a generated atlas of the repository-owned Gravebound procedural studies (disposable placeholders, `assets/packs/prl/sprites/placeholder/`) and fall back to coloured shapes if it is missing. Every third-party asset's licence is tracked in `assets/CREDITS.md`.
+- **Art sourcing:** a pinned, audited UltiCa subset is imported as the opt-in `--tileset=ultica` crypt candidate, with CC BY-SA 3.0 art notices, original selected PNGs and per-source provenance. It draws terrain/doors/stairs and static actors with a fixed player kit; no final pack or full-game appearance coverage is approved. The default remains the repository-owned Gravebound placeholder atlas with shape fallback. Selected-candidate failures reject explicitly, not via silent fallback. No DCSS art or third-party audio is imported. Track licences in `assets/CREDITS.md`.
 - **Placeholder rendering:** disposable gameplay placeholders must still respect the approved perspective rules where cheap to do so (for example, no visible floor-grid seams); they do not establish art direction.
 
 ## 15. Milestones

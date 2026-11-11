@@ -1,5 +1,10 @@
 # Meta-Progression
 
+**Skill prerequisites need revision:** the skills interview removed Bartering
+and consolidated other tracks. Feat examples below that name retired skills are
+legacy proposals; replacements require explicit design, not automatic mapping
+(Q-034/Q-035, I-037).
+
 Meta-progression persists **across runs** in a profile file (separate from character saves). It never grants raw power directly in a new run; it **unlocks options**: races, classes, and legacy special abilities (perks) selectable at character creation.
 
 ## Feats

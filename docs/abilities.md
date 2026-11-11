@@ -1,5 +1,12 @@
 # Abilities & Spells
 
+**Revision required:** the 2026-11-10 skill interview supersedes the legacy
+skill names and gates in the tables below. Schools are categories under one Magic
+skill; other consolidations and essential-action access are in
+[skills-and-progression.md](skills-and-progression.md#interview-decisions-and-revision-status).
+Ability thresholds and synergies are not automatically transferred to new
+skills; review them under Q-034/Q-035 and I-037 before implementation.
+
 Abilities unlock at skill thresholds (see [skills-and-progression.md](skills-and-progression.md)). **Passive** abilities are always on; **Active** abilities go on the hotbar and cost **Stamina** (martial) or **Mana** (magical), plus energy (time). Values are initial and tunable; most scale with the governing skill.
 
 Legend: *(P)* passive · *(A)* active · *(T)* toggle · **Req** = gear requirement.
@@ -225,11 +232,10 @@ Enchanting specifics: 25 Socket gems · 50 Add affix to Normal → Magic · 75 R
 
 ## Spells
 
-Spells belong to a school (skill) and a **circle** (1–8). Learning requires reading a spellbook (chance-based; minimum school skill = `circle × 12`). Failure chance:
-
-```
-fail% = clamp( 50 + circle×15 − school_skill − stat_mod×3 + armor_hindrance, 2, 95 )
-```
+Spells belong to a descriptive school and a **circle** (1–8). One Magic skill
+improves casting without being a prerequisite to cast; gear may have stat
+requirements. Learning, failure and difficulty formulas require redesign and
+playtesting (Q-034); no school-skill threshold is accepted.
 
 | Circle | Evocation | Abjuration | Restoration | Mysticism |
 |---|---|---|---|---|
@@ -242,7 +248,8 @@ fail% = clamp( 50 + circle×15 − school_skill − stat_mod×3 + armor_hindranc
 | 7 | Meteor | Sanctuary | Resurrect Ally | Gate Travel (to towns) |
 | 8 | Disintegrate | Mirror Ward | Divine Intervention | Time Stop (3 turns) |
 
-Necromancy and Summoning spells are their threshold abilities above (they also have circles for fail-rate purposes).
+Necromancy and Summoning are spell categories as well; their legacy threshold
+abilities above need review, not automatic transfer to Magic.
 
 ## Synergy abilities
 

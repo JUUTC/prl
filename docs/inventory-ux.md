@@ -15,6 +15,31 @@ rules are communicated, not new inventory capacity, stacking, healing or costs.
 Q-030/Q-031 record the 2026-11-10 interview decisions and remaining scope. Preserve the separate
 [art/UX gates](art-production.md); placeholder icons and styling are disposable.
 
+## Future Codex and stacks (accepted; not implemented)
+
+The Magic Book/Codex is a carried physical container with effectively unlimited
+scroll slots; scroll weight still counts. Books can be purchased, found or
+crafted. A magic-focused class or a custom/random build with at least 10
+starting Magic receives a basic book and small starter-scroll kit within its
+kit value. Without a book, scrolls go to the backpack; acquiring the first book
+auto-files existing and future scrolls. Unextracted contents travel with a
+dropped/stored book. Scrolls remain physical, individually extractable and
+directly usable; learned spells are permanent knowledge, not extractable items.
+
+One interface separates Learned Spells from Carried Scrolls. Order scrolls as
+Unknown, then identified school/category → family → level. Allow unlimited
+favorites and eight clickable quick slots accessible by 1–8 while respecting
+existing reservations/remapping. A known slot binds family and preferred level,
+without silent substitution. An unknown slot pins a physical instance and
+never auto-refills. Scrolls never stack, preventing favorite/slot behavior from
+revealing hidden sameness. The target picker and warnings follow Q-030.
+
+For compatible stackable items use automatic pickup/transfer merging and a
+quantity dialog with one/half/all shortcuts; limits and unidentified exceptions
+follow [items-and-crafting.md](items-and-crafting.md#accepted-design-updates-not-yet-implemented).
+Exact compatibility and post-identification merge timing remain open. This
+future design does not replace the independently developed inventory workspace.
+
 ## 1. Player jobs and priorities
 
 | Priority | Job | Success criterion |

@@ -28,7 +28,7 @@ prl/
 │   │   └── prl/               # base game content pack (namespace `prl`)
 │   │       ├── pack.ron
 │   │       ├── data/          # RON definitions by kind (monsters/, items/, skills/ …)
-│   │       ├── sprites/       # 64×64 PNGs by category
+│   │       ├── sprites/       # PNGs/atlases by category; source dimensions are pack-specific
 │   │       ├── audio/
 │   │       └── locale/        # en.ftl (later)
 │   ├── fonts/                 # OFL fonts + their licences
@@ -81,3 +81,6 @@ crates/prl_core/src/
 - Asset paths are `snake_case` and grouped by category: `sprites/monsters/undead/skeleton_warrior.png`.
 - Source art files (`.aseprite`) live next to exports in `art_src/` (later; possibly Git LFS).
 - Every third-party asset is listed in `assets/CREDITS.md` before it is merged.
+- Source sprite dimensions are independent of the 64x64 logical grid. Keep
+  display scale, anchors and provenance in the presentation manifest; do not
+  resize gameplay cells to match imported art.

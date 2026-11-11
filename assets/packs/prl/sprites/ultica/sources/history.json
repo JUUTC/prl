@@ -1,0 +1,142 @@
+{
+  "pngs_human_body_32x36/overlay/wielded/longsword/longsword_mf.png": [
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "fff687708d0bbe20faa2cdbbb673b595e9b990fb",
+      "subject": "Ultica \"32x36 sheet, phase 1: overlays\" (#785)"
+    }
+  ],
+  "pngs_human_body_32x36/overlay/worn/armour_antique/chainmail_suit_m.png": [
+    {
+      "author": "hoasd1",
+      "revision": "257f34593d3ad5224600b8e8710b1146ddfd2e02",
+      "subject": "[Ultica] [0.H] Un-Obsolete sprites (#2447)"
+    }
+  ],
+  "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png": [
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+      "subject": "Ultica \"32x48 tilesheet\" (#896)"
+    }
+  ],
+  "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton.png": [
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+      "subject": "Ultica \"32x48 tilesheet\" (#896)"
+    }
+  ],
+  "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png": [
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+      "subject": "Ultica \"32x48 tilesheet\" (#896)"
+    }
+  ],
+  "pngs_human_body_plus_32x48/overlay/skin/skin_brown_m.png": [
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+      "subject": "Ultica \"32x48 tilesheet\" (#896)"
+    }
+  ],
+  "pngs_normal_32x32/monsters/animals/mutants/mon_sewer_rat.png": [
+    {
+      "author": "I-am-Erk",
+      "revision": "2b20c9de7f4c814513bea81d26edcdebb27db8fe",
+      "subject": "discord submissions 31 aug to 2 sep (#241)"
+    }
+  ],
+  "pngs_normal_32x32/monsters/common/shadow_32x32_small.png": [
+    {
+      "author": "acepleiades",
+      "revision": "32c08c3733a9e9ef711e460a479a721eeeac623a",
+      "subject": "Ultica more monsters 9"
+    },
+    {
+      "author": "Serhiy Zahoriya",
+      "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+      "subject": "Ultica \"32x48 tilesheet\" (#896)"
+    }
+  ],
+  "pngs_normal_32x32/terrain/stairs/t_stairs_down.png": [
+    {
+      "author": "I-am-Erk",
+      "revision": "a8920c440fc364b8ec9e617cf2d4436cb8e41e7d",
+      "subject": "wood stairs"
+    }
+  ],
+  "pngs_normal_32x32/terrain/t_door/t_door_c.png": [
+    {
+      "author": "hoasd1",
+      "revision": "9b4387840a537d05995a72b94cdfb2d041473b0e",
+      "subject": "[Ultica]_Colored_doors_glass_doors_and_bamboo_plus_tweaks_by_hoasd1 (#1910)"
+    },
+    {
+      "author": "hoasd1",
+      "revision": "c6215548a87554942b10bb8400bd57f6f8794ea0",
+      "subject": "Add_stuff_and_delete_stuff (#1634)"
+    }
+  ],
+  "pngs_normal_32x32/terrain/t_door/t_door_frame.png": [
+    {
+      "author": "hoasd1",
+      "revision": "9b4387840a537d05995a72b94cdfb2d041473b0e",
+      "subject": "[Ultica]_Colored_doors_glass_doors_and_bamboo_plus_tweaks_by_hoasd1 (#1910)"
+    },
+    {
+      "author": "hoasd1",
+      "revision": "c6215548a87554942b10bb8400bd57f6f8794ea0",
+      "subject": "Add_stuff_and_delete_stuff (#1634)"
+    }
+  ],
+  "pngs_normal_32x32/terrain/t_door/t_door_o.png": [
+    {
+      "author": "hoasd1",
+      "revision": "9b4387840a537d05995a72b94cdfb2d041473b0e",
+      "subject": "[Ultica]_Colored_doors_glass_doors_and_bamboo_plus_tweaks_by_hoasd1 (#1910)"
+    },
+    {
+      "author": "I-am-Erk",
+      "revision": "9ed824e3326854f4fefd26597f22f8480dff3984",
+      "subject": "broken door, wielded hammer, some item rearrangement"
+    }
+  ],
+  "pngs_normal_32x32/terrain/t_rock/t_rock_center.png": [
+    {
+      "author": "barsoosayque",
+      "revision": "3cbd75b1f49bb05cdbeb034122f838a746757714",
+      "subject": "Natural terrain update -- Part 2 (#157)"
+    }
+  ],
+  "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png": [
+    {
+      "author": "barsoosayque",
+      "revision": "3cbd75b1f49bb05cdbeb034122f838a746757714",
+      "subject": "Natural terrain update -- Part 2 (#157)"
+    },
+    {
+      "author": "Isaac Freund",
+      "revision": "7172a59bf2fb481e6714fa8d21e6df602b7cb448",
+      "subject": "Reorganize directory structure"
+    }
+  ],
+  "pngs_tall_32x64/terrain/t_stairs_up/t_wood_stairs_up.png": [
+    {
+      "author": "I-am-Erk",
+      "revision": "e1dcf8dad05bc1b2ed03f4ece8bc5c73bb46a28f",
+      "subject": "up stair up dates"
+    },
+    {
+      "author": "I-am-Erk",
+      "revision": "2f3c6b0414d70ffc686c7a50d452f405cda3f7ae",
+      "subject": "Update t_wood_stairs_up.png"
+    },
+    {
+      "author": "I-am-Erk",
+      "revision": "a8920c440fc364b8ec9e617cf2d4436cb8e41e7d",
+      "subject": "wood stairs"
+    }
+  ]
+}

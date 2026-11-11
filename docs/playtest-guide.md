@@ -22,6 +22,23 @@ For local development:
 cargo run -p prl -- --dev-assets
 ```
 
+For the opt-in UltiCa crypt art candidate, use `Launch-UltiCa.cmd` in the
+Windows package, or locally:
+
+```sh
+cargo run -p prl -- --dev-assets --tileset=ultica
+```
+
+This replaces world tiles, doors, stairs and actors only. Actors are static,
+unmirrored sprites with cosmetic movement/hit feedback. The player has a **fixed
+sword/mail appearance study**, not dynamic equipment visuals. Inventory, item
+icons, ground loot markers and generated sounds are unchanged. The window title
+labels the candidate; omitting the tileset flag restores the procedural art.
+Missing or corrupt selected candidate files produce a visible boot error, not
+a silent fallback. The CC BY-SA 3.0 art notices and original selected sources
+are included under `assets/packs/prl/sprites/ultica/`.
+This is not final art approval or evidence of a verified Windows launch.
+
 The current provisional save slot continues automatically on launch. It saves
 after 20 committed player actions, on floor changes and when quitting. A death
 barrier prevents the prior living checkpoint from being continued; launch then

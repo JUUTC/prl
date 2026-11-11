@@ -1,16 +1,28 @@
-# P2 placeholder view
+# Playtest world presentation
 
 `PrlRenderPlugin` requires Bevy's 2D renderer and text, and `PrlCorePlugin`.
 Startup must insert a successfully loaded `CoreState`; the renderer never
 constructs rules or writes gameplay state. The binary composes these plugins.
 
-Insert `PlaceholderArtSource(pack_dir)` to draw the disposable Gravebound atlas
+Insert `ArtSource::placeholder(pack_dir)` to draw the disposable Gravebound atlas
 described by `<pack_dir>/sprites/placeholder/gravebound_placeholder.ron`
 (regenerate with `python3 tools/character-study/export_placeholder_atlas.py`).
 Sprites are looked up by content ID from that pack manifest; adding a
 definition's sprite needs no engine change. If the source is absent or the
 manifest/PNG is invalid, an error is logged and procedural shapes are drawn.
 Neither is final PRL art or palette, and neither completes art P1.
+
+`ArtSource::ultica(pack_dir)` selects the audited, pinned crypt candidate under
+`sprites/ultica/ultica.ron`. The binary opts in with `--tileset=ultica`, validates
+image decoding and actor/tile/door/stair coverage before play and reports invalid
+candidate data on its boot-error screen; it never silently switches atlases.
+Schema 2 adds display scale, two-axis offsets and stair markers; schema 1 remains
+compatible. Native 32x32 cells display at 2x on the 64-unit logical grid;
+larger canvases retain proportional bounds. Candidate actors use single static,
+unmirrored frames, retaining traversal/hit feedback. The player kit is fixed art,
+not current equipment. UI, item icons and ground loot markers are unchanged.
+See [`tools/tileset`](../../tools/tileset/README.md) for conversion, licences,
+original source pixels and package verification.
 
 Map cells occupy 64 logical world units with no drawn grid. The camera follows
 the player; `+`/`-` (including numpad) select integer 1–4× world zoom. UI scaling

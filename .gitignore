@@ -1,2 +1,3 @@
 /target
 *.sav
+__pycache__/

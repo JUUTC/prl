@@ -1,11 +1,76 @@
 # Art Specification & Production Plan
 
-**Status:** approved direction; production artwork not yet approved.
+**Status:** CDDA asset-reuse direction accepted; an audited UltiCa crypt subset
+is integrated as an opt-in candidate. Final pack/visual approval, broader
+appearance/equipment coverage and Windows hands-on acceptance remain open.
 This document expands [SPEC.md](SPEC.md#14-art--audio-direction).
 Gameplay rules remain in their system specifications. The browser atelier is a
 placeholder experiment, not the production renderer or a release-quality reference.
 
-## 1. Decision register
+## Current direction override (2026-11-11)
+
+The user approved reducing animation requirements to fit the selected Cataclysm:
+Dark Days Ahead tileset. This section supersedes conflicting animation
+requirements and custom-animation production gates below; those remain as
+historical context, not prerequisites for adopting a tileset.
+
+- Static actors and tiles are acceptable. Reuse supplied facings and frames;
+  dedicated idle/walk/attack/work/consumable/casting poses and independently
+  authored left/right sets are not mandatory.
+- Detailed anatomical hand/grip animation and visible per-action props are
+  optional where supported, not reasons to recreate the tileset. Preserve
+  gameplay main/off-hand semantics regardless of visual coverage.
+- Cosmetic movement, hit feedback, projectiles, targeting and outcome messages
+  must make actions readable without waiting for bespoke animation. Reduced
+  motion remains supported; presentation never changes rules or action timing.
+- Do not infer native sprite resolution, equipment-layer coverage, available
+  appearances or fantasy-content coverage before auditing the chosen pack.
+  Logical grid size and gameplay movement remain unchanged by this decision.
+- Select and pin a tileset, audit asset-specific licensing/credits, inventory
+  coverage gaps and prove a representative in-game scene before bulk import.
+  Audit sound assets separately; a tileset license does not license a soundpack.
+
+UltiCa is a candidate, not an accepted pack selection. Gravebound-specific
+appearance, palette and perspective requirements need reconciliation with the
+selected assets; this animation decision does not approve replacements for all
+of those choices or alter the separate inventory/UI UX work. See Q-036/I-039.
+
+The [tileset integration plan](tileset-integration.md) records the pinned UltiCa
+candidate audit, current-crypt coverage, renderer gaps and dependency-ordered
+T0-T4 delivery checks. Subset rights/credits (I-040), the offline converter
+(I-041) and opt-in renderer (I-042) are implemented. Original source PNGs,
+provenance and CC BY-SA notices accompany the compact generated atlas.
+Do not treat this bounded candidate as approval to expand the roster.
+
+### Reuse and delivery checks
+
+- The [CDDA tileset repository](https://github.com/I-am-Erk/CDDA-Tilesets)
+  identifies UltiCa as CC BY-SA 3.0. Pin the version and verify each selected
+  asset's provenance and exceptions before importing; include required
+  attribution, licence text, source links and change notices with distributions.
+  Adapted artwork must satisfy applicable ShareAlike terms. Independently
+  authored MIT code remains separately licensed; review release packaging and
+  mixed-asset terms before shipping.
+- [CC-Sounds](https://github.com/Fris0uman/CDDA-Soundpacks) describes effects
+  sourced from multiple authors with per-folder credits and music under
+  separate permission. Its repository-level licence is not a substitute for
+  verifying each recording's actual rights. Do not assume the music permission
+  extends to PRL; obtain sufficient permission or omit it.
+- Retain a per-asset inventory in `assets/CREDITS.md`, covering author, source,
+  pinned revision, licence, used files and modifications. Package the notices
+  alongside Windows artifacts. The selected UltiCa subset is imported with those
+  records; no external audio is imported.
+- Map validated assets to PRL content IDs in presentation code and consume
+  committed outcomes for audio; never modify headless rules or gameplay timing
+  to accommodate a visual. Verify a representative scene, missing-asset
+  diagnostics, readability and packaged loading before expanding coverage.
+
+## 1. Previous decision register (reconcile under Q-036)
+
+The following legacy brief and phases document the earlier custom-art effort.
+Animation, bespoke-art sourcing and associated phase prerequisites are
+superseded by the current direction override above; remaining visual choices
+must be reconciled against the selected tileset, not assumed approved.
 
 | Area | Approved requirement | Not approved / still to resolve |
 |---|---|---|
@@ -162,6 +227,19 @@ New asset families need a gameplay purpose, inventory entry, dependencies and
 acceptance criteria; avoid unrelated showcase expansion.
 
 ## 7. Current position and next work
+
+**Current path:** the CDDA reuse override and
+[T0-T4 integration plan](tileset-integration.md) supersede the custom-production
+next steps below. UltiCa's pinned release uses 32x32 base cells with larger
+sprites/offsets. The audited candidate is runnable with `--tileset=ultica`;
+the procedural atlas remains the default. The release ZIP omits licence/credit
+files; the imported subset now includes legal text, original source metadata,
+attribution and adaptation notices. Converter/runtime integration and Linux
+packaged smoke are delivered, not final visual approval or Windows launch proof.
+I-039 remains open for those gates and later coverage; I-043 item icons are
+separate from this world-art proof.
+
+**Historical custom-art position (not the current prerequisite):**
 
 **P0 reference package prepared; approval and feasibility checks pending.**
 Review [the P0 package](style/gravebound-p0.md), including its original construction

@@ -1,9 +1,9 @@
 //! Presentation of game state: tilemap, sprites, lighting, camera, animation.
 //!
 //! Reads `prl_core` state and ordered outcomes; never mutates game rules.
-//! All P2 visuals are disposable placeholders, not final art: a generated
-//! Gravebound placeholder atlas when the pack provides one, otherwise
-//! procedural shapes. Neither completes art P1.
+//! The default uses a generated Gravebound placeholder atlas or shape fallback.
+//! Explicit `UltiCa` candidate selection uses an audited, separately licensed
+//! crypt subset with static actors. Neither is final art approval.
 
 use bevy::prelude::*;
 
@@ -16,7 +16,7 @@ mod facing;
 mod map;
 mod motion;
 
-pub use art::{PLACEHOLDER_MANIFEST, PlaceholderArtSource};
+pub use art::{ArtError, ArtSource, PLACEHOLDER_MANIFEST, ULTICA_MANIFEST};
 pub use camera::{TILE_SIZE, WorldZoom, tile_to_world};
 pub use motion::AnimationSpeed;
 

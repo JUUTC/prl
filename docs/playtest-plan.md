@@ -32,6 +32,21 @@ The concurrent animation/UX session is now recorded in
 [art-production.md](art-production.md) and [the Gravebound reference](style/gravebound-p0.md).
 Q-006 records that integration. Gameplay P0-P5 and art P0-P5 are separate gates;
 placeholder movement code does not approve final sprites, geometry or timings.
+The 2026-11-11 CDDA sourcing pivot reduces animation scope to the selected
+tileset's supplied frames/facings; static sprites are acceptable. The
+[art-production override](art-production.md#current-direction-override-2026-11-11)
+supersedes bespoke-animation gates. I-039 tracks licensing, coverage and a
+representative integration proof. The audited UltiCa subset and opt-in world
+renderer are now delivered; this is not final art or Windows hands-on acceptance.
+The [tileset integration plan](tileset-integration.md) now records a verified
+UltiCa candidate pin and crypt mappings. T0-T4 / I-040-I-044 track
+subset rights, conversion, renderer proof, item icons and Windows acceptance;
+the candidate is not the selected shipping pack. Keep the current runnable
+placeholder path until the replacement passes review.
+Use `--tileset=ultica` or the packaged `Launch-UltiCa.cmd` to inspect the candidate.
+The player kit is fixed art; item icons, loot markers and UI remain unchanged.
+The skills/character and scroll/Codex interviews record future rules in
+Q-030–Q-035 and I-037/I-038; they are not implemented in the present playtest.
 The defaults below remain proposals for the slice, not recovered timing answers.
 
 ## Scope of the first complete slice
@@ -276,6 +291,26 @@ record accepted decisions in the relevant system doc. Keep the question ID and
 resolution/source in the register; do not delete the history.
 
 ## Validation and playtest record
+
+**2026-11-11 UltiCa candidate increment (working tree):** format, workspace
+Clippy with denied warnings, 217 Rust tests (one existing ignored balance probe)
+and denied-warning rustdoc pass. Six converter/package tests, deterministic
+regeneration from the pinned ZIP and preserved originals, and stdlib-only
+complete image/source/notice inventory verification pass. Headless comparisons
+preserve identical command results/snapshots with both art sources and all
+Normal/Fast/Off motion settings; missing mappings, image corruption and invalid
+manifest data reject.
+
+Native Bevy/Xvfb Linux smoke launched an extracted package from `/tmp` without
+`--dev-assets`, using an isolated save directory. Candidate art loaded; movement,
+1x/2x zoom, 1280x900/720 resize and inventory browsing were exercised. Graceful
+quit wrote the save and restart continued it with the revised stone-wall/wooden
+up-stair art. Removing only the packaged candidate PNG produced the boot-error
+screen and exit 1 despite a valid source-checkout atlas; restoring it and omitting
+the selection flag loaded the procedural atlas and exited normally. This is
+technical evidence, not final art or human usability approval. No audio device
+was available. Windows workflow checks/launcher are wired, but no remote run or
+hands-on Windows launch of this increment is claimed (I-044).
 
 Run the smallest affected tests during iteration; run workspace format, clippy,
 tests and warning-free docs before stage handoff. Add the planned CI gates in P0;

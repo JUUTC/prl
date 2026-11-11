@@ -1,0 +1,569 @@
+{
+  "archive_sha256": "da1edc5b2ecc6390b143dbea5bd3e5302faae473b939631e1593e9b86b0f120d",
+  "changes": "Selected fixed variants; composed layers; repacked native pixels. Player kit is a fixed candidate study, not dynamic equipment.",
+  "revision": "5ee942f9e6601970c5da356200e7cf5061226262",
+  "source_history": {
+    "pngs_human_body_32x36/overlay/wielded/longsword/longsword_mf.png": [
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "fff687708d0bbe20faa2cdbbb673b595e9b990fb",
+        "subject": "Ultica \"32x36 sheet, phase 1: overlays\" (#785)"
+      }
+    ],
+    "pngs_human_body_32x36/overlay/worn/armour_antique/chainmail_suit_m.png": [
+      {
+        "author": "hoasd1",
+        "revision": "257f34593d3ad5224600b8e8710b1146ddfd2e02",
+        "subject": "[Ultica] [0.H] Un-Obsolete sprites (#2447)"
+      }
+    ],
+    "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png": [
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+        "subject": "Ultica \"32x48 tilesheet\" (#896)"
+      }
+    ],
+    "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton.png": [
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+        "subject": "Ultica \"32x48 tilesheet\" (#896)"
+      }
+    ],
+    "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png": [
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+        "subject": "Ultica \"32x48 tilesheet\" (#896)"
+      }
+    ],
+    "pngs_human_body_plus_32x48/overlay/skin/skin_brown_m.png": [
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+        "subject": "Ultica \"32x48 tilesheet\" (#896)"
+      }
+    ],
+    "pngs_normal_32x32/monsters/animals/mutants/mon_sewer_rat.png": [
+      {
+        "author": "I-am-Erk",
+        "revision": "2b20c9de7f4c814513bea81d26edcdebb27db8fe",
+        "subject": "discord submissions 31 aug to 2 sep (#241)"
+      }
+    ],
+    "pngs_normal_32x32/monsters/common/shadow_32x32_small.png": [
+      {
+        "author": "acepleiades",
+        "revision": "32c08c3733a9e9ef711e460a479a721eeeac623a",
+        "subject": "Ultica more monsters 9"
+      },
+      {
+        "author": "Serhiy Zahoriya",
+        "revision": "1c23164f6dc670cf7d33cc024898b7e2867b4c43",
+        "subject": "Ultica \"32x48 tilesheet\" (#896)"
+      }
+    ],
+    "pngs_normal_32x32/terrain/stairs/t_stairs_down.png": [
+      {
+        "author": "I-am-Erk",
+        "revision": "a8920c440fc364b8ec9e617cf2d4436cb8e41e7d",
+        "subject": "wood stairs"
+      }
+    ],
+    "pngs_normal_32x32/terrain/t_door/t_door_c.png": [
+      {
+        "author": "hoasd1",
+        "revision": "9b4387840a537d05995a72b94cdfb2d041473b0e",
+        "subject": "[Ultica]_Colored_doors_glass_doors_and_bamboo_plus_tweaks_by_hoasd1 (#1910)"
+      },
+      {
+        "author": "hoasd1",
+        "revision": "c6215548a87554942b10bb8400bd57f6f8794ea0",
+        "subject": "Add_stuff_and_delete_stuff (#1634)"
+      }
+    ],
+    "pngs_normal_32x32/terrain/t_door/t_door_frame.png": [
+      {
+        "author": "hoasd1",
+        "revision": "9b4387840a537d05995a72b94cdfb2d041473b0e",
+        "subject": "[Ultica]_Colored_doors_glass_doors_and_bamboo_plus_tweaks_by_hoasd1 (#1910)"
+      },
+      {
+        "author": "hoasd1",
+        "revision": "c6215548a87554942b10bb8400bd57f6f8794ea0",
+        "subject": "Add_stuff_and_delete_stuff (#1634)"
+      }
+    ],
+    "pngs_normal_32x32/terrain/t_door/t_door_o.png": [
+      {
+        "author": "hoasd1",
+        "revision": "9b4387840a537d05995a72b94cdfb2d041473b0e",
+        "subject": "[Ultica]_Colored_doors_glass_doors_and_bamboo_plus_tweaks_by_hoasd1 (#1910)"
+      },
+      {
+        "author": "I-am-Erk",
+        "revision": "9ed824e3326854f4fefd26597f22f8480dff3984",
+        "subject": "broken door, wielded hammer, some item rearrangement"
+      }
+    ],
+    "pngs_normal_32x32/terrain/t_rock/t_rock_center.png": [
+      {
+        "author": "barsoosayque",
+        "revision": "3cbd75b1f49bb05cdbeb034122f838a746757714",
+        "subject": "Natural terrain update -- Part 2 (#157)"
+      }
+    ],
+    "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png": [
+      {
+        "author": "barsoosayque",
+        "revision": "3cbd75b1f49bb05cdbeb034122f838a746757714",
+        "subject": "Natural terrain update -- Part 2 (#157)"
+      },
+      {
+        "author": "Isaac Freund",
+        "revision": "7172a59bf2fb481e6714fa8d21e6df602b7cb448",
+        "subject": "Reorganize directory structure"
+      }
+    ],
+    "pngs_tall_32x64/terrain/t_stairs_up/t_wood_stairs_up.png": [
+      {
+        "author": "I-am-Erk",
+        "revision": "e1dcf8dad05bc1b2ed03f4ece8bc5c73bb46a28f",
+        "subject": "up stair up dates"
+      },
+      {
+        "author": "I-am-Erk",
+        "revision": "2f3c6b0414d70ffc686c7a50d452f405cda3f7ae",
+        "subject": "Update t_wood_stairs_up.png"
+      },
+      {
+        "author": "I-am-Erk",
+        "revision": "a8920c440fc364b8ec9e617cf2d4436cb8e41e7d",
+        "subject": "wood stairs"
+      }
+    ]
+  },
+  "visuals": {
+    "prl:door/layers": [
+      {
+        "index": 7377,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          32,
+          11168,
+          64,
+          11200
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png",
+        "source_sha256": "5dcecfdfe5076d1277f394263952b53f295f2ff61bb20b5e8baf85be1c64655c",
+        "subtile": "center",
+        "tile_id": "t_rock_floor",
+        "variant": 0
+      },
+      {
+        "index": 6118,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "bg",
+        "rect": [
+          192,
+          8640,
+          224,
+          8672
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_door/t_door_frame.png",
+        "source_sha256": "2ede2ffa9527b8d3a7550bff5089ce19dc94c06e346d2c88765ef4522c17d018",
+        "subtile": null,
+        "tile_id": "t_door_c",
+        "variant": 0
+      },
+      {
+        "index": 6117,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          160,
+          8640,
+          192,
+          8672
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_door/t_door_c.png",
+        "source_sha256": "19f874e9ad0163e5bb5e67962aa892b1432a1dc545c404af45f7025b580df2f1",
+        "subtile": null,
+        "tile_id": "t_door_c",
+        "variant": 0
+      }
+    ],
+    "prl:door/open_layers": [
+      {
+        "index": 7377,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          32,
+          11168,
+          64,
+          11200
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png",
+        "source_sha256": "5dcecfdfe5076d1277f394263952b53f295f2ff61bb20b5e8baf85be1c64655c",
+        "subtile": "center",
+        "tile_id": "t_rock_floor",
+        "variant": 0
+      },
+      {
+        "index": 6118,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "bg",
+        "rect": [
+          192,
+          8640,
+          224,
+          8672
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_door/t_door_frame.png",
+        "source_sha256": "2ede2ffa9527b8d3a7550bff5089ce19dc94c06e346d2c88765ef4522c17d018",
+        "subtile": null,
+        "tile_id": "t_door_o",
+        "variant": 0
+      },
+      {
+        "index": 6120,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          256,
+          8640,
+          288,
+          8672
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_door/t_door_o.png",
+        "source_sha256": "988bf2e104c9a76b1f84c259674675c939aeb17077119af0d8f4d2f15f45d138",
+        "subtile": null,
+        "tile_id": "t_door_o",
+        "variant": 0
+      }
+    ],
+    "prl:floor/layers": [
+      {
+        "index": 7377,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          32,
+          11168,
+          64,
+          11200
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_rock_floor/t_rock_floor_center.png",
+        "source_sha256": "5dcecfdfe5076d1277f394263952b53f295f2ff61bb20b5e8baf85be1c64655c",
+        "subtile": "center",
+        "tile_id": "t_rock_floor",
+        "variant": 0
+      }
+    ],
+    "prl:grave_rat/layers": [
+      {
+        "index": 4659,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "bg",
+        "rect": [
+          96,
+          5728,
+          128,
+          5760
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/monsters/common/shadow_32x32_small.png",
+        "source_sha256": "aa0356eb6ad4ce22104ed17165f1427e26836579bd27fe8df0893307e499d5b0",
+        "subtile": null,
+        "tile_id": "mon_sewer_rat",
+        "variant": 0
+      },
+      {
+        "index": 4582,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          192,
+          5568,
+          224,
+          5600
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/monsters/animals/mutants/mon_sewer_rat.png",
+        "source_sha256": "493dca14a3e59679fc4be2d5b76f70f44f1de8d0be5f79a1cc0f954c82fbeb38",
+        "subtile": null,
+        "tile_id": "mon_sewer_rat",
+        "variant": 0
+      }
+    ],
+    "prl:player/layers": [
+      {
+        "index": 12441,
+        "offset": [
+          0,
+          -16
+        ],
+        "plane": "bg",
+        "rect": [
+          288,
+          144,
+          320,
+          192
+        ],
+        "sheet": "human_body_plus.png",
+        "source": "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png",
+        "source_sha256": "2cbac7c144766eb371102cd96403dda8bf5816c1da18438194500f930f82e040",
+        "subtile": null,
+        "tile_id": "player_male",
+        "variant": 0
+      },
+      {
+        "index": 12651,
+        "offset": [
+          0,
+          -16
+        ],
+        "plane": "fg",
+        "rect": [
+          352,
+          768,
+          384,
+          816
+        ],
+        "sheet": "human_body_plus.png",
+        "source": "pngs_human_body_plus_32x48/overlay/skin/skin_brown_m.png",
+        "source_sha256": "d6fbf01c0d6d0a1400c57bf0b5e9c9fc6318fec588aec04bf3748fcfc89dafd1",
+        "subtile": null,
+        "tile_id": "player_male",
+        "variant": 0
+      },
+      {
+        "index": 11061,
+        "offset": [
+          0,
+          -8
+        ],
+        "plane": "fg",
+        "rect": [
+          160,
+          3168,
+          192,
+          3204
+        ],
+        "sheet": "human_body.png",
+        "source": "pngs_human_body_32x36/overlay/worn/armour_antique/chainmail_suit_m.png",
+        "source_sha256": "b3d44fef91b69d09b690798a1aed97331bca94903965e251bb6cb9bfaaab7c53",
+        "subtile": null,
+        "tile_id": "overlay_male_worn_mc_chainmail_suit",
+        "variant": 0
+      },
+      {
+        "index": 10776,
+        "offset": [
+          0,
+          -8
+        ],
+        "plane": "fg",
+        "rect": [
+          256,
+          2520,
+          288,
+          2556
+        ],
+        "sheet": "human_body.png",
+        "source": "pngs_human_body_32x36/overlay/wielded/longsword/longsword_mf.png",
+        "source_sha256": "c9797111fac3ff267d6a98e55eae1d8df79c937c7eb2e8517343ceb962bd2b13",
+        "subtile": null,
+        "tile_id": "overlay_wielded_longsword",
+        "variant": 0
+      }
+    ],
+    "prl:shambler/layers": [
+      {
+        "index": 12441,
+        "offset": [
+          0,
+          -16
+        ],
+        "plane": "bg",
+        "rect": [
+          288,
+          144,
+          320,
+          192
+        ],
+        "sheet": "human_body_plus.png",
+        "source": "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png",
+        "source_sha256": "2cbac7c144766eb371102cd96403dda8bf5816c1da18438194500f930f82e040",
+        "subtile": null,
+        "tile_id": "mon_zombie",
+        "variant": 0
+      },
+      {
+        "index": 12612,
+        "offset": [
+          0,
+          -16
+        ],
+        "plane": "fg",
+        "rect": [
+          128,
+          672,
+          160,
+          720
+        ],
+        "sheet": "human_body_plus.png",
+        "source": "pngs_human_body_plus_32x48/monsters/mon_zombie_variants/mon_zombie_1.png",
+        "source_sha256": "3fc59372a124ab576a1c0bfef4f988d918079325046ee8b2351057242b401daf",
+        "subtile": null,
+        "tile_id": "mon_zombie",
+        "variant": 0
+      }
+    ],
+    "prl:skeleton/layers": [
+      {
+        "index": 12441,
+        "offset": [
+          0,
+          -16
+        ],
+        "plane": "bg",
+        "rect": [
+          288,
+          144,
+          320,
+          192
+        ],
+        "sheet": "human_body_plus.png",
+        "source": "pngs_human_body_plus_32x48/monsters/common/shadow_32x48_normal.png",
+        "source_sha256": "2cbac7c144766eb371102cd96403dda8bf5816c1da18438194500f930f82e040",
+        "subtile": null,
+        "tile_id": "mon_skeleton",
+        "variant": 0
+      },
+      {
+        "index": 12544,
+        "offset": [
+          0,
+          -16
+        ],
+        "plane": "fg",
+        "rect": [
+          0,
+          480,
+          32,
+          528
+        ],
+        "sheet": "human_body_plus.png",
+        "source": "pngs_human_body_plus_32x48/monsters/mon_skeleton/mon_skeleton.png",
+        "source_sha256": "9b4f7efe203951b73ff1a780b05de9651c9af9e2f7305cbcf8fb76165daa061e",
+        "subtile": null,
+        "tile_id": "mon_skeleton",
+        "variant": 0
+      }
+    ],
+    "prl:stairs_down/layers": [
+      {
+        "index": 5492,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          128,
+          7392,
+          160,
+          7424
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/stairs/t_stairs_down.png",
+        "source_sha256": "b8dbd2397c4ab0512bfe64c988d685d6966febf84241ad2362fbd5d0d6477f39",
+        "subtile": null,
+        "tile_id": "t_stairs_down",
+        "variant": 0
+      }
+    ],
+    "prl:stairs_up/layers": [
+      {
+        "index": 9535,
+        "offset": [
+          0,
+          -32
+        ],
+        "plane": "fg",
+        "rect": [
+          480,
+          2368,
+          512,
+          2432
+        ],
+        "sheet": "tall.png",
+        "source": "pngs_tall_32x64/terrain/t_stairs_up/t_wood_stairs_up.png",
+        "source_sha256": "09cc315c05489fbe37b1aaf890dc91cbe2f5f82296869a2f45096d4e8991a59a",
+        "subtile": null,
+        "tile_id": "t_wood_stairs_up",
+        "variant": 0
+      }
+    ],
+    "prl:wall/layers": [
+      {
+        "index": 7345,
+        "offset": [
+          0,
+          0
+        ],
+        "plane": "fg",
+        "rect": [
+          32,
+          11104,
+          64,
+          11136
+        ],
+        "sheet": "normal.png",
+        "source": "pngs_normal_32x32/terrain/t_rock/t_rock_center.png",
+        "source_sha256": "a8d4503c9b3fd41ce660aa304776b3cf84bf3f30bace7cab2c15a537b72f3a23",
+        "subtile": "center",
+        "tile_id": "t_rock",
+        "variant": 0
+      }
+    ]
+  }
+}

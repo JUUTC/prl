@@ -4,22 +4,30 @@ use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
 
-pub(super) fn content_path() -> io::Result<PathBuf> {
-    let development = development_assets(std::env::args_os().skip(1))?;
+pub(super) fn launch_assets() -> io::Result<(PathBuf, bool)> {
+    let (development, ultica) = options(std::env::args_os().skip(1))?;
     let executable = std::env::current_exe()?;
-    resolve_content_path(&executable, development)
+    Ok((resolve_content_path(&executable, development)?, ultica))
 }
 
-fn development_assets(arguments: impl IntoIterator<Item = OsString>) -> io::Result<bool> {
-    let arguments: Vec<_> = arguments.into_iter().collect();
-    match arguments.as_slice() {
-        [] => Ok(false),
-        [argument] if argument == "--dev-assets" => Ok(true),
-        _ => Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "usage: prl [--dev-assets]; --dev-assets opts into source-checkout assets",
-        )),
+fn options(arguments: impl IntoIterator<Item = OsString>) -> io::Result<(bool, bool)> {
+    let mut development = false;
+    let mut selection = None;
+    for argument in arguments {
+        if argument == "--dev-assets" && !development {
+            development = true;
+        } else if argument == "--tileset=ultica" && selection.is_none() {
+            selection = Some(true);
+        } else if argument == "--tileset=placeholder" && selection.is_none() {
+            selection = Some(false);
+        } else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "usage: prl [--dev-assets] [--tileset=ultica|--tileset=placeholder]",
+            ));
+        }
     }
+    Ok((development, selection.unwrap_or(false)))
 }
 
 fn resolve_content_path(executable: &Path, development: bool) -> io::Result<PathBuf> {
@@ -87,15 +95,39 @@ mod tests {
 
     #[test]
     fn checkout_assets_require_explicit_opt_in() {
-        assert!(!development_assets([]).unwrap());
-        assert!(development_assets([OsString::from("--dev-assets")]).unwrap());
-        assert!(development_assets([OsString::from("--dev-asset")]).is_err());
+        assert_eq!(options([]).unwrap(), (false, false));
+        assert_eq!(
+            options([OsString::from("--dev-assets")]).unwrap(),
+            (true, false)
+        );
+        assert!(options([OsString::from("--dev-asset")]).is_err());
         assert!(
-            development_assets([
+            options([
                 OsString::from("--dev-assets"),
                 OsString::from("--dev-assets"),
             ])
             .is_err()
+        );
+    }
+
+    #[test]
+    fn tileset_selection_is_explicit_and_never_changes_asset_resolution_policy() {
+        for arguments in [
+            ["--dev-assets", "--tileset=ultica"],
+            ["--tileset=ultica", "--dev-assets"],
+        ] {
+            assert_eq!(
+                options(arguments.map(OsString::from)).unwrap(),
+                (true, true)
+            );
+        }
+        assert_eq!(
+            options([OsString::from("--tileset=ultica")]).unwrap(),
+            (false, true)
+        );
+        assert!(options([OsString::from("--tileset=unknown")]).is_err());
+        assert!(
+            options(["--tileset=ultica", "--tileset=placeholder"].map(OsString::from)).is_err()
         );
     }
 

@@ -1,6 +1,10 @@
 # Gravebound P0 Reference Package
 
 **Status: candidate for review, not approved production art.**
+Historical custom-art reference: the 2026-11-11
+[tileset direction override](../art-production.md#current-direction-override-2026-11-11)
+supersedes its mandatory bespoke animation requirements. It is not a gate for
+the CDDA reuse proof; other visual decisions remain subject to Q-036 review.
 Scope: the P0 gate in [art-production.md](../art-production.md).
 This package does not authorize expanding the placeholder roster or starting P1.
 

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use prl_core::{CoreSet, CoreState, Position};
 
 use crate::actors::depth;
-use crate::art::PlaceholderArt;
+use crate::art::AtlasArt;
 use crate::camera::{TILE_SIZE, tile_to_world};
 
 #[derive(Component)]
@@ -35,7 +35,7 @@ fn tint(visible: bool) -> Color {
 fn refresh(
     mut commands: Commands<'_, '_>,
     state: Res<'_, CoreState>,
-    art: Option<Res<'_, PlaceholderArt>>,
+    art: Option<Res<'_, AtlasArt>>,
     placeholders: Query<'_, '_, Entity, With<Placeholder>>,
 ) {
     for entity in &placeholders {
@@ -44,12 +44,31 @@ fn refresh(
     spawn_terrain(&mut commands, &state, art.as_deref());
     spawn_loot(&mut commands, &state);
     if let Some(plan) = state.floor_plan() {
-        for (position, label) in [(plan.entrance, "<"), (plan.exit, ">")] {
+        for (position, label, marker) in [
+            (plan.entrance, "<", "stairs_up"),
+            (plan.exit, ">", "stairs_down"),
+        ] {
             if !state.map().is_visible(position) && state.map().remembered_tile(position).is_none()
             {
                 continue;
             }
             let centre = tile_to_world(position.x, position.y);
+            if let Some((art, tile)) = art
+                .as_deref()
+                .and_then(|art| art.index.markers.get(marker).map(|tile| (art, tile)))
+            {
+                let mut sprite = art.sprite(tile.closed);
+                sprite.color = tint(state.is_visible(position));
+                commands.spawn((
+                    Name::new(format!("Art {marker}")),
+                    sprite,
+                    Transform::from_translation(
+                        (centre + tile.offset).extend(depth(position.y) + 0.0002),
+                    ),
+                    Placeholder,
+                ));
+                continue;
+            }
             commands.spawn((
                 Name::new("Placeholder stairs"),
                 Text2d::new(label),
@@ -91,7 +110,7 @@ fn spawn_loot(commands: &mut Commands<'_, '_>, state: &CoreState) {
     }
 }
 
-fn spawn_terrain(commands: &mut Commands<'_, '_>, state: &CoreState, art: Option<&PlaceholderArt>) {
+fn spawn_terrain(commands: &mut Commands<'_, '_>, state: &CoreState, art: Option<&AtlasArt>) {
     let map = state.map();
     for y in 0..map.height() {
         for x in 0..map.width() {
@@ -119,7 +138,7 @@ fn spawn_terrain(commands: &mut Commands<'_, '_>, state: &CoreState, art: Option
                 commands.spawn((
                     Name::new(format!("Placeholder art tile {x},{y}")),
                     sprite,
-                    Transform::from_xyz(centre.x, centre.y + tile.offset_y, z),
+                    Transform::from_translation((centre + tile.offset).extend(z)),
                     Placeholder,
                 ));
                 continue;
