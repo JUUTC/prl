@@ -45,13 +45,16 @@ pub enum Container {
     },
 }
 
-/// A single, non-stacked slice item. General stack splitting is deferred.
+/// One stack of identical item instances.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Item {
     /// Persistent item identity.
     pub id: ItemId,
     /// Definition supplying shape, weight and effects.
     pub definition: prl_content::ContentId,
+    /// Number of identical units in this stack.
+    #[serde(default = "one_item")]
+    pub quantity: u16,
     /// Whether hidden affixes are known.
     pub identified: bool,
     /// Exactly one owning container.
@@ -61,6 +64,10 @@ pub struct Item {
     /// Backpack footprint turned 90 degrees; retained while equipped/on ground.
     #[serde(default)]
     pub rotated: bool,
+}
+
+fn one_item() -> u16 {
+    1
 }
 
 /// Explicit item transfer; validation completes before any mutation or time cost.
@@ -159,7 +166,7 @@ impl Inventory {
             .map(|definition| definition.kind.icon())
     }
 
-    /// Known name without leaking unidentified affixes.
+    /// Known name and quantity without leaking unidentified affixes.
     #[must_use]
     pub fn label(&self, item: &Item) -> String {
         let Some(definition) = self.definition(item) else {
@@ -169,7 +176,7 @@ impl Inventory {
             Rarity::Normal => "o",
             Rarity::Magic => "*",
         };
-        if !item.identified {
+        let label = if !item.identified {
             format!(
                 "{rarity} {} (?)",
                 self.appearances
@@ -180,6 +187,11 @@ impl Inventory {
             format!("{rarity} {}", definition.name)
         } else {
             format!("{rarity} {} {}", definition.name, definition.affix_name)
+        };
+        if item.quantity > 1 {
+            format!("{label} x{}", item.quantity)
+        } else {
+            label
         }
     }
 
@@ -202,8 +214,10 @@ impl Inventory {
         self.items
             .values()
             .filter(|item| matches!(item.container, BACKPACK | EQUIPMENT))
-            .filter_map(|item| self.definition(item))
-            .map(|definition| u64::from(definition.weight))
+            .filter_map(|item| {
+                self.definition(item)
+                    .map(|definition| u64::from(definition.weight) * u64::from(item.quantity))
+            })
             .sum()
     }
 
@@ -313,43 +327,12 @@ impl Inventory {
             return Err(RejectReason::InvalidItem);
         }
         let mut next = self.clone();
-        let mut cost = if matches!(source, Container::Equipment)
-            && definition.kind == ItemKind::Gear(EquipSlot::Body)
-        {
-            300
-        } else {
-            100
-        };
-        let cell = match destination {
-            Container::Backpack => {
-                if matches!(source, Container::Ground { .. }) {
-                    cost = 50;
-                }
-                if matches!(source, Container::Ground { .. })
-                    && self.carried_weight() + u64::from(definition.weight)
-                        > u64::from(self.catalog.carry_capacity)
-                {
-                    return Err(RejectReason::TooHeavy);
-                }
-                let cell = transfer
-                    .cell
-                    .or_else(|| self.first_fit(item.id, shape))
-                    .ok_or(RejectReason::BackpackFull)?;
-                if !self.fits(item.id, shape, cell) {
-                    return Err(RejectReason::BackpackFull);
-                }
-                Some(cell)
-            }
+        let cost = self.transfer_cost(item, definition, source, destination)?;
+        match destination {
             Container::Equipment => {
-                if item.container != BACKPACK {
-                    return Err(RejectReason::ItemInaccessible);
-                }
                 let ItemKind::Gear(slot) = definition.kind else {
                     return Err(RejectReason::InvalidItem);
                 };
-                if slot == EquipSlot::Body {
-                    cost = 300;
-                }
                 // Remove the candidate before finding room for the displaced item.
                 next.items.remove(&item.id);
                 let displaced = self.items.values().find(|other| {
@@ -368,20 +351,184 @@ impl Inventory {
                     old.cell = Some(cell);
                     next.items.insert(old.id, old);
                 }
-                None
             }
-            Container::Ground { .. } => {
-                if !matches!(source, Container::Backpack | Container::Equipment) {
-                    return Err(RejectReason::ItemInaccessible);
-                }
-                None
-            }
-        };
+            Container::Backpack | Container::Ground { .. } => {}
+        }
+        if self.transfer_stack(&mut next, transfer, item, definition, shape)? {
+            return Ok((next, cost));
+        }
         let mut moved = item.clone();
         moved.container = transfer.destination;
-        moved.cell = cell;
+        moved.cell = match destination {
+            Container::Backpack => {
+                let cell = transfer
+                    .cell
+                    .or_else(|| self.first_fit(item.id, shape))
+                    .ok_or(RejectReason::BackpackFull)?;
+                if !self.fits(item.id, shape, cell) {
+                    return Err(RejectReason::BackpackFull);
+                }
+                Some(cell)
+            }
+            Container::Equipment | Container::Ground { .. } => None,
+        };
         next.items.insert(moved.id, moved);
         Ok((next, cost))
+    }
+
+    fn transfer_cost(
+        &self,
+        item: &Item,
+        definition: &ItemDefinition,
+        source: &Container,
+        destination: &Container,
+    ) -> Result<u16, RejectReason> {
+        let body_armor = definition.kind == ItemKind::Gear(EquipSlot::Body);
+        let base_cost = if (matches!(source, Container::Equipment)
+            || matches!(destination, Container::Equipment))
+            && body_armor
+        {
+            300
+        } else {
+            100
+        };
+        match destination {
+            Container::Backpack => {
+                if matches!(source, Container::Ground { .. }) {
+                    if self.carried_weight()
+                        + u64::from(definition.weight) * u64::from(item.quantity)
+                        > u64::from(self.catalog.carry_capacity)
+                    {
+                        return Err(RejectReason::TooHeavy);
+                    }
+                    Ok(50)
+                } else {
+                    Ok(base_cost)
+                }
+            }
+            Container::Equipment => {
+                if item.container != BACKPACK {
+                    return Err(RejectReason::ItemInaccessible);
+                }
+                if !matches!(definition.kind, ItemKind::Gear(_)) {
+                    return Err(RejectReason::InvalidItem);
+                }
+                Ok(base_cost)
+            }
+            Container::Ground { .. } => {
+                if matches!(source, Container::Backpack | Container::Equipment) {
+                    Ok(base_cost)
+                } else {
+                    Err(RejectReason::ItemInaccessible)
+                }
+            }
+        }
+    }
+
+    fn transfer_stack(
+        &self,
+        next: &mut Self,
+        transfer: TransferItems,
+        item: &Item,
+        definition: &ItemDefinition,
+        shape: (u8, u8),
+    ) -> Result<bool, RejectReason> {
+        let stack_limit = definition.max_stack;
+        if stack_limit <= 1
+            || !item.identified
+            || !matches!(definition.kind, ItemKind::Healing { .. })
+            || !matches!(
+                self.containers.get(&transfer.destination),
+                Some(Container::Backpack | Container::Ground { .. })
+            )
+        {
+            return Ok(false);
+        }
+
+        let mut remaining = item.quantity;
+        let targets = next
+            .items
+            .values()
+            .filter(|other| {
+                other.id != item.id
+                    && other.container == transfer.destination
+                    && other.definition == item.definition
+                    && other.identified
+            })
+            .map(|other| other.id)
+            .collect::<Vec<_>>();
+        for target in targets {
+            let Some(existing) = next.items.get_mut(&target) else {
+                continue;
+            };
+            let merged = stack_limit.saturating_sub(existing.quantity).min(remaining);
+            existing.quantity += merged;
+            remaining -= merged;
+            if remaining == 0 {
+                break;
+            }
+        }
+        if remaining == 0 {
+            next.items.remove(&item.id);
+            return Ok(true);
+        }
+
+        let mut moved = item.clone();
+        moved.quantity = remaining;
+        moved.container = transfer.destination;
+        moved.cell = match self.containers.get(&transfer.destination) {
+            Some(Container::Backpack) => {
+                let cell = transfer
+                    .cell
+                    .or_else(|| self.first_fit(item.id, shape))
+                    .ok_or(RejectReason::BackpackFull)?;
+                if !self.fits(item.id, shape, cell) {
+                    return Err(RejectReason::BackpackFull);
+                }
+                Some(cell)
+            }
+            Some(Container::Ground { .. }) => None,
+            _ => return Err(RejectReason::InvalidItem),
+        };
+        next.items.insert(moved.id, moved);
+        Ok(true)
+    }
+
+    fn split(&self, id: ItemId, quantity: u16) -> Result<Self, RejectReason> {
+        let item = self.items.get(&id).ok_or(RejectReason::InvalidItem)?;
+        let definition = self.definition(item).ok_or(RejectReason::InvalidItem)?;
+        if item.container != BACKPACK {
+            return Err(RejectReason::ItemInaccessible);
+        }
+        if definition.max_stack <= 1
+            || !matches!(definition.kind, ItemKind::Healing { .. })
+            || !item.identified
+            || item.quantity <= 1
+            || quantity == 0
+            || quantity >= item.quantity
+        {
+            return Err(RejectReason::InvalidItem);
+        }
+        let new_id = ItemId(self.next_item);
+        let next_item = self
+            .next_item
+            .checked_add(1)
+            .ok_or(RejectReason::InvalidItem)?;
+        let shape = self.footprint(item).ok_or(RejectReason::InvalidItem)?;
+        let cell = self
+            .first_fit(new_id, shape)
+            .ok_or(RejectReason::BackpackFull)?;
+        let mut next = self.clone();
+        next.next_item = next_item;
+        if let Some(original) = next.items.get_mut(&id) {
+            original.quantity -= quantity;
+        }
+        let mut split = item.clone();
+        split.id = new_id;
+        split.quantity = quantity;
+        split.cell = Some(cell);
+        next.items.insert(new_id, split);
+        Ok(next)
     }
 
     pub(crate) fn validate(&self) -> Result<(), CoreError> {
@@ -399,12 +546,26 @@ impl Inventory {
         {
             return Err(invalid("invalid format, capacity or containers"));
         }
+        let definitions = self.validate_definitions()?;
+        if !self.valid_filter(&definitions) {
+            return Err(invalid(
+                "Default filter is oversized or references unknown items",
+            ));
+        }
+        self.validate_items()
+    }
+
+    fn validate_definitions(&self) -> Result<BTreeSet<&prl_content::ContentId>, CoreError> {
+        let invalid = |reason: &str| CoreError::InvalidRun(format!("items: {reason}"));
         let mut definitions = BTreeSet::new();
         for definition in &self.catalog.items {
             if !definitions.insert(&definition.id)
                 || definition.name.trim().is_empty()
                 || !(1..=10).contains(&definition.width)
                 || !(1..=6).contains(&definition.height)
+                || definition.max_stack == 0
+                || (definition.max_stack > 1
+                    && !matches!(definition.kind, ItemKind::Healing { .. }))
                 || (definition.rarity == Rarity::Normal && definition.affix != ItemBonus::default())
                 || matches!(definition.kind, ItemKind::Healing { amount: 0 })
                 || (!matches!(definition.kind, ItemKind::Gear(_))
@@ -434,11 +595,11 @@ impl Inventory {
                 return Err(invalid("unknown supply or reward definition"));
             }
         }
-        if !self.valid_filter(&definitions) {
-            return Err(invalid(
-                "Default filter is oversized or references unknown items",
-            ));
-        }
+        Ok(definitions)
+    }
+
+    fn validate_items(&self) -> Result<(), CoreError> {
+        let invalid = |reason: &str| CoreError::InvalidRun(format!("items: {reason}"));
         let mut slots = BTreeSet::new();
         for (id, item) in &self.items {
             let definition = self
@@ -447,6 +608,9 @@ impl Inventory {
             if *id != item.id
                 || id.0 == 0
                 || id.0 >= self.next_item
+                || item.quantity == 0
+                || item.quantity > definition.max_stack
+                || (!item.identified && item.quantity > 1)
                 || (definition.rarity == Rarity::Normal
                     && matches!(definition.kind, ItemKind::Gear(_))
                     && !item.identified)
@@ -554,6 +718,21 @@ impl CoreState {
         })
     }
 
+    pub(crate) fn plan_split_stack(
+        &self,
+        id: ItemId,
+        quantity: u16,
+    ) -> Result<crate::state::Action, RejectReason> {
+        let inventory = self.inventory.as_ref().ok_or(RejectReason::InvalidItem)?;
+        let next = inventory.split(id, quantity)?;
+        Ok(crate::state::Action::Items {
+            inventory: Box::new(next),
+            cost: 0,
+            healing: 0,
+            message: format!("Split {quantity} items into a new stack. No time spent."),
+        })
+    }
+
     pub(crate) fn plan_quaff(&self, id: ItemId) -> Result<crate::state::Action, RejectReason> {
         let inventory = self.inventory.as_ref().ok_or(RejectReason::InvalidItem)?;
         let item = inventory
@@ -572,7 +751,11 @@ impl CoreState {
             return Err(RejectReason::NoEffect);
         }
         let mut next = inventory.clone();
-        next.items.remove(&id);
+        if item.quantity == 1 {
+            next.items.remove(&id);
+        } else if let Some(item) = next.items.get_mut(&id) {
+            item.quantity -= 1;
+        }
         for other in next
             .items
             .values_mut()
@@ -618,7 +801,11 @@ impl CoreState {
             return Err(RejectReason::NoEffect);
         }
         let mut next = inventory.clone();
-        next.items.remove(&scroll);
+        if scroll_item.quantity == 1 {
+            next.items.remove(&scroll);
+        } else if let Some(scroll_item) = next.items.get_mut(&scroll) {
+            scroll_item.quantity -= 1;
+        }
         for item in next.items.values_mut() {
             if item.id == target
                 || item.definition == scroll_item.definition
@@ -666,6 +853,9 @@ impl CoreState {
                 let (_, cost) =
                     inventory.transferred(transfer, self.map.id(), player.position())?;
                 return Ok(cost);
+            }
+            crate::Command::SplitStack { item, quantity } => {
+                self.plan_split_stack(item, quantity)?
             }
             crate::Command::Drop(item) => self.plan_drop(item)?,
             crate::Command::Quaff(item) => self.plan_quaff(item)?,
@@ -771,6 +961,7 @@ impl CoreState {
                             rotated: false,
                             id: item_id,
                             definition: id.clone(),
+                            quantity: 1,
                             identified: definition.rarity == Rarity::Normal
                                 && matches!(definition.kind, ItemKind::Gear(_)),
                             container,
@@ -892,6 +1083,168 @@ mod tests {
                 CommandResult::Accepted { .. }
             ));
         }
+    }
+
+    fn enable_potion_stacks(state: &mut CoreState, max_stack: u16, identified: bool) {
+        let inventory = state.inventory.as_mut().unwrap();
+        inventory
+            .catalog
+            .items
+            .iter_mut()
+            .find(|definition| definition.id.name() == "healing_potion")
+            .unwrap()
+            .max_stack = max_stack;
+        for item in inventory
+            .items
+            .values_mut()
+            .filter(|item| item.definition.name() == "healing_potion")
+        {
+            item.identified = identified;
+        }
+    }
+
+    #[test]
+    fn identified_stackable_potions_merge_on_pickup_without_exceeding_limit() {
+        let mut state = crate::test_support::dungeon();
+        enable_potion_stacks(&mut state, 2, true);
+        pickup_all(&mut state);
+        let potions = state
+            .inventory()
+            .unwrap()
+            .items()
+            .filter(|item| item.definition.name() == "healing_potion" && item.container == BACKPACK)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            potions.iter().map(|item| item.quantity).collect::<Vec<_>>(),
+            [2, 1]
+        );
+        assert!(potions.iter().all(|item| item.identified));
+        assert!(state.inventory().unwrap().validate().is_ok());
+    }
+
+    #[test]
+    fn unidentified_consumables_remain_separate_and_identification_does_not_merge() {
+        let mut state = crate::test_support::dungeon();
+        enable_potion_stacks(&mut state, 10, false);
+        pickup_all(&mut state);
+        let potions = state
+            .inventory()
+            .unwrap()
+            .items()
+            .filter(|item| item.definition.name() == "healing_potion" && item.container == BACKPACK)
+            .map(|item| item.id)
+            .collect::<Vec<_>>();
+        assert_eq!(potions.len(), 3);
+        let scroll = find(&state, "identify_scroll");
+        state.issue(Command::Identify {
+            scroll,
+            target: potions[0],
+        });
+        let inventory = state.inventory().unwrap();
+        assert!(potions.iter().all(|id| inventory.items[id].identified));
+        assert!(potions.iter().all(|id| inventory.items[id].quantity == 1));
+        assert!(inventory.validate().is_ok());
+    }
+
+    #[test]
+    fn consuming_one_unit_preserves_the_remaining_stack_and_scales_weight() {
+        let mut state = crate::test_support::dungeon();
+        enable_potion_stacks(&mut state, 10, true);
+        pickup_all(&mut state);
+        let potion = find(&state, "healing_potion");
+        let inventory = state.inventory.as_mut().unwrap();
+        assert_eq!(inventory.items[&potion].quantity, 3);
+        let weight = inventory.carried_weight();
+        state.actors.get_mut(&state.player).unwrap().hp = 10;
+        state.issue(Command::Quaff(potion));
+        assert_eq!(state.inventory().unwrap().items[&potion].quantity, 2);
+        assert_eq!(state.inventory().unwrap().carried_weight(), weight - 200);
+        assert!(state.inventory().unwrap().validate().is_ok());
+    }
+
+    #[test]
+    fn splitting_a_stack_is_atomic_free_and_allocates_a_logical_item_id() {
+        let mut state = crate::test_support::dungeon();
+        enable_potion_stacks(&mut state, 10, true);
+        pickup_all(&mut state);
+        let potion = find(&state, "healing_potion");
+        let command = Command::SplitStack {
+            item: potion,
+            quantity: 1,
+        };
+        let before = (
+            state.clock(),
+            state.rng_position(),
+            state.actors().cloned().collect::<Vec<_>>(),
+        );
+        assert_eq!(state.item_action_cost(command), Ok(0));
+        assert!(matches!(
+            state.issue(command),
+            CommandResult::Accepted { .. }
+        ));
+        assert_eq!(
+            (
+                state.clock(),
+                state.rng_position(),
+                state.actors().cloned().collect::<Vec<_>>(),
+            ),
+            before
+        );
+        let inventory = state.inventory().unwrap();
+        let split = inventory
+            .items()
+            .find(|item| item.id != potion && item.definition.name() == "healing_potion")
+            .unwrap();
+        assert_eq!(inventory.items[&potion].quantity, 2);
+        assert_eq!(split.quantity, 1);
+        assert_ne!(inventory.items[&potion].cell, split.cell);
+        assert!(inventory.validate().is_ok());
+    }
+
+    #[test]
+    fn invalid_or_non_stackable_splits_preserve_inventory_and_world_state() {
+        let mut state = crate::test_support::dungeon();
+        pickup_all(&mut state);
+        let potion = find(&state, "healing_potion");
+        for quantity in [0, 1] {
+            let before = (
+                state.inventory().unwrap().clone(),
+                state.clock(),
+                state.rng_position(),
+            );
+            assert!(matches!(
+                state.issue(Command::SplitStack {
+                    item: potion,
+                    quantity
+                }),
+                CommandResult::Rejected {
+                    reason: RejectReason::InvalidItem,
+                    ..
+                }
+            ));
+            assert_eq!(state.inventory().unwrap(), &before.0);
+            assert_eq!(state.clock(), before.1);
+            assert_eq!(state.rng_position(), before.2);
+        }
+    }
+
+    #[test]
+    fn snapshot_restore_preserves_stack_quantities_and_older_items_default_to_one() {
+        let mut state = crate::test_support::dungeon();
+        enable_potion_stacks(&mut state, 10, true);
+        pickup_all(&mut state);
+        let potion = find(&state, "healing_potion");
+        state
+            .inventory
+            .as_mut()
+            .unwrap()
+            .items
+            .get_mut(&potion)
+            .unwrap()
+            .quantity = 3;
+        let snapshot = state.snapshot();
+        let restored = CoreState::restore(snapshot.clone()).unwrap();
+        assert_eq!(restored.snapshot(), snapshot);
     }
 
     #[test]

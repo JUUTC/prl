@@ -29,9 +29,13 @@ unchanged until I-028/I-037/I-038 ship.
   with limited meaningful repeat awards; formulas are open (Q-030).
 - Compatible consumables, materials and ammo auto-merge on pickup/transfer up
   to content-defined limits. Gear, unique items, scrolls and unidentified
-  consumables remain separate. Quantity split offers one/half/all shortcuts.
-  Compatibility fields and merging immediately after identification remain
-  open (Q-031).
+  consumables remain separate. Quantity split offers one/half/custom-quantity
+  shortcuts; transferring or dropping a stack acts on all its units.
+  The bounded stack foundation currently uses exact definition identity and
+  known state, with one/half/custom split actions; content-defined limits
+  default to one and no current item opts in. Material/ammo kinds,
+  richer compatibility fields and merging immediately after identification
+  remain open (Q-031).
 - Crafting uses Equipment Crafting, Alchemy & Cooking and Arcane Crafting;
   gathering uses Extraction and Harvesting. Basic work is available at zero
   skill, with possible failure and low quality/quantity; tools and materials
@@ -44,9 +48,12 @@ implements only single-instance Normal/Magic Main hand and Body gear, one healin
 potion type and one Identify scroll type. Catalog, base/affix bonuses, fixed
 supplies/rewards and Default label rules live in
 `assets/packs/prl/data/dungeons/crypt_playtest.ron`; they are provisional tuning,
-not recovered interview decisions. No random affix rolls, stacks, durability,
+not recovered interview decisions. No random affix rolls, enabled content stacks, durability,
 requirements, curses/blessings, auto-identification from wearing gear or crafting
-are claimed.
+are claimed. Stack quantities and safe split commands are supported as a
+headless foundation, with snapshot v6 singleton migration, but all shipped
+definitions retain the default limit of one until reviewed content sets a
+limit. Thus no playable stack is currently enabled.
 
 The 10x6 backpack uses deterministic row-major first-fit placement in each item's
 current orientation; pickup never rotates or rearranges existing items.
@@ -65,9 +72,13 @@ action count, AI or RNG. Placement is atomic; Organize sorts descending area,
 descending longest side, then ItemId, trying row-major base orientation before
 rotated orientation per item. It commits only if every item fits; failure
 preserves the complete layout and explains that best effort failed.
-Orientation persists through transfers and snapshot v5 (v4 migrates unrotated).
-See [inventory-ux.md](inventory-ux.md) for native controls. Stacks, other slots
-and the full weight model remain I-028.
+Orientation persists through transfers and snapshot v5 (v4 migrates unrotated);
+snapshot v6 adds quantities and migrates older items as singletons. Identified
+same-definition healing items can merge up to their content limit on transfer;
+unknown items stay separate and identification itself never merges them.
+See [inventory-ux.md](inventory-ux.md) for native controls. Material/ammo
+definitions, richer compatibility, other slots and the full weight model remain
+I-028.
 
 Normal gear is known. Unknown Magic gear shows base/rarity (`*`), not affix text;
 comparison omits unknown affix bonuses while actual combat includes them.

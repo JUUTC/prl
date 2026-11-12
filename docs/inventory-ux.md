@@ -15,7 +15,7 @@ rules are communicated, not new inventory capacity, stacking, healing or costs.
 Q-030/Q-031 record the 2026-11-10 interview decisions and remaining scope. Preserve the separate
 [art/UX gates](art-production.md); placeholder icons and styling are disposable.
 
-## Future Codex and stacks (accepted; not implemented)
+## Future Codex and bounded stack foundation
 
 The Magic Book/Codex is a carried physical container with effectively unlimited
 scroll slots; scroll weight still counts. Books can be purchased, found or
@@ -34,11 +34,15 @@ without silent substitution. An unknown slot pins a physical instance and
 never auto-refills. Scrolls never stack, preventing favorite/slot behavior from
 revealing hidden sameness. The target picker and warnings follow Q-030.
 
-For compatible stackable items use automatic pickup/transfer merging and a
-quantity dialog with one/half/all shortcuts; limits and unidentified exceptions
-follow [items-and-crafting.md](items-and-crafting.md#accepted-design-updates-not-yet-implemented).
-Exact compatibility and post-identification merge timing remain open. This
-future design does not replace the independently developed inventory workspace.
+The core supports content-limited stacks for identified healing items that share
+the exact same definition; the shipped catalog currently leaves every limit at
+one, so no playable item stacks yet. Unknown items remain separate, and
+identification itself never merges them. The workspace shows quantities and
+offers free Split one / Split half shortcuts or a custom quantity dialog;
+transferring or dropping acts on the whole stack. Material/ammo kinds, richer
+compatibility and post-identification merge timing remain open.
+Scrolls never stack. This bounded
+foundation does not replace the independently developed inventory workspace.
 
 ## 1. Player jobs and priorities
 
@@ -48,7 +52,7 @@ future design does not replace the independently developed inventory workspace.
 | First | Understand carried versus worn versus ground | Distinct labelled regions; one item has one location; picking up does not equip |
 | First | Decide whether to equip a find | Candidate and displaced equipment remain visible alongside known-only character changes |
 | First | Recover from a failed action | Precise reason beside the action; item, selection and world state remain intact |
-| Next | Collect a pile without repeated menu hunting | Ground list at the current cell, single-item actions, focus retained by persistent item ID |
+| Next | Collect a pile without repeated menu hunting | Ground list at the current cell, stack counts when content enables them, focus retained by persistent item ID |
 | Next | Understand shape and capacity | True 10x6 geometry, item footprint and weight; distinguish no contiguous room from overweight |
 | Later | Manage larger item sets | Same item card, focus and transfer language extend to stacks, bags and local storage when their rules ship |
 
@@ -130,7 +134,8 @@ controls. World zoom must not change its geometry.
   rotated orientation. No optimal-fit guarantee is implied. Both commands cost
   zero energy and advance no clock, action counter, AI, visibility or RNG.
   Orientation survives equipment/ground transfers and save/Continue; snapshot v5
-  migrates v4 items as unrotated and preserves their run history.
+  migrates v4 items as unrotated and preserves their run history. Snapshot v6
+  adds content-limited stack quantities and migrates older items as singletons.
 
 ### Ground
 
@@ -161,7 +166,7 @@ Read in this order:
 
 1. **Identity:** known name/appearance, rarity word + marker, known/unknown state.
 2. **Location and shape:** Equipped / Backpack / Ground, compatible slot,
-   footprint and weight. Quantity appears only after stacks exist.
+   footprint and per-unit weight; show total stack quantity where applicable.
 3. **Known function:** base stats or the known effect, with an `Unidentified -
    effect unknown` warning when appropriate.
 4. **Comparison:** current loadout versus the result, incumbent item(s), signed
@@ -294,6 +299,7 @@ type-discovery behavior is unchanged by this UX contract.
 | D | Drop review |
 | Escape | Cancel chooser/review, then close inventory; never commit |
 | G | Pick up the selected ground item |
+| S / H / X | Split one / half / enter a custom quantity for an identified stack |
 | I | Open; use Escape or Close to leave |
 | PgUp / PgDn | Scroll details; Shift scrolls backpack; narrow layout scrolls stacked content |
 

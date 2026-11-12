@@ -376,6 +376,7 @@ impl CoreState {
                     message: format!("You transfer {label}."),
                 })
             }
+            Command::SplitStack { item, quantity } => self.plan_split_stack(item, quantity),
             Command::Quaff(item) => self.plan_quaff(item),
             Command::Drop(item) => self.plan_drop(item),
             Command::Identify { scroll, target } => self.plan_identify(scroll, target),

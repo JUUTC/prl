@@ -50,6 +50,9 @@ enum Intent {
     Options,
     ToggleWarning(usize),
     Act(Verb),
+    SplitDigit(u8),
+    SplitBackspace,
+    SplitSubmit,
     Source(ItemId),
     Confirm,
     Cancel,
@@ -69,6 +72,9 @@ enum Verb {
     Drink,
     Drop,
     Identify,
+    SplitOne,
+    SplitHalf,
+    SplitCustom,
 }
 
 #[derive(Clone)]
@@ -92,6 +98,7 @@ enum Stage {
     },
     Options,
     Placement(prl_core::PlaceItem),
+    SplitQuantity(u16),
 }
 
 #[derive(Clone)]
@@ -268,9 +275,10 @@ fn rejection(reason: RejectReason, core: &CoreState, target: &Item, command: Com
             || "Pickup exceeds carry limit.".into(),
             |bag| {
                 format!(
-                    "Pickup exceeds limit: {} + {} / {} g. Leave something behind.",
+                    "Pickup exceeds limit: {} + {} x {} / {} g. Leave something behind.",
                     bag.carried_weight(),
                     bag.definition(target).map_or(0, |item| item.weight),
+                    target.quantity,
                     bag.carry_capacity()
                 )
             },
@@ -295,6 +303,33 @@ fn actions(core: &CoreState, workspace: &Workspace) -> Vec<Action> {
     let Some(definition) = bag.definition(item) else {
         return Vec::new();
     };
+    if !matches!(item.container, BACKPACK | EQUIPMENT) {
+        let command = Command::Transfer(TransferItems {
+            item: item.id,
+            destination: BACKPACK,
+            cell: None,
+        });
+        let (cost, reason) = match core.item_action_cost(command) {
+            Ok(cost) => (cost, None),
+            Err(reason) => (50, Some(rejection(reason, core, item, command))),
+        };
+        return vec![Action {
+            verb: Verb::Pickup,
+            title: "Pick up [G]",
+            command: Some(command),
+            cost,
+            reason,
+            warning: [false; 3],
+        }];
+    }
+    item_actions(core, item, definition)
+}
+
+fn item_actions(
+    core: &CoreState,
+    item: &Item,
+    definition: &prl_content::ItemDefinition,
+) -> Vec<Action> {
     let mut result = Vec::new();
     let mut add = |verb, title, command, cost, warning, hidden| {
         let preview = if hidden {
@@ -313,21 +348,6 @@ fn actions(core: &CoreState, workspace: &Workspace) -> Vec<Action> {
             warning,
         });
     };
-    if !matches!(item.container, BACKPACK | EQUIPMENT) {
-        add(
-            Verb::Pickup,
-            "Pick up [G]",
-            Command::Transfer(TransferItems {
-                item: item.id,
-                destination: BACKPACK,
-                cell: None,
-            }),
-            50,
-            [false; 3],
-            false,
-        );
-        return result;
-    }
     if let ItemKind::Gear(slot) = definition.kind {
         let body = slot == EquipSlot::Body;
         add(
@@ -365,12 +385,17 @@ fn actions(core: &CoreState, workspace: &Workspace) -> Vec<Action> {
         item.container == EQUIPMENT && definition.kind == ItemKind::Gear(EquipSlot::Body);
     add(
         Verb::Drop,
-        "Drop [D]",
+        if item.quantity > 1 {
+            "Drop all [D]"
+        } else {
+            "Drop [D]"
+        },
         Command::Drop(item.id),
         if worn_body { 300 } else { 100 },
         [true, false, worn_body && threatened(core)],
         false,
     );
+    result.extend(split_actions(item));
     if !item.identified {
         result.push(Action {
             verb: Verb::Identify,
@@ -384,6 +409,44 @@ fn actions(core: &CoreState, workspace: &Workspace) -> Vec<Action> {
         });
     }
     result
+}
+
+fn split_actions(item: &Item) -> Vec<Action> {
+    if item.container != BACKPACK || !item.identified || item.quantity <= 1 {
+        return Vec::new();
+    }
+    vec![
+        Action {
+            verb: Verb::SplitOne,
+            title: "Split one [S]",
+            command: Some(Command::SplitStack {
+                item: item.id,
+                quantity: 1,
+            }),
+            cost: 0,
+            reason: None,
+            warning: [false; 3],
+        },
+        Action {
+            verb: Verb::SplitHalf,
+            title: "Split half [H]",
+            command: Some(Command::SplitStack {
+                item: item.id,
+                quantity: item.quantity / 2,
+            }),
+            cost: 0,
+            reason: None,
+            warning: [false; 3],
+        },
+        Action {
+            verb: Verb::SplitCustom,
+            title: "Split amount [X]",
+            command: None,
+            cost: 0,
+            reason: None,
+            warning: [false; 3],
+        },
+    ]
 }
 
 fn controls(core: &CoreState, workspace: &Workspace) -> Vec<Intent> {
@@ -423,6 +486,7 @@ fn controls(core: &CoreState, workspace: &Workspace) -> Vec<Intent> {
             .chain([Intent::Cancel])
             .collect(),
         Stage::Placement(_) => vec![Intent::Rotate, Intent::Place, Intent::Cancel],
+        Stage::SplitQuantity(_) => vec![Intent::SplitSubmit, Intent::Cancel],
     }
 }
 
@@ -500,6 +564,28 @@ fn keyboard_intent(
     if matches!(workspace.stage, Stage::Placement(_)) {
         return packing::keyboard(keys, workspace);
     }
+    if matches!(workspace.stage, Stage::SplitQuantity(_)) {
+        if keys.just_pressed(KeyCode::Enter) {
+            return Some(Intent::SplitSubmit);
+        }
+        if keys.just_pressed(KeyCode::Backspace) {
+            return Some(Intent::SplitBackspace);
+        }
+        return [
+            (KeyCode::Digit0, 0),
+            (KeyCode::Digit1, 1),
+            (KeyCode::Digit2, 2),
+            (KeyCode::Digit3, 3),
+            (KeyCode::Digit4, 4),
+            (KeyCode::Digit5, 5),
+            (KeyCode::Digit6, 6),
+            (KeyCode::Digit7, 7),
+            (KeyCode::Digit8, 8),
+            (KeyCode::Digit9, 9),
+        ]
+        .into_iter()
+        .find_map(|(key, digit)| keys.just_pressed(key).then_some(Intent::SplitDigit(digit)));
+    }
     if workspace.stage != Stage::Browse {
         return None;
     }
@@ -530,6 +616,9 @@ fn keyboard_intent(
         (KeyCode::KeyD, Verb::Drop),
         (KeyCode::KeyC, Verb::Identify),
         (KeyCode::KeyG, Verb::Pickup),
+        (KeyCode::KeyS, Verb::SplitOne),
+        (KeyCode::KeyH, Verb::SplitHalf),
+        (KeyCode::KeyX, Verb::SplitCustom),
     ] {
         if keys.just_pressed(key) {
             return Some(Intent::Act(verb));
@@ -553,6 +642,9 @@ fn activate(
     queue: &mut CoreCommandQueue,
 ) {
     if packing::activate(intent, core, workspace, queue) {
+        return;
+    }
+    if activate_split(intent, core, workspace, queue) {
         return;
     }
     workspace.focus = Some(intent);
@@ -597,6 +689,9 @@ fn activate(
             if verb == Verb::Identify {
                 workspace.stage = Stage::Sources;
                 workspace.focus = Some(Intent::Cancel);
+            } else if verb == Verb::SplitCustom {
+                workspace.stage = Stage::SplitQuantity(0);
+                workspace.focus = Some(Intent::SplitSubmit);
             } else if let Some(command) = action.command {
                 let warning =
                     std::array::from_fn(|index| action.warning[index] && warnings.enabled[index]);
@@ -639,6 +734,56 @@ fn activate(
         }
         _ => {}
     }
+}
+
+fn activate_split(
+    intent: Intent,
+    core: &CoreState,
+    workspace: &mut Workspace,
+    queue: &mut CoreCommandQueue,
+) -> bool {
+    match intent {
+        Intent::SplitDigit(digit) => {
+            if let Stage::SplitQuantity(quantity) = workspace.stage {
+                workspace.stage = Stage::SplitQuantity(
+                    quantity.saturating_mul(10).saturating_add(u16::from(digit)),
+                );
+            }
+        }
+        Intent::SplitBackspace => {
+            if let Stage::SplitQuantity(quantity) = workspace.stage {
+                workspace.stage = Stage::SplitQuantity(quantity / 10);
+            }
+        }
+        Intent::SplitSubmit => {
+            let Stage::SplitQuantity(quantity) = workspace.stage else {
+                return true;
+            };
+            let Some(item) = selected(core, workspace) else {
+                workspace.feedback = "Stack is no longer available.".into();
+                workspace.stage = Stage::Browse;
+                return true;
+            };
+            if quantity == 0 || quantity >= item.quantity {
+                workspace.feedback = format!(
+                    "Enter a quantity from 1 to {}.",
+                    item.quantity.saturating_sub(1)
+                );
+                return true;
+            }
+            submit(
+                Command::SplitStack {
+                    item: item.id,
+                    quantity,
+                },
+                core,
+                workspace,
+                queue,
+            );
+        }
+        _ => return false,
+    }
+    true
 }
 
 fn submit(

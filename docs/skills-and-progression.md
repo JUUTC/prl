@@ -120,6 +120,13 @@ below; those tables are design history, not an implementation-ready catalogue.
 
 ## Gain rules
 
+The formula and pacing proposal below is **legacy design history**, not an
+accepted or implemented gameplay rule. The current interview accepts
+opponent-based challenge direction and slow use-based growth, but rates,
+opponent ratings, repetition and practice remain unresolved. The isolated
+[experimental simulation](skill-growth-simulation.md) compares candidate
+curves only; it is not runtime behavior or accepted balance.
+
 When an action uses skill `S` (value `s`) against difficulty `D`:
 
 1. Compute success probability `p` for the action.
@@ -131,7 +138,7 @@ When an action uses skill `S` (value `s`) against difficulty `D`:
 7. **Repeat penalty:** repeating the same action on the same target type within a short window reduces `g` (anti-macro).
 8. Gear affixes `+X to [Skill]` raise the *effective* value but not the *trained* value; gains are based on trained value.
 
-Target pacing (Normal, focused use) — **slow, hardcore UO feel**: ~5 hours to Journeyman (50), **~20+ hours to Master (100)**, Legendary (150) and beyond are multi-run / very long-run goals. `G_base` and `K` are tuned to hit these targets (verified by a simulation test).
+Historical target pacing (Normal, focused use) — **slow, hardcore UO feel**: ~5 hours to Journeyman (50), **~20+ hours to Master (100)**, Legendary (150) and beyond are multi-run / very long-run goals. These hour values are unverified legacy targets; no actions-per-hour assumption or accepted model supports them.
 
 **Trainers** in towns can raise any skill to at most **30** for gold.
 

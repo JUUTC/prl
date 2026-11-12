@@ -85,7 +85,7 @@ Six classic stats: **STR, DEX, CON, INT, WIS, CHA**.
 
 Modifier = `floor((stat − 10) / 2)`.
 
-**Creation modes (accepted, not implemented):** independently choose Default,
+**Creation modes (accepted; headless validation foundation only):** independently choose Default,
 Customize or Random for stats, skills and gear, or Random Character for an
 unlocked race/class and all character sections without changing world settings.
 Customized sections survive a class change; provide explicit reset to class
@@ -100,6 +100,9 @@ gear can use the full starter catalogue within the class kit value; random
 gear is class-weighted with some off-theme results and rare over-budget
 jackpots without debt. Values, distributions and class allocations remain open
 (Q-033/I-037); free rerolls are not an irreversible risk.
+The I-046 headless draft checks these stat/skill budgets and independent section
+transitions. It does not generate rolls, validate gear budgets or unlocks, apply
+racial bonuses, create a playable character, or provide a creation UI.
 
 **Growth** — stats train slowly through related skill use (e.g., heavy weapons train STR), with a logarithmic soft cap and no hard cap. See [skills-and-progression.md](skills-and-progression.md#stat-training).
 
@@ -213,7 +216,8 @@ starting unknown scrolls are not silently usable as known Identify sources.
 Backpack rearrangement and 90-degree rotation are free; explicit Organize is
 deterministic best effort and atomic, never silent on pickup. These accepted
 organization rules are implemented with headless commands and persisted
-orientation (snapshot v5, migrating v4 items as unrotated) in I-036. Placement
+orientation (snapshot v5, migrating v4 items as unrotated) in I-036. Snapshot
+v6 adds stack quantities, migrating prior item instances as singletons. Placement
 supports drag/drop, click-place and keyboard; cancellation/rejection preserves
 the original layout. Free organization advances no action counter, clocks,
 energy, AI or RNG and never closes inventory on danger. These commands do not
@@ -282,8 +286,9 @@ endpoint, examine mode, a 10x6 first-fit backpack, Main hand/Body equipment,
 Normal/Magic gear, healing potions and Identify scrolls. Combat and known-only
 comparisons share one stat evaluator; ground labels use the Default loot filter.
 The [P3 subset](items-and-crafting.md#current-p3-subset) documents reversible
-limits: fixed supplies/affixes, no stacks or curses, a hard carry cap before
-STR-derived encumbrance, frozen inactive floors and run-local IDs (Q-015/Q-019).
+limits: fixed supplies/affixes, no enabled stackable definitions or curses, a
+hard carry cap before STR-derived encumbrance, frozen inactive floors and
+run-local IDs (Q-015/Q-019).
 These do not replace the full rules above or mark M3/M5 complete. P4 now wires
 the headless atomic snapshot storage API (I-029) into automatic
 Continue, quit-save, provisional 20-action/floor checkpoints and death-barrier

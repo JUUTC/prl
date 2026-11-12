@@ -23,6 +23,13 @@ pub enum Command {
     Stairs(StairDirection),
     /// Atomically move one item between accessible containers.
     Transfer(crate::TransferItems),
+    /// Split part of a carried stack into a new backpack stack for free.
+    SplitStack {
+        /// Stack to split.
+        item: crate::ItemId,
+        /// Quantity placed in the new stack.
+        quantity: u16,
+    },
     /// Reposition/rotate one backpack item atomically, without passing time.
     PlaceItem(crate::PlaceItem),
     /// Explicit deterministic best-effort packing, all-or-nothing and free.

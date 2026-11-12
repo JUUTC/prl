@@ -25,7 +25,8 @@ comparison and action flows. Its browser study is mock data, not another stats
 path. I-034/I-035 are delivered; I-036 implements free same-bag placement,
 rotation and explicit deterministic, atomic best-effort Organize. Native
 drag/drop, click-place and keyboard use shared core validation; orientation
-persists in snapshot v5, and pickup never silently repacks.
+persists in snapshot v5, while v6 adds stack quantities with singleton
+migration. Pickup never silently repacks.
 Optimizer/storage breadth remains after P5; final art and Windows acceptance
 remain separate.
 

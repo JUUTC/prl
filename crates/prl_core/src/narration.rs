@@ -64,6 +64,7 @@ pub(crate) fn accepted(command: Command) -> Option<String> {
         Command::NewRun
         | Command::Stairs(_)
         | Command::Transfer(_)
+        | Command::SplitStack { .. }
         | Command::Quaff(_)
         | Command::Identify { .. }
         | Command::Drop(_)

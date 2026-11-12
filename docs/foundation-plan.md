@@ -37,7 +37,8 @@ sources and normal costed commands. Separate versioned warning preferences
 survive character death/restart independently of snapshots. I-036 adds atomic
 same-bag placement/rotation and deterministic all-or-nothing Organize, costing
 zero energy, actions, clocks, AI or RNG. Snapshot v5 persists orientation and
-migrates v4 items as unrotated without losing kill history. Drag/drop,
+migrates v4 items as unrotated without losing kill history. Snapshot v6 adds
+content-limited quantities and migrates older items as singletons. Drag/drop,
 click-place and keyboard share core validation; pickup never repacks existing
 items. See [inventory-ux.md](inventory-ux.md).
 
@@ -53,6 +54,21 @@ The bounded item-icon pass shares public physical categories through
 `prl_content::ItemIcon` / `Inventory::icon`, with image handles bridged by the
 binary between sibling presentation crates. Sword/mail icons decorate existing
 controls and visible filter-matching ground loot; no gameplay/save fields change.
+
+I-046 adds headless `prl_core::creation`: independent stat, skill and opaque
+gear draft modes, class-change preservation, explicit resets, caller-supplied
+rolls, and pre-race stat / fixed-point skill allocation validation. Incomplete
+custom allocations are editable but fail final allocation validation. This is
+not wired into `CoreState`, character saves, current starter, or UI; callers
+must separately validate class/race availability and gear. It generates no
+randomness and defines no default class allocation or skill catalogue.
+
+The bounded I-028 stack foundation adds content-limited per-item quantities,
+identified same-definition Healing merges on transfers, per-unit consumption
+and weight, free one/half splitting, and v6 singleton migration. The existing
+content leaves every stack limit at one. Materials/ammo definitions, richer
+compatibility, custom quantity controls, additional equipment slots and
+STR-derived encumbrance remain later work.
 
 ## Contracts to establish before gameplay grows
 
