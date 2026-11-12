@@ -60,8 +60,8 @@ fn disk_save_migrates_v4_and_retains_new_rotated_placement() {
     rewrite(&store, |file| {
         file.snapshot = file
             .snapshot
-            .replacen("version:5", "version:4", 1)
-            .replace(",rotated:false", "");
+            .replacen("version:6", "version:5", 1)
+            .replace(",quantity:1", "");
         file.checksum = digest(&file.snapshot);
     });
     let mut restored = store.load().unwrap().unwrap();
@@ -304,7 +304,7 @@ fn previous_arena_snapshot_migrates_and_unknown_core_version_fails() {
     rewrite(&store, |saved| {
         saved.snapshot = saved
             .snapshot
-            .replacen("version:5", "version:2", 1)
+            .replacen("version:6", "version:2", 1)
             .replace(",dungeon:None,inventory:None", "")
             .replace(",kills:0,kills_complete:true", "");
         saved.checksum = digest(&saved.snapshot);

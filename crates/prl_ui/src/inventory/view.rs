@@ -509,6 +509,24 @@ fn review(
             );
         }
         Stage::Options => warning_options(parent, workspace, warnings, theme),
+        Stage::SplitQuantity(quantity) => {
+            let maximum =
+                selected(core, workspace).map_or(0, |item| item.quantity.saturating_sub(1));
+            text(
+                parent,
+                format!("Split quantity: {quantity} (1-{maximum}); type digits, Backspace edits."),
+                theme,
+            );
+            button(
+                parent,
+                "Split amount [Enter]".into(),
+                Intent::SplitSubmit,
+                workspace,
+                theme,
+                Node::default(),
+                false,
+            );
+        }
         Stage::Browse | Stage::Placement(_) => {}
     }
     if workspace.stage != Stage::Browse {

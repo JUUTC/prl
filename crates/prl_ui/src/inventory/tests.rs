@@ -117,6 +117,108 @@ fn browsing_grid_list_and_unknown_source_views_are_read_only() {
 }
 
 #[test]
+fn stack_actions_offer_one_and_half_splits_without_spending_game_time() {
+    let mut config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+        "../../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+    ))
+    .unwrap();
+    config
+        .items
+        .items
+        .iter_mut()
+        .find(|definition| definition.id.name() == "healing_potion")
+        .unwrap()
+        .max_stack = 10;
+    let mut core = config
+        .build(&prl_content::ContentPack::placeholder().unwrap(), 1)
+        .unwrap();
+    while let Some(command) = core.pickup_command() {
+        assert!(matches!(
+            core.issue(command),
+            CommandResult::Accepted { .. }
+        ));
+    }
+    let potions: Vec<_> = core
+        .inventory()
+        .unwrap()
+        .items()
+        .filter(|item| item.definition.name() == "healing_potion")
+        .map(|item| item.id)
+        .collect();
+    let scroll = find(&core, |item| item.definition.name() == "identify_scroll");
+    core.issue(Command::Identify {
+        scroll,
+        target: potions[0],
+    });
+    core.issue(Command::Drop(potions[0]));
+    core.issue(Command::Drop(potions[1]));
+    core.issue(core.pickup_command().unwrap());
+    let potion = find(&core, |item| {
+        item.definition.name() == "healing_potion" && item.container == BACKPACK
+    });
+    assert_eq!(
+        core.inventory()
+            .unwrap()
+            .items()
+            .find(|item| item.id == potion)
+            .unwrap()
+            .quantity,
+        3
+    );
+    let clock = core.clock();
+    let mut app = app(core);
+    open(&mut app);
+    act(&mut app, Intent::Select(potion));
+    let available: Vec<_> = actions(
+        app.world().resource::<CoreState>(),
+        app.world().resource::<Workspace>(),
+    )
+    .into_iter()
+    .map(|action| action.verb)
+    .collect();
+    assert!(available.contains(&Verb::SplitOne));
+    assert!(available.contains(&Verb::SplitHalf));
+    act(&mut app, Intent::Act(Verb::SplitHalf));
+    let core = app.world().resource::<CoreState>();
+    assert_eq!(core.clock(), clock);
+    let stacks: Vec<_> = core
+        .inventory()
+        .unwrap()
+        .items()
+        .filter(|item| item.definition.name() == "healing_potion" && item.container == BACKPACK)
+        .map(|item| item.quantity)
+        .collect();
+    assert_eq!(stacks, [2, 1]);
+    let remaining = app
+        .world()
+        .resource::<CoreState>()
+        .inventory()
+        .unwrap()
+        .items()
+        .find(|item| {
+            item.definition.name() == "healing_potion"
+                && item.container == BACKPACK
+                && item.quantity == 2
+        })
+        .unwrap()
+        .id;
+    act(&mut app, Intent::Select(remaining));
+    act(&mut app, Intent::Act(Verb::SplitCustom));
+    act(&mut app, Intent::SplitDigit(1));
+    act(&mut app, Intent::SplitSubmit);
+    let core = app.world().resource::<CoreState>();
+    let stacks: Vec<_> = core
+        .inventory()
+        .unwrap()
+        .items()
+        .filter(|item| item.definition.name() == "healing_potion" && item.container == BACKPACK)
+        .map(|item| item.quantity)
+        .collect();
+    assert_eq!(stacks, [1, 1, 1]);
+    assert_eq!(core.clock(), clock);
+}
+
+#[test]
 fn rendered_unknown_gear_does_not_leak_hidden_affixes_or_action_hints() {
     let mut config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
         "../../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"

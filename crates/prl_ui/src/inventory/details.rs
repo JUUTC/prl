@@ -24,10 +24,20 @@ pub(super) fn render(
     };
     super::view::detail_icon(parent, core, item, images);
     text(parent, bag.label(item), theme);
+    let weight = if item.quantity > 1 {
+        format!(
+            "{} g each x {} = {} g",
+            definition.weight,
+            item.quantity,
+            u64::from(definition.weight) * u64::from(item.quantity)
+        )
+    } else {
+        format!("{} g", definition.weight)
+    };
     text(
         parent,
         format!(
-            "{:?} / {}\n{} / {} x {} / {} g",
+            "{:?} / {}\n{} / {} x {} / {}",
             definition.rarity,
             if item.identified {
                 "Identified"
@@ -45,7 +55,7 @@ pub(super) fn render(
                 .map_or(definition.width, |shape| shape.0),
             bag.footprint(item)
                 .map_or(definition.height, |shape| shape.1),
-            definition.weight
+            weight
         ),
         theme,
     );

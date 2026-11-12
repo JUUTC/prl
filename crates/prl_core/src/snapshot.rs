@@ -175,6 +175,15 @@ impl CoreState {
             if let Some(inventory) = snapshot.state.inventory.as_mut() {
                 for item in inventory.items.values_mut() {
                     item.rotated = false;
+                    item.quantity = 1;
+                }
+            }
+            snapshot.version = 5;
+        }
+        if snapshot.version == 5 {
+            if let Some(inventory) = snapshot.state.inventory.as_mut() {
+                for item in inventory.items.values_mut() {
+                    item.quantity = 1;
                 }
             }
             snapshot.version = SNAPSHOT_VERSION;
@@ -653,7 +662,7 @@ mod tests {
         let hash = arena().snapshot().canonical_hash().unwrap();
         assert_eq!(
             blake3::Hash::from_bytes(hash).to_hex().as_str(),
-            "b582294577ce4e1cfe2697044450274820f71042ba9f06786cf5e4aebede44c2"
+            "65e06dd911df67340142eb393841d08adc6ba6e8e050819f1f5fd93ad40d6d83"
         );
     }
 
@@ -709,7 +718,7 @@ mod tests {
         let old = current
             .to_ron()
             .unwrap()
-            .replacen("version:5", "version:2", 1)
+            .replacen("version:6", "version:2", 1)
             .replace(",dungeon:None,inventory:None", "")
             .replace(",kills:0,kills_complete:true", "");
         assert!(!old.contains("inventory:"));
@@ -728,7 +737,7 @@ mod tests {
             .snapshot()
             .to_ron()
             .unwrap()
-            .replacen("version:5", "version:3", 1)
+            .replacen("version:6", "version:3", 1)
             .replace(",kills:0,kills_complete:true", "");
         let mut migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
         assert_eq!(migrated.kills(), 0);
@@ -750,8 +759,9 @@ mod tests {
             .snapshot()
             .to_ron()
             .unwrap()
-            .replacen("version:5", "version:4", 1)
-            .replace(",rotated:false", "");
+            .replacen("version:6", "version:4", 1)
+            .replace(",rotated:false", "")
+            .replace(",quantity:1", "");
         assert!(!old.contains("rotated:"));
         let migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
         assert_eq!(migrated.snapshot(), state.snapshot());
@@ -761,6 +771,26 @@ mod tests {
                 .unwrap()
                 .items()
                 .all(|item| !item.rotated)
+        );
+    }
+
+    #[test]
+    fn version_five_items_migrate_with_single_quantity() {
+        let state = crate::test_support::dungeon();
+        let old = state
+            .snapshot()
+            .to_ron()
+            .unwrap()
+            .replacen("version:6", "version:5", 1)
+            .replace(",quantity:1", "");
+        assert!(!old.contains("quantity:"));
+        let migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
+        assert!(
+            migrated
+                .inventory()
+                .unwrap()
+                .items()
+                .all(|item| item.quantity == 1)
         );
     }
 

@@ -8,6 +8,12 @@ must be reconciled, capped at 50 per starting skill and redistributed to retain
 open; do not treat these lists as approved new allocations. Class is a starting
 template, never an equipment restriction.
 
+The headless I-046 creation draft checks pre-racial point-buy and starting
+skill budgets using caller-supplied class defaults and a caller-supplied
+skill catalogue. It stores opaque gear section values without validating
+prices, allowed gear or jackpot rules. Class availability, racial application,
+random distributions and the actual playable character are not implemented.
+
 ## Races
 
 Racial stat modifiers apply **after** point-buy. Racial traits are permanent special abilities. Racial **aptitudes** give +5 starting points and a +20% gain-rate multiplier on listed skills.

@@ -9,6 +9,7 @@ mod actor;
 mod ai;
 mod combat;
 mod command;
+pub mod creation;
 mod dungeon;
 mod error;
 mod fixture;
@@ -51,7 +52,7 @@ pub const SECONDS_PER_TICK: u64 = 6;
 /// Energy cost of every P2 action: wait, move, open door and melee attack.
 pub const ACTION_ENERGY: u16 = 100;
 /// Version of the headless snapshot DTO.
-pub const SNAPSHOT_VERSION: u32 = 5;
+pub const SNAPSHOT_VERSION: u32 = 6;
 
 /// Registers the headless command resolver and its ordered extension sets.
 pub struct PrlCorePlugin;

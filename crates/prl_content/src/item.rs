@@ -108,6 +108,9 @@ pub struct ItemDefinition {
     pub height: u8,
     /// Per-instance weight in grams.
     pub weight: u32,
+    /// Maximum quantity per stack; one means this definition never stacks.
+    #[serde(default = "single_item_stack")]
+    pub max_stack: u16,
     /// Effect or equipment slot.
     pub kind: ItemKind,
     /// Visible base-type modifiers.
@@ -121,6 +124,10 @@ pub struct ItemDefinition {
     /// Seed-selected anonymous descriptions for unknown consumables.
     #[serde(default)]
     pub appearances: Vec<String>,
+}
+
+fn single_item_stack() -> u16 {
+    1
 }
 
 /// Knowledge-aware shared filter expression, also reusable for storage rules.
