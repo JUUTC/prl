@@ -20,15 +20,23 @@ below; those tables are design history, not an implementation-ready catalogue.
 - One Magic skill covers casting; schools are descriptive categories. Keep
   optional Identification and one Companion Handling skill for all companions.
   Basic follow/stay/attack/dismiss commands work reliably at zero skill.
+- Keep Stealth as a separate trained skill; it does not merge into Survival or
+  get replaced by stats/equipment. It supports deliberate Hide/Ambush actions;
+  passive movement detection is separate, and it contributes with Athletics
+  and speed to active overworld encounter evasion. Meaningful Hide/Ambush
+  attempts and encounter evasions, successful or failed, are eligible for
+  challenge-based gain. Gain tuning, ability mapping and exact check weighting
+  remain open (2026-11-12, Q-035; Q-010).
 - Combine locks and traps into Security, tracking and healing into Survival;
   use Equipment Crafting, Alchemy & Cooking, Arcane Crafting, Extraction
   (ore/wood) and Harvesting (herbs/animal materials). Remove Bartering;
-  Charisma influences prices. Stealth remains undecided.
+  Charisma influences prices.
 - Zero-skill use reaches basic competence quickly then slows. Safe practice
-  can train basics, but meaningful field use is needed for advanced mastery.
-  Balance gains against opportunities per skill; ID and Meditation may need
-  different rates from attacks. The sample formula, pacing and safe-practice
-  ceilings below need simulation rather than being accepted final rates.
+  can train basics up to a 30.0 ceiling, but meaningful field use is needed
+  beyond that. Keep ~20+ focused hours to Master (100) as a rough target,
+  validated by playtest. Balance gains against opportunities per skill; ID and
+  Meditation may need different rates from attacks. The sample formula and
+  exact rates remain unaccepted.
 - Magic Resistance combines skill, stats and gear: magic damage reduction
   and hostile-effect resistance chance each cap at 90%. Combination formulas
   and interaction with the general resistance cap remain open.
@@ -76,7 +84,7 @@ below; those tables are design history, not an implementation-ready catalogue.
 ### Subterfuge & Utility
 | Skill | Trained by | Trains stat |
 |---|---|---|
-| Stealth | Moving unseen near enemies | DEX |
+| Stealth | Meaningful successful or failed Hide/Ambush attempts and encounter evasions | DEX |
 | Lockpicking | Picking locks | DEX |
 | Traps | Detecting, disarming, setting traps | DEX / INT |
 | Item Lore | Inspecting/identifying items | INT |
@@ -122,8 +130,15 @@ below; those tables are design history, not an implementation-ready catalogue.
 
 The formula and pacing proposal below is **legacy design history**, not an
 accepted or implemented gameplay rule. The current interview accepts
-opponent-based challenge direction and slow use-based growth, but rates,
-opponent ratings, repetition and practice remain unresolved. The isolated
+opponent-based challenge direction, stable opponent ratings derived from
+monster/area level (not player gear), a linear falloff to zero over a 20-point
+below-skill rating gap, full challenge weight at or above skill, diminishing
+returns for repeating the identical action against the identical target, and
+slow use-based growth. The initial repeat multiplier candidate is 10% less per
+repetition, floored at 20%, fully recovering after 5 intervening committed
+actions without that exact action/target. These are working rules, not final
+balance; the rating formula, gains and practice implementation remain
+unresolved. The isolated
 [experimental simulation](skill-growth-simulation.md) compares candidate
 curves only; it is not runtime behavior or accepted balance.
 
