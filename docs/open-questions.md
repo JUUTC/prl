@@ -29,7 +29,7 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-007 | Movement/attack timing, key repeat, input buffering and motion options? | Provisional | Input/presentation integration at P1/P2 | I-023/B-009 implement reversible defaults: enabled held movement/wait after 500 ms, then 180 ms; F2/F3/F4 adjust, F5/F6 remap/reset (session-only). Stop at visible hostiles, damage, HP <=25%, notable cells and modal/focus/outcome interruptions; never repeat attacks or catch up missed intervals. Walk tween 150 ms Normal / 60 ms Fast / instant Off. Confirm comfort/timing and future persisted options through hands-on feedback; no final art/UX approval |
 | Q-008 | Can diagonal movement squeeze past blocked corners; do invalid actions cost time? | Provisional | Movement/pathfinding tests at P1 | No corner squeezing when either orthogonal neighbour blocks passage; invalid intents explain rejection and consume no energy; confirm and document in time-and-turns.md |
 | Q-009 | How are facing/frontal shield blocks and physical mitigation ordering defined? | Provisional | Block/armor implementation at P2 | P2 working default: no shields in P2 content, so the block step and facing are not implemented; armor% uses `raw` after crit/glance and before flat armor; single-type physical only. Still needed: facing/arc rules and mixed-damage handling before shields ship; numeric cases in combat.md |
-| Q-010 | What challenge probability drives combat skill gains when attacks always hit? | Model direction resolved; tuning open | Combat skill-gain integration at P4 | 2026-11-10 interview: derive challenge from the opponent, not hit/miss; trivial/easy targets give little or no gain. Calibrate opponent rating, repeat penalty and gains by simulation/playtest before implementation |
+| Q-010 | What challenge probability drives combat skill gains when attacks always hit? | Model direction and working curve selected; calibration open | Combat skill-gain integration at P4 | Derive challenge from the opponent, not hit/miss; trivial/easy targets give little or no gain. Use a stable rating derived from monster/area level, independent of player gear. User selected linear falloff to zero over a 20-point below-skill gap and full challenge weight at/above skill (2026-11-12). Repeating the identical action against the identical target has diminishing returns; use the I-047 candidate multiplier (10% less per repetition, floor 20%), recovering fully after 5 intervening committed actions without that exact action/target (2026-11-13). Rating formula and gain rates remain to calibrate. Keep 20+ focused hours to Master (100) as a rough target, validate by playtest |
 | Q-011 | Which Windows build profile/linker gives the fastest useful iteration? | Open | Distribution at P0 | Native Windows local builds and one Windows artifact target; benchmark incremental/link times and package size before enabling dynamic linking or changing linker |
 | Q-012 | Checkpoint interval and crash recovery contract? | Provisional | Persistence at P4 | Working default implemented in I-030: every 20 committed player actions and floor transition, plus quit-save; confirm interval through playtest/write-cost evidence. Death uses a durable tombstone before removing the living slot, but the post-command write leaves a small hard-crash window; checkpoints may roll back progress since the last save. I-029/I-030 cover atomic storage and runtime lifecycle, not write-ahead death atomicity. Same-directory file sync then atomic replacement; Unix directory sync follows. Windows sudden-power-loss metadata durability remains unproven; do not call interrupted-temp-file tests a power-cut guarantee |
 | Q-013 | Minimum Windows version/GPU and performance/readability budgets? | Open | Launch compatibility at P0; acceptance at P5 | Target Windows x86_64; test 1080p/4K and multiple UI scales; obtain tester hardware, measure latency/frame time, then set supported minimums and budgets |
@@ -54,17 +54,46 @@ update the owning system doc and retain the ID, resolution and source here.
 | Q-032 | What Magic Book/Codex stores and how it exposes spells/scrolls? | Interaction contract resolved; implementation in I-038 | Magic/scroll slice after I-037 | One carried book stores physical scrolls (effectively unlimited slots, contents weight still counts) and is acquired by purchase, loot or crafting. Magic-class or Magic>=10 starts with one, charged against kit value; no-book pickup falls back to backpack. Auto-file existing/future scrolls when a book is acquired. Scrolls can be extracted/used directly; learned spells are separate permanent knowledge and cannot be extracted. One interface has separate Learned Spells/Carried Scrolls, unlimited favorites and eight click/1-8 quick slots. Known slot binds family+preferred level; no silent level substitution. Unknown slot pins one physical instance and empties on use, never refills automatically. Scroll index: Unknown, then school/category > family > level. Unextracted scrolls travel with a dropped/stored book. Quick-slot and taxonomy implementation details follow playtest |
 | Q-033 | How should character creation offer class defaults, customization and random rolls? | Mode contract resolved; budget/economy tuning open | Character creation I-037; I-046 foundation; Q-010 and skills system | Class is a starting template, never an equipment restriction. Independent Default/Customize/Random paths for stats, skills and gear, plus Random Character (unlocked race/class and all character sections, not world settings). Custom class switching preserves edits; explicit Reset to Class Defaults. Custom stats: 27 points, 8–15 pre-race. Random class-weighted stats: 24–30 points, max18 pre-race; cost 16=12,17=15,18=18; race modifiers follow. Default class stats use 27. Skills: class/default and custom use 150 points, any skill, max50 each; random class-weighted uses 180, same cap. Random gear is class-weighted with off-theme chance and a rare above-budget jackpot, no debt; custom gear uses full starter catalogue within the class kit's value budget. Randomized section cannot be manually edited, but can be rerolled without limit before final confirmation; other sections remain independent. Character-roll RNG is independent of world seed. I-046 validates stat/skill allocations and draft transitions with caller-supplied rolls, but does not generate rolls, enforce gear budgets or validate unlocked classes/races. Exact class defaults, distributions, prices and jackpot odds need balance testing |
 | Q-034 | What is the starting Magic/Identification skill model? | General Magic and optional ID resolved; details open | Skills/class creation I-037; scroll system I-038 | One Magic skill improves all casting; schools are descriptive categories. Stats may gate casting gear, not Magic skill. Optional Identification has non-skill fallbacks. High skill has one chance per identifiable physical item to add a property, not merely reveal one; service/scroll ID preserve a later personal chance, including on identified store items. Failure spends the action and chance but leaves the item unharmed. Bonus strengths, costs, odds, per-type properties and ability prerequisites remain open |
-| Q-035 | What actions may skills gate, given solo play, slow advancement and permadeath? | Core principle and action policies resolved; skill taxonomy open | Before revising Q-034, ability prerequisites, class allocations or skill catalog | Essential survival and main-path actions cannot be skill-gated. Reliable baseline healing and non-skill identification serve all builds; required routes have non-skill alternatives, with keys expensive or hard to find. Zero-skill weapon use remains possible subject to gear stat requirements. Zero-skill use should reach a basic level quickly, then slow; practice and skill-specific gain rates need tuning. Accepted skill consolidations and training decisions are in [skills-and-progression.md](skills-and-progression.md#interview-decisions-and-revision-status). The next unanswered interview question is whether Stealth remains separate, merges with Survival, or uses stats/equipment instead |
+| Q-035 | What actions may skills gate, given solo play, slow advancement and permadeath? | Core principle and action policies resolved; taxonomy partly resolved | Before revising Q-034, ability prerequisites, class allocations or skill catalog | Essential survival and main-path actions cannot be skill-gated. Reliable baseline healing and non-skill identification serve all builds; required routes have non-skill alternatives, with keys expensive or hard to find. Zero-skill weapon use remains possible subject to gear stat requirements. Zero-skill use should reach a basic level quickly, then slow. Limited safe practice is allowed for early gains, capped at 30.0; meaningful field use is needed beyond that. Stealth is a separate trained skill for deliberate Hide/Ambush actions; passive movement detection is separate. Stealth also contributes alongside Athletics and speed to active overworld encounter evasion. Meaningful successful or failed Hide/Ambush attempts and encounter evasions are eligible for challenge-based gains. Exact check weighting, challenge calibration, ability mapping and gain tuning remain open (2026-11-12; Q-010). Accepted skill consolidations and training decisions are in [skills-and-progression.md](skills-and-progression.md#interview-decisions-and-revision-status) |
 | Q-036 | Which CDDA tileset/audio assets and remaining visual requirements fit PRL? | Animation reduction resolved; subset audited/integrated; final selection/visual coverage open | Presentation reuse I-039; I-040-I-045 | [Integration plan](tileset-integration.md): UltiCa 2026-11-08 is pinned and imported as an opt-in candidate with 18 original PNGs, collective/file-history provenance, original metadata and CC BY-SA notices. New runs add a grassy approach, animated placeholder player option and fantasy-appropriate sprite substitutions. Sword/mail category icons are integrated; modern bottle art is excluded and potion/scroll artwork stays placeholder pending suitable candidates. These are not final visual approval. Resolve foreground occlusion/perspective, fixed-kit versus dynamic equipment, race/appearance coverage, consumable art and whether to select UltiCa as the default. Do not impose the old unapproved palette. Windows hands-on acceptance and separate sound rights remain open |
 
 ## Resolution history
 
+Stealth skill follow-up (2026-11-12, user): keep Stealth as a separate trained
+skill for deliberate Hide/Ambush actions. Passive movement detection is separate;
+Stealth also contributes with Athletics and speed to active overworld encounter
+evasion. It does not merge into Survival or get replaced by stats/equipment.
+Meaningful Hide/Ambush attempts and encounter evasions train Stealth; successful
+and failed attempts are eligible for challenge-based gains. Exact check weighting,
+challenge calibration, gain tuning and ability mapping remain open under Q-035.
+
+Combat skill-growth follow-up (2026-11-12, user): rate an opponent from stable
+monster/area-level data, independent of player gear. The rating formula, relation
+to trained skill, repeat penalty and gains remain open under Q-010/I-006.
+
+Combat skill-growth curve follow-up (2026-11-12, user): use the linear-gap
+candidate from I-047 as the working model, tapering gains linearly to zero over
+a 20-point gap when the opponent rating is below trained skill; ratings at or
+above skill receive full challenge weight. Repeating only the identical action
+against the identical target incurs diminishing returns, which recover after a
+short period without repetition. The I-047 multiplier (10% less per repetition,
+floor 20%) is the initial tuning candidate; the multiplier fully recovers after
+5 intervening committed actions without that exact action/target. Keep ~20+
+focused hours to Master (100) as a rough target validated by playtest. These are
+working rules, not final balance; rating calibration and gain rates remain open.
+
+Safe-practice follow-up (2026-11-12, user): allow limited practice gains in
+safe conditions, but require meaningful field use above 30.0 skill. The exact
+practice activities, gain rate and how the ceiling is enforced remain open.
+
 Skill-growth simulation prototype (2026-11-12): I-047 now has isolated
 deterministic fixed-point tooling comparing two opponent-rating gap curves,
 repetition, safe practice and opportunity-frequency sensitivity. Candidate
-numbers and results are exploratory only; Q-010 remains unresolved until
-opponent rating and real opportunity data are calibrated, and Q-035 practice
-activities/ceilings remain open. No gameplay, save or RNG behavior changed.
+numbers and results are exploratory only; Q-010 remains open until the
+opponent-rating formula and real opportunity data are calibrated; the stable
+monster/area-level rating basis and linear-gap working curve are accepted.
+Q-035 practice activities/rate remain open, with a 30.0 ceiling selected.
+No gameplay, save or RNG behavior changed.
 See [the simulation report](skill-growth-simulation.md).
 
 CDDA presentation pivot (2026-11-11): user approved reducing animation
@@ -266,15 +295,15 @@ Archery); these separate progression tracks must not prevent basic weapon use.
 - Blight spreads over time (difficulty-scaled), can be pushed back.
 - Pantheon: required only for Clerics/Paladins.
 - Art: 64×64 logical tiles with integer zoom (4K-ready); CDDA tileset reuse under review, with source resolution determined by the chosen assets (Q-036).
-- Palette: locked ramp-based PRL palette (~24 ramps × 6–8 shades, ~150–190 colours), CI-checked. This is the target; no palette is locked yet (Q-014/Q-018).
+- Palette target: ramp-based PRL palette (~24 ramps × 6–8 shades, ~150–190 colours), with a future CI check. The palette is not locked and the check is not implemented (Q-014/Q-018).
 - Fonts: Pixelify Sans + Silkscreen (OFL); title font later. Integrated in the placeholder UI (I-010); final type scale belongs to the UX effort.
 - UI: bevy_ui for the game; bevy_egui only for dev tools behind a feature flag.
 - Tone: grimdark-hopeful high fantasy; terse, archaic-lite prose.
-- Character art baseline: Gravebound; two unlabeled silhouettes, five looks per race/silhouette, actual equipped items and gear improvements visible independently of skill-derived PL.
+- Character art: the Gravebound brief and its silhouette, look-count and equipment-visibility goals remain an unapproved proposal; reconcile them with the selected tileset before treating them as production requirements (Q-018/Q-036).
 - Production quality: existing procedural sprites are placeholders, not shippable art. A finished character in a representative world scene must be approved before batch expansion; follow the gated [art production plan](art-production.md).
 - World perspective: three-quarter overhead, hidden square grid, no visible floor grid, eight-direction movement, half-height foreground walls for character readability.
 - Animation: fit the chosen tileset; static sprites and supplied facings are acceptable. Dedicated action poses and anatomical grip animation are not mandatory; gameplay hand assignments remain intact (Q-036).
-- Visual coverage: archery draw/release, arrow variants, spell effects, monsters/enemies, townsfolk, animals, tree-felling and ore-depletion states, crafting benches, eating and drinking.
+- Visual coverage target inventory: archery, effects, creatures, NPCs, animals, resource states, stations and consumables still needs review against the selected pack; bespoke action poses are not required (Q-036).
 - Atmosphere: optional subtle fog/ash parallax, no shifting interactables or terrain; preserve actor/target readability and offer reduced-motion/off controls.
 - Mods/DLC: v1 data-only content packs (namespaced IDs, load order); DLC = first-party packs; WASM scripting deferred.
 - Code: Cargo workspace (prl, prl_core, prl_content, prl_gen, prl_render, prl_ui, prl_audio, prl_save); strict lints (clippy all + pedantic as errors, no unsafe, no unwrap/expect outside tests, documented pub items).
@@ -282,12 +311,12 @@ Archery); these separate progression tracks must not prevent basic weapon use.
 - Meta-progression: everything earnable in Explorer mode.
 - Pets: stabled in towns; only control-slot pets travel.
 - Audio: basic SFX in v1, music later.
-- Skill pacing: ~20+ hours of focused use to reach Master (100).
+- Skill pacing: the legacy ~20+ hours of focused use to reach Master (100) is an unverified target, not accepted balance (Q-010/I-006).
 - No reputation system.
 - No skill/stat decay.
 - Keyboard + mouse only for v1.
 - Malgareth the Undying: betrayed champion; Kaedric demanded a sacrifice he refused (secret quest line).
-- Combat: always hit; evasion → glancing blows; armor flat + %; resist cap 75% (90% max) with difficulty penalty.
+- Combat direction: always-hit, glancing blows, flat and percentage armor, and resistance caps are the design baseline; shield/facing and mixed-damage ordering remain provisional (Q-009).
 - Damage types: Physical + Fire, Cold, Lightning, Poison.
 - Bestiary: 60–80 base monsters, ~10 families.
 - Dungeons: instanced, resettable at entrance; Dungeon Sigil modifiers (risk/reward, rare pure bonus).

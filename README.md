@@ -55,22 +55,53 @@ studies accompany optional fog/ash parallax with reduced-motion controls.
 The [layered export pilot](tools/art-pipeline/README.md) checks real LibreSprite
 source round-trips and per-layer atlas exports independently of placeholder art.
 
-## Building
+## Building and playtesting
 
-Requires a recent stable Rust toolchain.
+Requires a recent stable Rust toolchain. From PowerShell in the repository
+folder, start the default development build with the repository's placeholder
+assets:
 
-```sh
+```powershell
 cargo run -p prl -- --dev-assets
 ```
+
+### Playtest options
+
+The development executable accepts these options:
+
+| PowerShell command | Playtest setup |
+|---|---|
+| `cargo run -p prl -- --dev-assets` | Default procedural placeholder tileset and animated placeholder player |
+| `cargo run -p prl -- --dev-assets --tileset=placeholder` | Explicitly select the procedural placeholder tileset |
+| `cargo run -p prl -- --dev-assets --tileset=ultica` | Opt-in UltiCa crypt candidate with the animated placeholder player |
+| `cargo run -p prl -- --dev-assets --tileset=ultica --player=animated` | Explicitly select the animated placeholder player with UltiCa |
+| `cargo run -p prl -- --dev-assets --tileset=ultica --player=ultica` | UltiCa candidate with its static sword/mail player |
+
+`--player=ultica` requires `--tileset=ultica`; `--player=animated` can be
+specified with that tileset to make the default choice explicit. The options
+select presentation only; they do not change gameplay rules or saves. The
+development flag uses checkout assets only when no `assets` directory is
+adjacent to the executable. If adjacent assets exist, they take priority and
+must be complete.
+
+For the packaged Windows playtest, download and extract the complete artifact
+to a writable folder. In PowerShell, run `.\Launch.cmd` for the default
+placeholder build or `.\Launch-UltiCa.cmd` for the UltiCa candidate. To choose
+the static UltiCa player directly, run
+`.\prl.exe --tileset=ultica --player=ultica` from the extracted folder. Keep the
+adjacent `assets` folder with the executable; packaged runs do not search the
+source checkout. The
+launchers write `playtest.log` or `playtest-ultica.log` diagnostics. See the
+[playtest guide](docs/playtest-guide.md) for controls, the current playable
+scope, and what feedback to report.
 
 The P3 build uses placeholder art to demonstrate two seeded crypt floors, persistent
 stairs/return travel, melee combat, loot, equipment, consumables, death and new runs.
 Inventory now has native equipment/grid/List/details/ground panels, pointer and
 keyboard actions, persistent warning options, free backpack placement/rotation
 and explicit atomic best-effort Organize. Unknown-scroll Read remains deferred.
-See [playtest guide](docs/playtest-guide.md) for controls and
-scope. The Windows playtest workflow packages the executable, fixture content
-and a diagnostic launcher; its downloadable build requires no Rust installation.
+The Windows playtest workflow packages the executable, fixture content
+and diagnostic launchers; its downloadable build requires no Rust installation.
 `--dev-assets` explicitly allows the development checkout's assets when none
 are adjacent to the executable. Without it, missing packaged assets fail at boot,
 even on a machine that has the source checkout. An adjacent `assets` directory

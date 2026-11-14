@@ -100,7 +100,7 @@ their outcomes exist.
 - **Dungeons are dark.** Visibility = light radius, except races with darkvision see unlit tiles within 6 (desaturated). Races with **low-light vision** (Elves) see +2 tiles beyond any light radius but nothing in total darkness.
 - Light sources: **torch** (radius 4, ~1,500 turns), **lantern** (radius 5, refuelled with oil), **Light** spell (radius 5, duration by Mysticism), glowing affixes, braziers and magical terrain.
 - Towns and the overworld use daylight; night reduces sight on the overworld.
-- **Stealth:** darkness grants a stealth bonus and lit tiles a penalty. Carrying a light makes you visible to monsters from farther away, so you trade vision against being noticed.
+- **Stealth:** light and darkness affect ordinary enemy visibility; passive movement detection is separate from the Stealth skill. Stealth supports deliberate Hide/Ambush actions, whose exact checks remain open (Q-035). Carrying a light makes you visible to monsters from farther away, so you trade vision against being noticed.
 
 ## Hunger (when enabled)
 
