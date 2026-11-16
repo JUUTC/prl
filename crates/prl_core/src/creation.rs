@@ -1,8 +1,8 @@
-//! Headless creation drafts and accepted starting-budget constraints (Q-033).
+//! Character identity, first-run stat validation and headless creation drafts.
 //!
-//! This is not a playable character, save format, random generator or skill
-//! catalogue. Callers supply class defaults, rolled values and allowed skill
-//! IDs; future integration must validate gear, race and class availability.
+//! The first-run profile is snapshot-persisted but does not yet affect gameplay.
+//! Class defaults, random generation, skills, gear, racial mechanics and
+//! availability remain caller-owned or future integration work.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;

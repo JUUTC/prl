@@ -683,7 +683,7 @@ mod tests {
         let hash = arena().snapshot().canonical_hash().unwrap();
         assert_eq!(
             blake3::Hash::from_bytes(hash).to_hex().as_str(),
-            "65e06dd911df67340142eb393841d08adc6ba6e8e050819f1f5fd93ad40d6d83"
+            "550e58be21030c25fa558bb5473a8ccbeed42043a885d0f4b014a8a330628251"
         );
     }
 
