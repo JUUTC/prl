@@ -1,0 +1,301 @@
+//! Explicit development asset opt-in; packaged builds never search the checkout.
+
+use std::ffi::OsString;
+use std::io;
+use std::path::{Path, PathBuf};
+
+pub(super) fn launch_assets() -> io::Result<(PathBuf, bool, bool)> {
+    let (development, ultica, animated_player) = options(std::env::args_os().skip(1))?;
+    let executable = std::env::current_exe()?;
+    Ok((
+        resolve_content_path(&executable, development)?,
+        ultica,
+        animated_player,
+    ))
+}
+
+fn options(arguments: impl IntoIterator<Item = OsString>) -> io::Result<(bool, bool, bool)> {
+    let mut development = false;
+    let mut selection = None;
+    let mut player = None;
+    for argument in arguments {
+        if argument == "--dev-assets" && !development {
+            development = true;
+        } else if argument == "--tileset=ultica" && selection.is_none() {
+            selection = Some(true);
+        } else if argument == "--tileset=placeholder" && selection.is_none() {
+            selection = Some(false);
+        } else if argument == "--player=animated" && player.is_none() {
+            player = Some(true);
+        } else if argument == "--player=ultica" && player.is_none() {
+            player = Some(false);
+        } else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "usage: prl [--dev-assets] [--tileset=ultica|--tileset=placeholder] [--player=animated|--player=ultica]",
+            ));
+        }
+    }
+    let ultica = selection.unwrap_or(false);
+    if !ultica && player.is_some() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "--player requires --tileset=ultica",
+        ));
+    }
+    Ok((development, ultica, player.unwrap_or(ultica)))
+}
+
+fn resolve_content_path(executable: &Path, development: bool) -> io::Result<PathBuf> {
+    let assets = executable
+        .parent()
+        .ok_or_else(|| io::Error::other("executable has no parent directory"))?
+        .join("assets");
+    // An incomplete adjacent package must fail, even with development opted in.
+    if !development || assets.try_exists()? {
+        return Ok(assets.join("packs/prl/base.ron"));
+    }
+    Ok(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl/base.ron"))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    use super::*;
+
+    fn load_without_save(
+        path: &Path,
+    ) -> Result<
+        (
+            prl_core::CoreState,
+            prl_core::RunFactory,
+            prl_save::SnapshotStore,
+            bool,
+        ),
+        Box<dyn std::error::Error>,
+    > {
+        static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+        let save = std::env::temp_dir().join(format!(
+            "prl-assets-save-{}-{}.ron",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        crate::load_playtest(path, &save)
+    }
+
+    struct PackageDirectory(PathBuf);
+
+    impl PackageDirectory {
+        fn new() -> Self {
+            static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+            let path = std::env::temp_dir().join(format!(
+                "prl-assets-test-{}-{}",
+                std::process::id(),
+                NEXT_ID.fetch_add(1, Ordering::Relaxed)
+            ));
+            std::fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+
+        fn executable(&self) -> PathBuf {
+            self.0.join("prl.exe")
+        }
+    }
+
+    impl Drop for PackageDirectory {
+        fn drop(&mut self) {
+            std::fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn checkout_assets_require_explicit_opt_in() {
+        assert_eq!(options([]).unwrap(), (false, false, false));
+        assert_eq!(
+            options([OsString::from("--dev-assets")]).unwrap(),
+            (true, false, false)
+        );
+        assert!(options([OsString::from("--dev-asset")]).is_err());
+        assert!(
+            options([
+                OsString::from("--dev-assets"),
+                OsString::from("--dev-assets"),
+            ])
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn tileset_selection_is_explicit_and_never_changes_asset_resolution_policy() {
+        for arguments in [
+            ["--dev-assets", "--tileset=ultica"],
+            ["--tileset=ultica", "--dev-assets"],
+        ] {
+            assert_eq!(
+                options(arguments.map(OsString::from)).unwrap(),
+                (true, true, true)
+            );
+        }
+        assert_eq!(
+            options([OsString::from("--tileset=ultica")]).unwrap(),
+            (false, true, true)
+        );
+        assert_eq!(
+            options(["--tileset=ultica", "--player=ultica"].map(OsString::from)).unwrap(),
+            (false, true, false)
+        );
+        assert!(options([OsString::from("--player=ultica")]).is_err());
+        assert!(options([OsString::from("--tileset=unknown")]).is_err());
+        assert!(
+            options(["--tileset=ultica", "--tileset=placeholder"].map(OsString::from)).is_err()
+        );
+    }
+
+    #[test]
+    fn missing_packaged_assets_never_fall_back_to_existing_checkout() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), false).unwrap();
+        assert_eq!(path, package.0.join("assets/packs/prl/base.ron"));
+        assert!(load_without_save(&path).is_err());
+    }
+
+    #[test]
+    fn development_opt_in_loads_checkout_when_no_adjacent_assets_exist() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        assert!(load_without_save(&path).is_ok());
+    }
+
+    #[test]
+    fn incomplete_adjacent_assets_never_fall_back_even_with_development_opt_in() {
+        let package = PackageDirectory::new();
+        std::fs::create_dir(package.0.join("assets")).unwrap();
+        for development in [false, true] {
+            let path = resolve_content_path(&package.executable(), development).unwrap();
+            assert_eq!(path, package.0.join("assets/packs/prl/base.ron"));
+            assert!(load_without_save(&path).is_err());
+        }
+    }
+
+    #[test]
+    fn adjacent_content_is_loaded_without_source_checkout_fallback() {
+        let package = PackageDirectory::new();
+        let pack = package.0.join("assets/packs/prl");
+        std::fs::create_dir_all(&pack).unwrap();
+        let source =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/packs/prl/base.ron");
+        std::fs::copy(source, pack.join("base.ron")).unwrap();
+        let dungeon = pack.join("data/dungeons/crypt_playtest.ron");
+        std::fs::create_dir_all(dungeon.parent().unwrap()).unwrap();
+        let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../assets/packs/prl/data/dungeons/crypt_playtest.ron");
+        std::fs::copy(source, &dungeon).unwrap();
+        for development in [false, true] {
+            let path = resolve_content_path(&package.executable(), development).unwrap();
+            assert_eq!(path, pack.join("base.ron"));
+            assert!(load_without_save(&path).is_ok());
+        }
+        std::fs::remove_file(&dungeon).unwrap();
+        let error = load_without_save(&pack.join("base.ron"))
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("crypt_playtest.ron"));
+        std::fs::write(&dungeon, "invalid required dungeon").unwrap();
+        let error = load_without_save(&pack.join("base.ron"))
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("crypt_playtest.ron"));
+        std::fs::write(pack.join("base.ron"), "invalid content").unwrap();
+        for development in [false, true] {
+            let path = resolve_content_path(&package.executable(), development).unwrap();
+            assert!(load_without_save(&path).is_err());
+        }
+    }
+
+    #[test]
+    fn startup_continues_valid_save_and_preserves_corrupt_save_on_error() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        let save_path = package.0.join("character.ron");
+        let (mut original, _, store, continued) = crate::load_playtest(&path, &save_path).unwrap();
+        assert!(!continued);
+        original.issue(prl_core::Command::Wait);
+        store.write(&original).unwrap();
+
+        let (continued, _, _, did_continue) = crate::load_playtest(&path, &save_path).unwrap();
+        assert!(did_continue);
+        assert_eq!(continued.snapshot(), original.snapshot());
+
+        std::fs::write(&save_path, "corrupt but preserved").unwrap();
+        let error = crate::load_playtest(&path, &save_path)
+            .err()
+            .unwrap()
+            .to_string();
+        assert!(error.contains("invalid save"));
+        assert_eq!(
+            std::fs::read_to_string(save_path).unwrap(),
+            "corrupt but preserved"
+        );
+    }
+
+    #[test]
+    fn legacy_crypt_save_continues_without_overwriting_and_new_run_has_approach() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        let save_path = package.0.join("character.ron");
+        let base = prl_content::ContentPack::load_from_path(&path).unwrap();
+        let config: prl_gen::CryptPlaytest = ron::from_str(include_str!(
+            "../../../assets/packs/prl/data/dungeons/crypt_playtest.ron"
+        ))
+        .unwrap();
+        let legacy = config.build_legacy(&base, 1).unwrap();
+        let store = prl_save::SnapshotStore::new(&save_path);
+        store.write(&legacy).unwrap();
+        let (mut continued, factory, _, did_continue) =
+            crate::load_playtest(&path, &save_path).unwrap();
+        assert!(did_continue);
+        assert_eq!(continued.snapshot(), legacy.snapshot());
+        factory.issue(&mut continued, prl_core::Command::NewRun);
+        assert_eq!(
+            continued.map().definition().to_string(),
+            "prl:crypt_approach"
+        );
+    }
+
+    #[test]
+    fn startup_recovers_death_barrier_into_a_committed_new_crypt() {
+        let package = PackageDirectory::new();
+        let path = resolve_content_path(&package.executable(), true).unwrap();
+        let save_path = package.0.join("character.ron");
+        let store = prl_save::SnapshotStore::new(&save_path);
+        let mut dead = prl_core::CoreState::demo().unwrap();
+        store.write(&dead).unwrap();
+        dead.issue(prl_core::Command::Move(prl_core::Direction::East));
+        dead.issue(prl_core::Command::Move(prl_core::Direction::East));
+        dead.issue(prl_core::Command::OpenDoor(prl_core::Direction::East));
+        for _ in 0..2000 {
+            if dead.is_player_dead() {
+                break;
+            }
+            dead.issue(prl_core::Command::Wait);
+        }
+        assert!(dead.is_player_dead());
+        store.record_death(&dead).unwrap();
+
+        let (next, _, _, continued) = crate::load_playtest(&path, &save_path).unwrap();
+        assert!(!continued);
+        assert_eq!(next.seed(), dead.seed() + 1);
+        assert_eq!(next.run_number(), dead.run_number() + 1);
+        assert_eq!(
+            prl_save::SnapshotStore::new(save_path)
+                .load()
+                .unwrap()
+                .unwrap()
+                .snapshot(),
+            next.snapshot()
+        );
+    }
+}

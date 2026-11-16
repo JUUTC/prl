@@ -1,0 +1,20 @@
+[package]
+name = "prl_ui"
+description = "PRL player-facing UI: theme, widgets, HUD, menus, screens"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_log", "bevy_ui", "bevy_ui_render", "bevy_text", "bevy_window", "default_font", "bevy_ui_widgets", "ui_picking"] }
+prl_content.workspace = true
+prl_core.workspace = true
+
+[dev-dependencies]
+prl_gen.workspace = true
+ron.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRL - Inventory interaction study</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="study-bar">
+    <div><strong>PRL / Inventory UX study</strong>
+      <p>Synthetic items and actions. Not connected to the game. Layout proposal, not final art.</p>
+    </div>
+    <label>Test situation
+      <select id="scenario">
+        <option value="normal">Hurt, known supplies</option>
+        <option value="danger">Hostile visible</option>
+        <option value="unknown">Unidentified supplies</option>
+        <option value="space">Fragmented backpack</option>
+        <option value="weight">Near pickup weight limit</option>
+        <option value="full-hp">Full health</option>
+        <option value="empty">Empty bag and ground</option>
+        <option value="long-name">Long item names</option>
+      </select>
+    </label>
+    <button id="reset">Reset situation</button>
+  </header>
+  <main>
+    <section id="world" class="world" aria-label="World return after an item action" hidden>
+      <p class="eyebrow">SIMULATED WORLD RETURN</p>
+      <h1>One action. Back to the world.</h1>
+      <p id="world-result" role="status"></p>
+      <p id="world-stats"></p>
+      <p>No enemies, ticks or saves are simulated. The game must resolve its normal scheduler here.</p>
+      <button id="open" class="primary">Open inventory [I]</button>
+    </section>
+    <section id="inventory" class="workspace" aria-label="Inventory workspace">
+      <header class="inventory-header">
+        <div><p class="eyebrow">CHARACTER / ITEMS</p><h1>Inventory</h1></div>
+        <div><strong>Browsing: no time passes</strong><p id="vitals"></p></div>
+        <button id="close">Return to world [Esc]</button>
+      </header>
+      <p id="threat" class="notice"></p>
+      <div class="columns">
+        <section class="pane equipment" aria-labelledby="equipment-title">
+          <h2 id="equipment-title">Equipment</h2>
+          <p>Functional playtest slots</p>
+          <div id="equipment-items" class="collection" aria-label="Equipped items"></div>
+          <h3>Known character totals</h3>
+          <dl id="totals"></dl>
+          <p class="subtle">Unknown bonuses excluded. No functional shield in this slice.</p>
+        </section>
+        <section class="pane backpack" aria-labelledby="backpack-title">
+          <div class="pane-heading">
+            <h2 id="backpack-title">Backpack</h2>
+            <div class="view-switch" role="group" aria-label="Backpack display">
+              <button id="grid-view" aria-pressed="true">Grid</button>
+              <button id="list-view" aria-pressed="false">List</button>
+            </div>
+          </div>
+          <p>10 x 6 cells. Select to inspect; placement is read-only.</p>
+          <div id="bag-grid" class="bag-grid collection" aria-label="Backpack items in grid order"></div>
+          <div id="bag-list" class="bag-list collection" aria-label="Backpack item list" hidden></div>
+          <div class="capacity">
+            <label for="weight" id="weight-label">Carried weight</label>
+            <meter id="weight" min="0" max="60"></meter>
+            <p id="space"></p>
+          </div>
+          <p class="subtle">No dragging, repacking, stacks or auto-sort in this study.</p>
+        </section>
+        <section id="details" class="pane details" aria-labelledby="details-title">
+          <h2 id="details-title">Item details</h2>
+          <div id="detail-content"></div>
+        </section>
+      </div>
+      <section class="pane ground" aria-labelledby="ground-title">
+        <div class="pane-heading"><h2 id="ground-title">At your feet</h2><span>Current cell only / manual pickup</span></div>
+        <div id="ground-items" class="collection ground-items" aria-label="Items at your feet"></div>
+      </section>
+      <footer class="action-strip">
+        <strong id="action-target"></strong>
+        <div id="actions" class="actions"></div>
+        <p id="feedback" role="status" aria-live="polite" tabindex="-1"></p>
+        <p class="subtle">Click / Enter: inspect only. Arrows: items in region. Tab: controls.
+          E: equip | Q: drink | C: identify | D: drop | Esc: close. No held actions.</p>
+      </footer>
+    </section>
+  </main>
+  <dialog id="review" aria-labelledby="review-title">
+    <form method="dialog">
+      <p class="eyebrow">REVIEW / NO TIME PASSES</p>
+      <h2 id="review-title">Review action</h2>
+      <p id="review-target"></p>
+      <p id="review-cost"></p>
+      <p id="review-warning" class="notice"></p>
+      <label id="source-label" hidden>Carried Identify scroll
+        <select id="source"></select>
+      </label>
+      <p id="review-error" role="alert"></p>
+      <div class="actions">
+        <button id="cancel" value="cancel" autofocus>Cancel [Esc]</button>
+        <button id="confirm" type="button" class="primary">Commit one action</button>
+      </div>
+    </form>
+  </dialog>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

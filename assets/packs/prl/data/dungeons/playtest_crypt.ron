@@ -1,0 +1,10 @@
+// Headless P3 generator proof only; not yet selected by the playable build.
+(
+    format: 1,
+    map: "prl:playtest_crypt",
+    width: 48,
+    height: 32,
+    wall: "prl:wall",
+    floor: "prl:floor",
+    player: "prl:player",
+)
