@@ -61,8 +61,8 @@ pub(crate) fn accepted(command: Command) -> Option<String> {
         Command::Move(_) => Some("You move.".into()),
         Command::Wait => Some("You wait.".into()),
         Command::OpenDoor(_) => Some("You open the door.".into()),
-        Command::CreateCharacter(_) => None,
-        Command::NewRun
+        Command::CreateCharacter(_)
+        | Command::NewRun
         | Command::Stairs(_)
         | Command::Transfer(_)
         | Command::SplitStack { .. }

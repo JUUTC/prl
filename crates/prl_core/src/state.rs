@@ -676,7 +676,7 @@ mod tests {
         let before_rng = state.rng_position();
         assert!(matches!(
             state.issue(Command::CreateCharacter(profile)),
-            crate::CommandResult::Accepted { .. }
+            CommandResult::Accepted { .. }
         ));
         assert_eq!(state.clock(), before_clock);
         assert_eq!(state.rng_position(), before_rng);
@@ -684,7 +684,7 @@ mod tests {
         assert!(!state.character_creation_open());
         assert!(matches!(
             state.issue(Command::CreateCharacter(profile)),
-            crate::CommandResult::Rejected {
+            CommandResult::Rejected {
                 reason: RejectReason::CharacterAlreadyCreated,
                 ..
             }
@@ -706,7 +706,7 @@ mod tests {
                 destination: crate::BACKPACK,
                 cell: None,
             })),
-            crate::CommandResult::Rejected {
+            CommandResult::Rejected {
                 reason: RejectReason::InvalidItem,
                 ..
             }
@@ -716,7 +716,7 @@ mod tests {
         assert!(!state.character_creation_open());
         assert!(matches!(
             state.issue(Command::CreateCharacter(CharacterProfile::LEGACY_DEFAULT)),
-            crate::CommandResult::Rejected {
+            CommandResult::Rejected {
                 reason: RejectReason::CharacterCreationClosed,
                 ..
             }

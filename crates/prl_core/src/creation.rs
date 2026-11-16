@@ -42,16 +42,11 @@ impl StartingRace {
     #[must_use]
     pub const fn step(self, direction: i8) -> Self {
         match (self, direction < 0) {
-            (Self::Human, true) => Self::Orc,
-            (Self::Human, false) => Self::Elf,
-            (Self::Elf, true) => Self::Human,
-            (Self::Elf, false) => Self::Dwarf,
-            (Self::Dwarf, true) => Self::Elf,
-            (Self::Dwarf, false) => Self::Halfling,
-            (Self::Halfling, true) => Self::Dwarf,
-            (Self::Halfling, false) => Self::Orc,
-            (Self::Orc, true) => Self::Halfling,
-            (Self::Orc, false) => Self::Human,
+            (Self::Human, true) | (Self::Halfling, false) => Self::Orc,
+            (Self::Human, false) | (Self::Dwarf, true) => Self::Elf,
+            (Self::Elf, true) | (Self::Orc, false) => Self::Human,
+            (Self::Elf, false) | (Self::Halfling, true) => Self::Dwarf,
+            (Self::Dwarf, false) | (Self::Orc, true) => Self::Halfling,
         }
     }
 }
@@ -91,18 +86,12 @@ impl StartingClass {
     #[must_use]
     pub const fn step(self, direction: i8) -> Self {
         match (self, direction < 0) {
-            (Self::Warrior, true) => Self::Paladin,
-            (Self::Warrior, false) => Self::Rogue,
-            (Self::Rogue, true) => Self::Warrior,
-            (Self::Rogue, false) => Self::Mage,
-            (Self::Mage, true) => Self::Rogue,
-            (Self::Mage, false) => Self::Cleric,
-            (Self::Cleric, true) => Self::Mage,
-            (Self::Cleric, false) => Self::Ranger,
-            (Self::Ranger, true) => Self::Cleric,
-            (Self::Ranger, false) => Self::Paladin,
-            (Self::Paladin, true) => Self::Ranger,
-            (Self::Paladin, false) => Self::Warrior,
+            (Self::Warrior, true) | (Self::Ranger, false) => Self::Paladin,
+            (Self::Warrior, false) | (Self::Rogue, true) => Self::Rogue,
+            (Self::Rogue, false) | (Self::Mage, true) => Self::Mage,
+            (Self::Mage, false) | (Self::Cleric, true) => Self::Cleric,
+            (Self::Cleric, false) | (Self::Ranger, true) => Self::Ranger,
+            (Self::Paladin, true) | (Self::Paladin, false) => Self::Warrior,
         }
     }
 }
