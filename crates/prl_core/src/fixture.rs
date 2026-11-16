@@ -64,6 +64,8 @@ impl CoreState {
             inventory: None,
             kills: 0,
             kills_complete: true,
+            character: None,
+            character_creation_open: true,
         };
         state.refresh_visibility();
         state.log.record(

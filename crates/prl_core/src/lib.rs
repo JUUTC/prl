@@ -33,6 +33,7 @@ use bevy::prelude::{App, Plugin, ResMut, SystemSet, Update};
 
 pub use actor::{Actor, ActorBehavior, AiState, CombatStats};
 pub use command::{Command, CommandResult, CoreCommandQueue, RejectReason};
+pub use creation::{CharacterProfile, StartingClass, StartingRace, StartingStats};
 pub use dungeon::{FloorPlan, RunExitGuard, RunFactory, StairDirection};
 pub use error::CoreError;
 pub use geometry::{Direction, Position};
@@ -52,7 +53,7 @@ pub const SECONDS_PER_TICK: u64 = 6;
 /// Energy cost of every P2 action: wait, move, open door and melee attack.
 pub const ACTION_ENERGY: u16 = 100;
 /// Version of the headless snapshot DTO.
-pub const SNAPSHOT_VERSION: u32 = 6;
+pub const SNAPSHOT_VERSION: u32 = 7;
 
 /// Registers the headless command resolver and its ordered extension sets.
 pub struct PrlCorePlugin;

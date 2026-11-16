@@ -61,7 +61,8 @@ pub(crate) fn accepted(command: Command) -> Option<String> {
         Command::Move(_) => Some("You move.".into()),
         Command::Wait => Some("You wait.".into()),
         Command::OpenDoor(_) => Some("You open the door.".into()),
-        Command::NewRun
+        Command::CreateCharacter(_)
+        | Command::NewRun
         | Command::Stairs(_)
         | Command::Transfer(_)
         | Command::SplitStack { .. }
@@ -92,6 +93,13 @@ pub(crate) fn rejected(reason: RejectReason) -> String {
         RejectReason::BackpackFull => "There is no room in the backpack for that shape.".into(),
         RejectReason::TooHeavy => "That pickup would exceed your carrying limit.".into(),
         RejectReason::NoEffect => "That would have no effect; no item or time spent.".into(),
+        RejectReason::CharacterCreationClosed => {
+            "Character creation is only available before gameplay starts.".into()
+        }
+        RejectReason::CharacterAlreadyCreated => {
+            "A character has already been created for this run.".into()
+        }
+        RejectReason::InvalidCharacter => "That character profile is invalid.".into(),
     }
 }
 

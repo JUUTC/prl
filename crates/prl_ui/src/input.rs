@@ -1,7 +1,8 @@
 use crate::repeat::{HeldAction, RepeatSettings};
 use bevy::{prelude::*, window::PrimaryWindow};
 use prl_core::{
-    Command, CoreCommandQueue, CoreSet, CoreState, Direction, RunStatus, StairDirection,
+    CharacterProfile, Command, CoreCommandQueue, CoreSet, CoreState, Direction, RunStatus,
+    StairDirection,
 };
 
 /// Seconds a first `R` press waits for confirmation during a live run.
@@ -17,9 +18,17 @@ pub struct UiMode {
     focused: bool,
     pub(super) look: Option<prl_core::Position>,
     pub(super) show_all_loot: bool,
+    pub(super) creation: Option<CreationEditor>,
     held: HeldAction,
     remapping: Option<Vec<KeyCode>>,
     binding_error: Option<&'static str>,
+}
+
+#[derive(Default)]
+pub(super) struct CreationEditor {
+    pub(super) profile: CharacterProfile,
+    pub(super) stat: usize,
+    pub(super) error: Option<&'static str>,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,6 +42,11 @@ pub(super) enum Overlay {
 }
 
 impl UiMode {
+    /// Enables the required first-run character-creation screen.
+    pub fn enable_first_run_creation(&mut self) {
+        self.creation = Some(CreationEditor::default());
+    }
+
     pub(super) const fn window_focused(&self) -> bool {
         self.focused
     }
@@ -45,7 +59,7 @@ impl UiMode {
     /// Whether gameplay input is paused by a help/menu overlay.
     #[must_use]
     pub const fn is_paused(&self) -> bool {
-        !matches!(self.overlay, Overlay::None)
+        self.creation.is_some() || !matches!(self.overlay, Overlay::None)
     }
 
     fn look_input(
@@ -199,6 +213,9 @@ pub(super) fn handle_input(
         mode.held.cancel();
         return;
     }
+    if creation_overlay_input(&keys, &mut mode, &mut queue, state.as_deref()) {
+        return;
+    }
     if mode.overlay == Overlay::Inventory {
         if keys.just_pressed(KeyCode::BracketRight) {
             scale.0 = (scale.0 + 0.25).min(2.0);
@@ -269,6 +286,75 @@ pub(super) fn handle_input(
         } else {
             mode.held
                 .tick(&keys, state, time.elapsed(), &repeat, &mut queue);
+        }
+    }
+}
+
+fn creation_overlay_input(
+    keys: &ButtonInput<KeyCode>,
+    mode: &mut UiMode,
+    queue: &mut CoreCommandQueue,
+    state: Option<&CoreState>,
+) -> bool {
+    if mode.creation.is_some() && state.is_some_and(|core| core.character_profile().is_some()) {
+        mode.creation = None;
+    }
+    if mode.creation.is_some() {
+        creation_input(keys, mode, queue);
+        true
+    } else {
+        false
+    }
+}
+
+fn creation_input(keys: &ButtonInput<KeyCode>, mode: &mut UiMode, queue: &mut CoreCommandQueue) {
+    if !queue.is_empty() {
+        return;
+    }
+    let Some(editor) = mode.creation.as_mut() else {
+        return;
+    };
+    if keys.just_pressed(KeyCode::KeyA) {
+        editor.profile.race = editor.profile.race.step(-1);
+        editor.error = None;
+    } else if keys.just_pressed(KeyCode::KeyD) {
+        editor.profile.race = editor.profile.race.step(1);
+        editor.error = None;
+    } else if keys.just_pressed(KeyCode::KeyQ) {
+        editor.profile.class = editor.profile.class.step(-1);
+        editor.error = None;
+    } else if keys.just_pressed(KeyCode::KeyE) {
+        editor.profile.class = editor.profile.class.step(1);
+        editor.error = None;
+    } else if keys.just_pressed(KeyCode::ArrowUp) {
+        editor.stat = editor.stat.saturating_sub(1);
+    } else if keys.just_pressed(KeyCode::ArrowDown) {
+        editor.stat = (editor.stat + 1).min(5);
+    } else if keys.just_pressed(KeyCode::ArrowLeft) || keys.just_pressed(KeyCode::ArrowRight) {
+        let direction: i8 = if keys.just_pressed(KeyCode::ArrowRight) {
+            1
+        } else {
+            -1
+        };
+        let current = editor.profile.stats.scores[editor.stat];
+        let candidate_score = if direction > 0 {
+            current.saturating_add(1)
+        } else {
+            current.saturating_sub(1)
+        };
+        let mut candidate = editor.profile.stats;
+        candidate.scores[editor.stat] = candidate_score;
+        if prl_core::creation::stat_cost(candidate, prl_core::creation::CreationMode::Customize)
+            .is_ok_and(|spent| spent <= 27)
+        {
+            editor.profile.stats = candidate;
+            editor.error = None;
+        }
+    } else if keys.just_pressed(KeyCode::Enter) {
+        if editor.profile.is_valid() {
+            queue.push(Command::CreateCharacter(editor.profile));
+        } else {
+            editor.error = Some("Stats must spend exactly 27 points; scores range 8-15.");
         }
     }
 }
@@ -675,6 +761,25 @@ mod tests {
 
     fn fixture_app() -> Result<App, prl_core::CoreError> {
         Ok(app_with(CoreState::demo()?))
+    }
+
+    #[test]
+    fn first_run_creation_selects_identity_without_spending_game_time() {
+        let mut app = fixture_app().unwrap();
+        app.world_mut()
+            .resource_mut::<UiMode>()
+            .enable_first_run_creation();
+        press(&mut app, KeyCode::KeyD);
+        press(&mut app, KeyCode::KeyE);
+        press(&mut app, KeyCode::Enter);
+        app.update();
+        let state = app.world().resource::<CoreState>();
+        let profile = state.character_profile().unwrap();
+        assert_eq!(profile.race, prl_core::StartingRace::Elf);
+        assert_eq!(profile.class, prl_core::StartingClass::Rogue);
+        assert_eq!(state.clock().player_actions(), 0);
+        assert_eq!(state.clock().ticks(), 0);
+        assert!(app.world().resource::<UiMode>().creation.is_none());
     }
 
     #[test]

@@ -2,7 +2,9 @@
 
 This build tests a small outdoor approach and seeded two-floor crypt: exploring, fighting, looting, equipping,
 using consumables, returning upstairs and retrying after death. It is not the full
-game: there are no skills, profile, overworld, towns or campaign. The
+game: the first-run creator only records race, class and a 27-point stat
+allocation; there are no skills or progression, racial mechanics, or gear
+selection. There is also no overworld, towns or campaign. The
 sprites are a generated placeholder atlas of the project's own Gravebound
 studies; if it fails
 to load, the game draws coloured shapes instead. Sprites, shapes, colours, the

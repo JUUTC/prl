@@ -10,9 +10,10 @@ template, never an equipment restriction.
 
 The headless I-046 creation draft checks pre-racial point-buy and starting
 skill budgets using caller-supplied class defaults and a caller-supplied
-skill catalogue. It stores opaque gear section values without validating
-prices, allowed gear or jackpot rules. Class availability, racial application,
-random distributions and the actual playable character are not implemented.
+skill catalogue. The first-run UI stores a race, class and valid 27-point
+pre-racial stat allocation, but applies none of their gameplay effects.
+It stores no skills or gear. Class unlocks, racial effects, random distributions
+and complete playable-character mechanics remain unimplemented.
 
 ## Races
 

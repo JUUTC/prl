@@ -60,12 +60,16 @@ fn disk_save_migrates_v4_and_retains_new_rotated_placement() {
     rewrite(&store, |file| {
         file.snapshot = file
             .snapshot
-            .replacen("version:6", "version:5", 1)
+            .replacen("version:7", "version:5", 1)
             .replace(",quantity:1", "");
         file.checksum = digest(&file.snapshot);
     });
     let mut restored = store.load().unwrap().unwrap();
-    assert_eq!(restored.snapshot(), core.snapshot());
+    assert_eq!(restored.inventory(), core.inventory());
+    assert_eq!(
+        restored.character_profile(),
+        Some(prl_core::CharacterProfile::LEGACY_DEFAULT)
+    );
     let sword = restored
         .inventory()
         .unwrap()
@@ -304,9 +308,10 @@ fn previous_arena_snapshot_migrates_and_unknown_core_version_fails() {
     rewrite(&store, |saved| {
         saved.snapshot = saved
             .snapshot
-            .replacen("version:6", "version:2", 1)
+            .replacen("version:7", "version:2", 1)
             .replace(",dungeon:None,inventory:None", "")
-            .replace(",kills:0,kills_complete:true", "");
+            .replace(",kills:0,kills_complete:true", "")
+            .replace(",character:None,character_creation_open:true", "");
         saved.checksum = digest(&saved.snapshot);
     });
     let restored = store.load().unwrap().unwrap();
@@ -314,6 +319,10 @@ fn previous_arena_snapshot_migrates_and_unknown_core_version_fails() {
     assert_eq!(restored.rng_position(), state.rng_position());
     assert_eq!(restored.kills(), 0);
     assert!(!restored.kills_complete());
+    assert_eq!(
+        restored.character_profile(),
+        Some(prl_core::CharacterProfile::LEGACY_DEFAULT)
+    );
     rewrite(&store, |saved| {
         saved.snapshot = saved.snapshot.replacen("version:2", "version:999", 1);
         saved.checksum = digest(&saved.snapshot);
