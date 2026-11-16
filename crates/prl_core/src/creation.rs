@@ -91,7 +91,7 @@ impl StartingClass {
             (Self::Rogue, false) | (Self::Mage, true) => Self::Mage,
             (Self::Mage, false) | (Self::Cleric, true) => Self::Cleric,
             (Self::Cleric, false) | (Self::Ranger, true) => Self::Ranger,
-            (Self::Paladin, true) | (Self::Paladin, false) => Self::Warrior,
+            (Self::Paladin, _) => Self::Warrior,
         }
     }
 }
