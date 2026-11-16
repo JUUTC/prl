@@ -8,6 +8,138 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use prl_content::ContentId;
+use serde::{Deserialize, Serialize};
+
+/// Starting race choices shown by the first-run creator.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StartingRace {
+    /// Human.
+    Human,
+    /// Elf.
+    Elf,
+    /// Dwarf.
+    Dwarf,
+    /// Halfling.
+    Halfling,
+    /// Orc.
+    Orc,
+}
+
+impl StartingRace {
+    /// User-facing race name.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Human => "Human",
+            Self::Elf => "Elf",
+            Self::Dwarf => "Dwarf",
+            Self::Halfling => "Halfling",
+            Self::Orc => "Orc",
+        }
+    }
+
+    /// Advances to the next listed race, wrapping at either end.
+    #[must_use]
+    pub const fn step(self, direction: i8) -> Self {
+        match (self, direction < 0) {
+            (Self::Human, true) => Self::Orc,
+            (Self::Human, false) => Self::Elf,
+            (Self::Elf, true) => Self::Human,
+            (Self::Elf, false) => Self::Dwarf,
+            (Self::Dwarf, true) => Self::Elf,
+            (Self::Dwarf, false) => Self::Halfling,
+            (Self::Halfling, true) => Self::Dwarf,
+            (Self::Halfling, false) => Self::Orc,
+            (Self::Orc, true) => Self::Halfling,
+            (Self::Orc, false) => Self::Human,
+        }
+    }
+}
+
+/// Starting class choices shown by the first-run creator.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StartingClass {
+    /// Warrior.
+    Warrior,
+    /// Rogue.
+    Rogue,
+    /// Mage.
+    Mage,
+    /// Cleric.
+    Cleric,
+    /// Ranger.
+    Ranger,
+    /// Paladin.
+    Paladin,
+}
+
+impl StartingClass {
+    /// User-facing class name.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Warrior => "Warrior",
+            Self::Rogue => "Rogue",
+            Self::Mage => "Mage",
+            Self::Cleric => "Cleric",
+            Self::Ranger => "Ranger",
+            Self::Paladin => "Paladin",
+        }
+    }
+
+    /// Advances to the next listed class, wrapping at either end.
+    #[must_use]
+    pub const fn step(self, direction: i8) -> Self {
+        match (self, direction < 0) {
+            (Self::Warrior, true) => Self::Paladin,
+            (Self::Warrior, false) => Self::Rogue,
+            (Self::Rogue, true) => Self::Warrior,
+            (Self::Rogue, false) => Self::Mage,
+            (Self::Mage, true) => Self::Rogue,
+            (Self::Mage, false) => Self::Cleric,
+            (Self::Cleric, true) => Self::Mage,
+            (Self::Cleric, false) => Self::Ranger,
+            (Self::Ranger, true) => Self::Cleric,
+            (Self::Ranger, false) => Self::Paladin,
+            (Self::Paladin, true) => Self::Ranger,
+            (Self::Paladin, false) => Self::Warrior,
+        }
+    }
+}
+
+/// Identity and point-buy allocation selected before the first gameplay action.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CharacterProfile {
+    /// Chosen starting race.
+    pub race: StartingRace,
+    /// Chosen starting class.
+    pub class: StartingClass,
+    /// Pre-racial STR, DEX, CON, INT, WIS, CHA scores.
+    pub stats: StartingStats,
+}
+
+impl Default for CharacterProfile {
+    fn default() -> Self {
+        Self::LEGACY_DEFAULT
+    }
+}
+
+impl CharacterProfile {
+    /// Provisional identity used when migrating saves made before character creation.
+    pub const LEGACY_DEFAULT: Self = Self {
+        race: StartingRace::Human,
+        class: StartingClass::Warrior,
+        stats: StartingStats {
+            scores: [15, 13, 12, 12, 12, 9],
+        },
+    };
+
+    /// Whether this profile satisfies the accepted default/custom stat budget.
+    #[must_use]
+    pub fn is_valid(self) -> bool {
+        validate_stats(self.stats, CreationMode::Customize).is_ok()
+    }
+}
 
 /// Independent creation-section mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,7 +153,7 @@ pub enum CreationMode {
 }
 
 /// Six pre-racial scores in STR, DEX, CON, INT, WIS, CHA order.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StartingStats {
     /// Scores before racial modifiers.
     pub scores: [u8; 6],

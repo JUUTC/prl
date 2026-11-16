@@ -90,6 +90,8 @@ pub struct CoreState {
     pub(crate) inventory: Option<crate::Inventory>,
     pub(crate) kills: u64,
     pub(crate) kills_complete: bool,
+    pub(crate) character: Option<crate::CharacterProfile>,
+    pub(crate) character_creation_open: bool,
 }
 
 impl CoreState {
@@ -103,6 +105,18 @@ impl CoreState {
     #[must_use]
     pub const fn kills_complete(&self) -> bool {
         self.kills_complete
+    }
+
+    /// Selected identity and pre-racial stats, if first-run creation was completed.
+    #[must_use]
+    pub const fn character_profile(&self) -> Option<crate::CharacterProfile> {
+        self.character
+    }
+
+    /// Whether this run still accepts a character profile before any gameplay command.
+    #[must_use]
+    pub const fn character_creation_open(&self) -> bool {
+        self.character_creation_open
     }
 
     /// Constructs run 1 (seed 1) from the embedded base pack.
@@ -150,6 +164,9 @@ impl CoreState {
         if command == Command::NewRun {
             return self.start_new_run();
         }
+        if let Command::CreateCharacter(profile) = command {
+            return self.create_character(profile);
+        }
         if self.status == RunStatus::Dead {
             return self.reject(command, RejectReason::PlayerDead);
         }
@@ -157,6 +174,7 @@ impl CoreState {
             Ok(action) => action,
             Err(reason) => return self.reject(command, reason),
         };
+        self.character_creation_open = false;
         let cost = match &action {
             Action::Items { cost, .. } => *cost,
             _ => ACTION_ENERGY,
@@ -184,6 +202,44 @@ impl CoreState {
             self.refresh_visibility();
             self.advance_until_player_ready(player_debt);
         }
+        CommandResult::Accepted { sequence }
+    }
+
+    fn create_character(&mut self, profile: crate::CharacterProfile) -> CommandResult {
+        if self.status == RunStatus::Dead {
+            return self.reject(Command::CreateCharacter(profile), RejectReason::PlayerDead);
+        }
+        if self.character.is_some() {
+            return self.reject(
+                Command::CreateCharacter(profile),
+                RejectReason::CharacterAlreadyCreated,
+            );
+        }
+        if !self.character_creation_open {
+            return self.reject(
+                Command::CreateCharacter(profile),
+                RejectReason::CharacterCreationClosed,
+            );
+        }
+        if !profile.is_valid() {
+            return self.reject(
+                Command::CreateCharacter(profile),
+                RejectReason::InvalidCharacter,
+            );
+        }
+        self.character = Some(profile);
+        self.character_creation_open = false;
+        let sequence = self.log.record(
+            OutcomeKind::CommandAccepted {
+                command: Command::CreateCharacter(profile),
+                cost: 0,
+            },
+            Some(format!(
+                "{} {} created. Stats and other character mechanics are provisional.",
+                profile.race.label(),
+                profile.class.label()
+            )),
+        );
         CommandResult::Accepted { sequence }
     }
 
@@ -345,6 +401,9 @@ impl CoreState {
                 {
                     return self.reject_new_run(error.to_string());
                 }
+                let mut next = next;
+                next.character = self.character;
+                next.character_creation_open = self.character.is_none();
                 *self = next;
                 let sequence = self.log.next_sequence.saturating_sub(1);
                 CommandResult::Accepted { sequence }
@@ -358,6 +417,7 @@ impl CoreState {
         match command {
             Command::Wait => Ok(Action::Wait),
             Command::NewRun => Err(RejectReason::RunUnavailable),
+            Command::CreateCharacter(_) => Err(RejectReason::CharacterCreationClosed),
             Command::Stairs(direction) => self.plan_stairs(direction).map(Action::Travel),
             Command::Transfer(transfer) => {
                 let player = self.player().ok_or(RejectReason::InvalidItem)?;
@@ -577,8 +637,8 @@ impl CoreState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Direction;
     use crate::test_support::{arena, count_waits, place, set_speed};
+    use crate::{CharacterProfile, Direction, StartingClass, StartingRace};
 
     #[test]
     fn arena_has_dense_map_typed_ids_and_content_actors() {
@@ -602,6 +662,66 @@ mod tests {
             state.outcomes().last().map(|outcome| &outcome.kind),
             Some(OutcomeKind::RunStarted { run: 1, seed: 1 })
         ));
+    }
+
+    #[test]
+    fn character_creation_is_free_validated_and_preserved_across_new_runs() {
+        let mut state = CoreState::demo().unwrap();
+        let profile = CharacterProfile {
+            race: StartingRace::Elf,
+            class: StartingClass::Rogue,
+            stats: CharacterProfile::LEGACY_DEFAULT.stats,
+        };
+        let before_clock = state.clock();
+        let before_rng = state.rng_position();
+        assert!(matches!(
+            state.issue(Command::CreateCharacter(profile)),
+            crate::CommandResult::Accepted { .. }
+        ));
+        assert_eq!(state.clock(), before_clock);
+        assert_eq!(state.rng_position(), before_rng);
+        assert_eq!(state.character_profile(), Some(profile));
+        assert!(!state.character_creation_open());
+        assert!(matches!(
+            state.issue(Command::CreateCharacter(profile)),
+            crate::CommandResult::Rejected {
+                reason: RejectReason::CharacterAlreadyCreated,
+                ..
+            }
+        ));
+        assert_eq!(state.clock(), before_clock);
+        state.issue(Command::NewRun);
+        assert_eq!(state.character_profile(), Some(profile));
+        let restored = CoreState::restore(state.snapshot()).unwrap();
+        assert_eq!(restored.character_profile(), Some(profile));
+        assert!(!restored.character_creation_open());
+    }
+
+    #[test]
+    fn character_creation_closes_after_the_first_gameplay_command() {
+        let mut state = CoreState::demo().unwrap();
+        assert!(matches!(
+            state.issue(Command::Transfer(crate::TransferItems {
+                item: crate::ItemId(0),
+                destination: crate::BACKPACK,
+                cell: None,
+            })),
+            crate::CommandResult::Rejected {
+                reason: RejectReason::InvalidItem,
+                ..
+            }
+        ));
+        assert!(state.character_creation_open());
+        state.issue(Command::Wait);
+        assert!(!state.character_creation_open());
+        assert!(matches!(
+            state.issue(Command::CreateCharacter(CharacterProfile::LEGACY_DEFAULT)),
+            crate::CommandResult::Rejected {
+                reason: RejectReason::CharacterCreationClosed,
+                ..
+            }
+        ));
+        assert_eq!(state.character_profile(), None);
     }
 
     #[test]

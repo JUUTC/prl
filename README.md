@@ -76,7 +76,10 @@ are adjacent to the executable. Without it, missing packaged assets fail at boot
 even on a machine that has the source checkout. An adjacent `assets` directory
 always takes priority; incomplete or malformed package content never falls back.
 
-`cargo run` starts the two-floor crypt. Pick up entrance supplies with `G`, equip
+`cargo run` opens a first-run race/class and stat point-buy screen, then starts
+the two-floor crypt. This bounded creator records identity and the 27-point
+pre-racial allocation; skills, gear, racial effects and stat-driven combat are
+still placeholders. Pick up entrance supplies with `G`, equip
 them through `I`, and descend with Enter at `>`. Defeat the lower-floor guardian
 and use its `>` to finish the playtest endpoint. This is not campaign victory.
 Headless generation and scripted run tests use `cargo test -p prl_gen`. See

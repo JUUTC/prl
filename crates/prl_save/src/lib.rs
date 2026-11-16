@@ -1,7 +1,8 @@
 //! Persistence: character saves, crash-safety checkpoints, the meta-progression
 //! profile and morgue files. The headless snapshot store provides versioned,
 //! validated atomic replacement, provisional checkpoints, quit-save and
-//! death/abandonment recovery and text morgues. Profiles remain future work.
+//! death/abandonment recovery and text morgues. Meta-progression profiles remain
+//! future work.
 
 use bevy::app::OnAppExitSystems;
 use bevy::prelude::*;
@@ -16,7 +17,9 @@ pub use store::{InventoryWarnings, SaveError, SnapshotStore};
 mod tests {
     use std::collections::{BTreeMap, VecDeque};
 
-    use prl_core::{Command, CoreCommandQueue, CoreState, PrlCorePlugin, StairDirection};
+    use prl_core::{
+        CharacterProfile, Command, CoreCommandQueue, CoreState, PrlCorePlugin, StairDirection,
+    };
 
     use super::*;
 
@@ -121,6 +124,20 @@ mod tests {
             );
             assert!(state.clock().player_actions() >= 20);
         }
+    }
+
+    #[test]
+    fn character_creation_is_checkpointed_immediately() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = SnapshotStore::new(directory.path().join("slot.ron"));
+        let mut app = app_with_state(CoreState::demo().unwrap(), store.clone());
+        app.world_mut()
+            .resource_mut::<CoreCommandQueue>()
+            .push(Command::CreateCharacter(CharacterProfile::LEGACY_DEFAULT));
+        app.update();
+        let state = app.world().resource::<CoreState>();
+        assert_eq!(state.clock().player_actions(), 0);
+        assert_eq!(store.load().unwrap().unwrap().snapshot(), state.snapshot());
     }
 
     #[test]
@@ -340,6 +357,7 @@ pub struct SaveController {
     last_sequence: u64,
     last_saved_actions: u64,
     last_saved_run: u32,
+    last_saved_character: Option<prl_core::CharacterProfile>,
     invalidated_run: Option<u32>,
 }
 
@@ -353,6 +371,7 @@ impl SaveController {
             last_sequence: state.outcomes().last().map_or(0, |event| event.sequence),
             last_saved_actions: state.clock().player_actions(),
             last_saved_run: state.run_number(),
+            last_saved_character: state.character_profile(),
             invalidated_run: None,
         }
     }
@@ -426,6 +445,10 @@ fn persist_state(
         }
         return;
     }
+    if state.character_profile() != controller.last_saved_character {
+        save(&state, &mut controller, &mut status);
+        return;
+    }
     let actions_since_save = state
         .clock()
         .player_actions()
@@ -484,6 +507,7 @@ fn save(
     match controller.store.write(state) {
         Ok(()) => {
             controller.last_saved_actions = state.clock().player_actions();
+            controller.last_saved_character = state.character_profile();
             status.error = None;
             status.message = "saved".into();
             bevy::log::info!(

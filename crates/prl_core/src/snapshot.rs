@@ -44,6 +44,10 @@ struct CoreStateData {
     kills: u64,
     #[serde(default)]
     kills_complete: bool,
+    #[serde(default)]
+    character: Option<crate::CharacterProfile>,
+    #[serde(default)]
+    character_creation_open: bool,
 }
 
 impl CoreSnapshot {
@@ -145,6 +149,8 @@ impl CoreState {
                 inventory: self.inventory.clone(),
                 kills: self.kills,
                 kills_complete: self.kills_complete,
+                character: self.character,
+                character_creation_open: self.character_creation_open,
             },
         }
     }
@@ -186,6 +192,11 @@ impl CoreState {
                     item.quantity = 1;
                 }
             }
+            snapshot.version = 6;
+        }
+        if snapshot.version == 6 {
+            snapshot.state.character = Some(crate::CharacterProfile::LEGACY_DEFAULT);
+            snapshot.state.character_creation_open = false;
             snapshot.version = SNAPSHOT_VERSION;
         }
         if snapshot.version != SNAPSHOT_VERSION {
@@ -209,6 +220,8 @@ impl CoreState {
             inventory: data.inventory,
             kills: data.kills,
             kills_complete: data.kills_complete,
+            character: data.character,
+            character_creation_open: data.character_creation_open,
         })
     }
 }
@@ -218,6 +231,14 @@ fn invalid(reason: &'static str) -> CoreError {
 }
 
 fn validate(data: &CoreStateData) -> Result<(), CoreError> {
+    if data.character.is_some_and(|profile| !profile.is_valid()) {
+        return Err(invalid("character profile has an invalid stat allocation"));
+    }
+    if data.character.is_some() && data.character_creation_open {
+        return Err(invalid(
+            "completed character profile cannot leave creation open",
+        ));
+    }
     let map = &data.map;
     if map.id.get() == 0 {
         return Err(invalid("map ID must be nonzero"));
@@ -710,6 +731,18 @@ mod tests {
                 "snapshot must contain exactly one player actor"
             )))
         ));
+
+        let mut invalid_character = state.snapshot();
+        invalid_character.state.character = Some(crate::CharacterProfile {
+            stats: crate::StartingStats { scores: [8; 6] },
+            ..crate::CharacterProfile::LEGACY_DEFAULT
+        });
+        assert!(matches!(
+            CoreState::restore(invalid_character),
+            Err(CoreError::Snapshot(SnapshotError::InvalidState(
+                "character profile has an invalid stat allocation"
+            )))
+        ));
     }
 
     #[test]
@@ -718,12 +751,15 @@ mod tests {
         let old = current
             .to_ron()
             .unwrap()
-            .replacen("version:6", "version:2", 1)
+            .replacen("version:7", "version:2", 1)
             .replace(",dungeon:None,inventory:None", "")
-            .replace(",kills:0,kills_complete:true", "");
+            .replace(",kills:0,kills_complete:true", "")
+            .replace(",character:None,character_creation_open:true", "");
         assert!(!old.contains("inventory:"));
         let restored = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
         current.state.kills_complete = false;
+        current.state.character = Some(crate::CharacterProfile::LEGACY_DEFAULT);
+        current.state.character_creation_open = false;
         assert_eq!(restored.snapshot(), current);
         let mut wrong_version = crate::test_support::dungeon().snapshot();
         wrong_version.version = 2;
@@ -737,8 +773,9 @@ mod tests {
             .snapshot()
             .to_ron()
             .unwrap()
-            .replacen("version:6", "version:3", 1)
-            .replace(",kills:0,kills_complete:true", "");
+            .replacen("version:7", "version:3", 1)
+            .replace(",kills:0,kills_complete:true", "")
+            .replace(",character:None,character_creation_open:true", "");
         let mut migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
         assert_eq!(migrated.kills(), 0);
         assert!(!migrated.kills_complete());
@@ -759,12 +796,16 @@ mod tests {
             .snapshot()
             .to_ron()
             .unwrap()
-            .replacen("version:6", "version:4", 1)
+            .replacen("version:7", "version:4", 1)
             .replace(",rotated:false", "")
-            .replace(",quantity:1", "");
+            .replace(",quantity:1", "")
+            .replace(",character:None,character_creation_open:true", "");
         assert!(!old.contains("rotated:"));
         let migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
-        assert_eq!(migrated.snapshot(), state.snapshot());
+        let mut expected = state.snapshot();
+        expected.state.character = Some(crate::CharacterProfile::LEGACY_DEFAULT);
+        expected.state.character_creation_open = false;
+        assert_eq!(migrated.snapshot(), expected);
         assert!(
             migrated
                 .inventory()
@@ -781,8 +822,9 @@ mod tests {
             .snapshot()
             .to_ron()
             .unwrap()
-            .replacen("version:6", "version:5", 1)
-            .replace(",quantity:1", "");
+            .replacen("version:7", "version:5", 1)
+            .replace(",quantity:1", "")
+            .replace(",character:None,character_creation_open:true", "");
         assert!(!old.contains("quantity:"));
         let migrated = CoreState::restore(CoreSnapshot::from_ron(&old).unwrap()).unwrap();
         assert!(

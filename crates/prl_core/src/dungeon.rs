@@ -111,6 +111,8 @@ impl RunFactory {
                 {
                     return state.reject_new_run(error.to_string());
                 }
+                next.character = state.character;
+                next.character_creation_open = state.character.is_none();
                 next.run_number = state.run_number().saturating_add(1);
                 next.log = state.log.clone();
                 let sequence = next.log.record(

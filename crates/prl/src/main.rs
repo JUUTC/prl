@@ -54,6 +54,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let boot_error = match state {
         Ok((state, factory, store, continued, art)) => {
             preferences::install(&mut app, store.clone());
+            if state.character_creation_open() {
+                let mut mode = prl_ui::UiMode::default();
+                mode.enable_first_run_creation();
+                app.insert_resource(mode);
+            }
             if let Some(pack) = pack_path.parent() {
                 // `assets/packs/prl` -> `assets`, which holds the OFL fonts.
                 if let Some(assets) = pack.ancestors().nth(2) {

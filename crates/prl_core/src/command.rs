@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use bevy::prelude::Resource;
 use serde::{Deserialize, Serialize};
 
-use crate::{Direction, StairDirection};
+use crate::{CharacterProfile, Direction, StairDirection};
 
 /// Runtime intent accepted by the core command path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,6 +19,8 @@ pub enum Command {
     /// Abandon the current run (alive or dead) and start the next one
     /// (Q-021 provisional). Costs no game time.
     NewRun,
+    /// Stores the first-run identity and point-buy allocation without spending time.
+    CreateCharacter(CharacterProfile),
     /// Use stairs or the final playtest endpoint under the player.
     Stairs(StairDirection),
     /// Atomically move one item between accessible containers.
@@ -81,6 +83,12 @@ pub enum RejectReason {
     TooHeavy,
     /// Healing at full health or identifying a known item does not spend time.
     NoEffect,
+    /// Character creation is only available before gameplay starts.
+    CharacterCreationClosed,
+    /// A character profile has already been accepted for this run.
+    CharacterAlreadyCreated,
+    /// The proposed character profile is invalid.
+    InvalidCharacter,
 }
 
 /// Public result returned from synchronous command resolution.

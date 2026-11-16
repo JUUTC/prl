@@ -101,8 +101,10 @@ gear is class-weighted with some off-theme results and rare over-budget
 jackpots without debt. Values, distributions and class allocations remain open
 (Q-033/I-037); free rerolls are not an irreversible risk.
 The I-046 headless draft checks these stat/skill budgets and independent section
-transitions. It does not generate rolls, validate gear budgets or unlocks, apply
-racial bonuses, create a playable character, or provide a creation UI.
+transitions. The bounded first-run UI stores race, class and a valid 27-point
+pre-racial stat allocation in the character snapshot. It does not generate
+rolls, validate gear budgets or unlocks, apply racial bonuses, create a
+mechanically complete character, or implement skills/progression.
 
 **Growth** — stats train slowly through related skill use (e.g., heavy weapons train STR), with a logarithmic soft cap and no hard cap. See [skills-and-progression.md](skills-and-progression.md#stat-training).
 

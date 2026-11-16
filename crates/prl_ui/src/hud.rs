@@ -286,8 +286,50 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
     } else {
         "P2"
     };
+    let profile = core
+        .character_profile()
+        .map_or_else(String::new, |profile| {
+            format!(
+                "\nCharacter: {} {} | Pre-racial stats {:?}",
+                profile.race.label(),
+                profile.class.label(),
+                profile.stats.scores
+            )
+        });
+    let creation = if mode.creation_enabled {
+        let names = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+        let stats = mode
+            .creation_profile
+            .stats
+            .scores
+            .iter()
+            .enumerate()
+            .map(|(index, score)| {
+                format!(
+                    "{}{} {score}",
+                    if index == mode.creation_stat { ">" } else { "" },
+                    names[index]
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(" | ");
+        let points = prl_core::creation::stat_cost(
+            mode.creation_profile.stats,
+            prl_core::creation::CreationMode::Customize,
+        )
+        .map_or_else(|_| "invalid".to_owned(), |spent| spent.to_string());
+        format!(
+            "\n\nCHARACTER CREATION - no turns pass\nRace: {} (A/D) | Class: {} (Q/E)\nStats: {stats}\nArrows: select/edit | Points: {points}/27 | Enter: confirm\n{}",
+            mode.creation_profile.race.label(),
+            mode.creation_profile.class.label(),
+            mode.creation_error
+                .unwrap_or("Adjust stats to exactly 27 points; each stat must be 8-15.")
+        )
+    } else {
+        String::new()
+    };
     format!(
-        "{stage} PLACEHOLDER - not final art/font/audio | F1 help\nRun {} | Seed {} | {vitals}\nTick {} | Clock {}s | Actions {} | Motion {} (T) | Sound {} (M, 9/0) | Save {}{prompt}{dungeon}",
+        "{stage} PLACEHOLDER - not final art/font/audio | F1 help\nRun {} | Seed {} | {vitals}{profile}\nTick {} | Clock {}s | Actions {} | Motion {} (T) | Sound {} (M, 9/0) | Save {}{prompt}{dungeon}{creation}",
         core.run_number(),
         core.seed(),
         core.clock().ticks(),

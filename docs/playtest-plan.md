@@ -57,13 +57,14 @@ The defaults below remain proposals for the slice, not recovered timing answers.
 ## Next systems work from the interview (2026-11-11)
 
 Visual acceptance is not a prerequisite for the following headless work. The
-playable code currently has no character stat/skill ledger, skill-gain stream,
-creation screen, general unknown-scroll Read or Codex. Saving/morgues and the
-inventory workspace are foundations, not delivery of those systems.
+playable code has a bounded first-run race/class and stat point-buy screen, but
+no stat-driven gameplay, skill ledger/gain stream, general unknown-scroll Read
+or Codex. Saving/morgues and the inventory workspace are foundations, not
+delivery of those broader systems.
 
 | Priority | Bounded increment | What can proceed | What must not be assumed |
 |---|---|---|---|
-| 1 | Creation validation and section state (I-046) | Headless draft validates accepted point-buy costs/bounds, stat/skill budgets and starting cap; independent Default/Customize/Random sections preserve edits on class change and require explicit resets | Revised class allocations, racial skill bonuses, gear economy and random distributions are still open. This foundation does not generate rolls or validate gear, nor is it a playable creation UI |
+| 1 | Creation validation and section state (I-046) | Headless draft validates accepted point-buy costs/bounds, stat/skill budgets and starting cap; independent Default/Customize/Random sections preserve edits on class change and require explicit resets. I-037 adds first-run identity/stat selection and persistence | Revised class allocations, racial skill bonuses, gear economy and random distributions are still open. The first-run slice does not apply mechanical effects, generate rolls or validate gear |
 | 2 | Progression simulation (I-047/I-006) | Prototype compares experimental opponent-rating curves, zero-skill growth, repeated targets, a practice cap and opportunity-frequency sensitivity; see `docs/skill-growth-simulation.md` | This is expected-value tooling, not combat calibration or runtime behavior. Old hit-probability formula, Tactics, school-specific Magic skills and legacy pacing are not accepted defaults |
 | 3 | Live progression and creation integration (I-037) | After the needed catalogue/content and model decisions: stat/skill ledger, isolated RNG, save migration, known-only comparisons, HUD and morgue history | Stealth, racial aptitudes, class allocations, revised ability prerequisites and final growth parameters remain decisions, not programming details |
 | 4 | Scroll/Codex increment (I-038) | Preserve the accepted physical-item identity, unknown-target selection, consumption, run knowledge and quick-slot rules when designing the slice | Do not expose a Read button backed by arbitrary fizzle probabilities. Misfire/ID formulas, spell families/levels, per-type bonus properties and supporting Magic/Identification state must be specified first |
