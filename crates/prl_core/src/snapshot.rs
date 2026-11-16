@@ -68,7 +68,7 @@ impl CoreSnapshot {
 
     /// Canonical digest for pre-release replay and restore comparisons (Q-016).
     ///
-    /// BLAKE3 derive-key context `PRL core snapshot RON hash v2` hashes the UTF-8
+    /// BLAKE3 derive-key context `PRL core snapshot RON hash v3` hashes the UTF-8
     /// compact RON returned by [`Self::to_ron`], including snapshot version,
     /// content, logical IDs, RNG position and retained outcomes/messages.
     /// Ordered maps and integer rules state make this independent of ECS
@@ -83,7 +83,7 @@ impl CoreSnapshot {
     /// Returns [`SnapshotError::Encoding`] if serialization fails.
     pub fn canonical_hash(&self) -> Result<[u8; 32], SnapshotError> {
         let encoded = self.to_ron()?;
-        let mut hasher = blake3::Hasher::new_derive_key("PRL core snapshot RON hash v2");
+        let mut hasher = blake3::Hasher::new_derive_key("PRL core snapshot RON hash v3");
         hasher.update(encoded.as_bytes());
         Ok(*hasher.finalize().as_bytes())
     }
