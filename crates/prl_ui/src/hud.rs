@@ -296,10 +296,10 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
                 profile.stats.scores
             )
         });
-    let creation = if mode.creation_enabled {
+    let creation = if let Some(editor) = mode.creation.as_ref() {
         let names = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-        let stats = mode
-            .creation_profile
+        let stats = editor
+            .profile
             .stats
             .scores
             .iter()
@@ -307,22 +307,23 @@ fn header_text(core: &CoreState, mode: &UiMode, settings: &SettingsStatus) -> St
             .map(|(index, score)| {
                 format!(
                     "{}{} {score}",
-                    if index == mode.creation_stat { ">" } else { "" },
+                    if index == editor.stat { ">" } else { "" },
                     names[index]
                 )
             })
             .collect::<Vec<_>>()
             .join(" | ");
         let points = prl_core::creation::stat_cost(
-            mode.creation_profile.stats,
+            editor.profile.stats,
             prl_core::creation::CreationMode::Customize,
         )
         .map_or_else(|_| "invalid".to_owned(), |spent| spent.to_string());
         format!(
             "\n\nCHARACTER CREATION - no turns pass\nRace: {} (A/D) | Class: {} (Q/E)\nStats: {stats}\nArrows: select/edit | Points: {points}/27 | Enter: confirm\n{}",
-            mode.creation_profile.race.label(),
-            mode.creation_profile.class.label(),
-            mode.creation_error
+            editor.profile.race.label(),
+            editor.profile.class.label(),
+            editor
+                .error
                 .unwrap_or("Adjust stats to exactly 27 points; each stat must be 8-15.")
         )
     } else {
