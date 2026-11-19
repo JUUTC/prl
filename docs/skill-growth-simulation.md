@@ -1,8 +1,13 @@
 # Experimental Skill-Growth Simulation
 
-Status: **exploratory only**. This report does not select a final growth formula
-or balance target. Q-010/I-006 remain open, and these curves are not connected
-to `prl_core`, gameplay RNG, saves or the player skill state.
+Status: **exploratory only**. The linear-gap candidate is the selected working
+model, not a final growth formula or balance target. Q-010/I-006 remain open;
+the accepted rating basis is stable monster/area-level data independent of
+player gear, but its formula is not yet calibrated. Full challenge weight
+applies at/above skill; identical action/target repetitions receive diminishing
+returns that recover after a short no-repeat window. The rough target is 20+
+focused hours to Master (100), subject to playtest. These curves are not
+connected to `prl_core`, gameplay RNG, saves or the player skill state.
 
 Run the deterministic fixed-point comparison and its tests with:
 
@@ -25,11 +30,17 @@ gap is tapered to zero across 20 skill points:
 | `quadratic-gap` | `max(0, 1 - gap / 20) ^ 2` |
 
 Both candidates also use a repeat multiplier of `max(0.2, 1 - 0.1 * repeat
-index)`, where the first use has index zero. Safe practice runs at half rate
-and stops at 25.0. These numerical choices are test parameters, not accepted
-design decisions. The simulator uses integer fixed-point arithmetic and no
-RNG; it approximates expected progress and does not model discrete player
-outcomes.
+index)`, where the first use has index zero. The interview selected diminishing
+returns only for repeating an identical action against an identical target,
+with recovery after a short no-repeat window; this simulator's broad repeat
+scenario does not test target/action grouping or recovery. The multiplier is
+the initial tuning candidate, not final balance; the interview selected full
+recovery after 5 intervening committed actions without that exact action/target.
+Safe
+practice runs at half rate and stops at 25.0 in this prototype; the interview
+selected a 30.0 cap, so simulator results do not model that decision. The
+simulator uses integer fixed-point arithmetic and no RNG; it approximates
+expected progress and does not model discrete player outcomes.
 
 ## Results
 

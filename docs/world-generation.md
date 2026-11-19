@@ -100,7 +100,7 @@ Overworld travel is tile-by-tile on a **separate, scaled-down overworld map** (A
 - **Visible groups:** monster groups appear on the overworld map within your sight range, which Tracking extends. They wander and may approach or avoid you.
 - **Random ambushes:** each overworld step also rolls a hidden encounter chance based on biome, area level, blight and night time.
 - **Level comparison:** `Δ = area level − Power Level` (see [combat.md](combat.md#power-level--area-level)) scales how often and how strong encounters are. Much weaker monsters **avoid** you.
-- **Avoiding encounters:** when an encounter triggers you get a prompt to engage or try to evade. Evasion is a skill check using Stealth, Athletics and speed.
+- **Avoiding encounters:** when an encounter triggers you get a prompt to engage or try to evade. Evasion uses Stealth, Athletics and speed; exact check weighting remains open (Q-035).
 - **Control consumables:**
   - **Repel** potions and scrolls (e.g., *Ward of Passage*) reduce or block encounters for a duration. Their strength depends on item quality versus area level.
   - **Attraction** potions and lures **increase** spawns, optionally for a chosen **family** (e.g., *Wolf Musk* draws beasts). Use them to farm quest targets or specific monster drops in an area.
