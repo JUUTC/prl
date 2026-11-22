@@ -103,7 +103,7 @@ Unlocked via meta-progression feats — see [meta-progression.md](meta-progressi
 
 ## Pantheon (Clerics & Paladins)
 
-Clerics and Paladins **must choose a patron deity** at character creation. Other classes have no patron. Draft pantheon (names are placeholders):
+Clerics and Paladins **must choose a patron deity** at character creation. Other classes have no patron. Pantheon (names and personalities finalized in [lore.md](lore.md#the-pantheon); the table below is gameplay):
 
 | Deity | Domain | Boon | Taboo (loses piety) |
 |---|---|---|---|
