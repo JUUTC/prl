@@ -84,12 +84,14 @@ is preferable or whether either curve fits real skill opportunities.
 
 ## Remaining decisions
 
-- Define how combat opponents receive a rating and how that rating relates to
-  skill, gear, stats and encounter context.
+- Calibrate opponent ratings from stable monster/area-level data, independent
+  of player gear, and test the selected linear falloff against actual encounters.
 - Calibrate gains from real action opportunities, including infrequent skills
   such as Identification and Meditation.
-- Decide repetition windows/target categories and safe-practice activities and
-  ceilings.
+- Implement and test the selected identical action/target repetition rule and
+  five-action recovery; the 10% step and 20% floor remain tuning candidates.
+- Decide which safe-practice activities qualify and how their gain rate is
+  adjusted; implement and test the selected 30.0 cap.
 - Compare against observed playtest action frequencies before setting any
   real-time pacing target.
 - Revisit Stealth, racial aptitudes and ability thresholds separately; this
