@@ -49,6 +49,25 @@ fn draft() -> CreationDraft<Vec<&'static str>> {
 }
 
 #[test]
+fn class_selection_cycles_in_both_directions() {
+    let classes = [
+        StartingClass::Warrior,
+        StartingClass::Rogue,
+        StartingClass::Mage,
+        StartingClass::Cleric,
+        StartingClass::Ranger,
+        StartingClass::Paladin,
+    ];
+    for (index, class) in classes.into_iter().enumerate() {
+        assert_eq!(class.step(1), classes[(index + 1) % classes.len()]);
+        assert_eq!(
+            class.step(-1),
+            classes[(index + classes.len() - 1) % classes.len()]
+        );
+    }
+}
+
+#[test]
 fn point_buy_table_and_mode_specific_score_ranges_are_exact() {
     let costs = [0, 1, 2, 3, 4, 5, 7, 9, 12, 15, 18];
     for (offset, expected) in costs.into_iter().enumerate() {

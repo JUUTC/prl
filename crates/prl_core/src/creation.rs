@@ -87,11 +87,11 @@ impl StartingClass {
     pub const fn step(self, direction: i8) -> Self {
         match (self, direction < 0) {
             (Self::Warrior, true) | (Self::Ranger, false) => Self::Paladin,
-            (Self::Warrior, false) | (Self::Rogue, true) => Self::Rogue,
-            (Self::Rogue, false) | (Self::Mage, true) => Self::Mage,
-            (Self::Mage, false) | (Self::Cleric, true) => Self::Cleric,
-            (Self::Cleric, false) | (Self::Ranger, true) => Self::Ranger,
-            (Self::Paladin, _) => Self::Warrior,
+            (Self::Warrior, false) | (Self::Mage, true) => Self::Rogue,
+            (Self::Rogue, false) | (Self::Cleric, true) => Self::Mage,
+            (Self::Mage, false) | (Self::Ranger, true) => Self::Cleric,
+            (Self::Cleric, false) | (Self::Paladin, true) => Self::Ranger,
+            (Self::Paladin, false) | (Self::Rogue, true) => Self::Warrior,
         }
     }
 }
